@@ -22,7 +22,7 @@ struct RootView: View {
                         .navigationTitle("History")
                 }
             }
-            Tab("Tools", systemImage: "plus.forwardslash.minus") {
+            Tab("Tools", systemImage: "calculator") {
                 NavigationStack {
                     List {}
                         .navigationTitle("Tools")
