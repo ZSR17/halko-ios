@@ -1,0 +1,85 @@
+# XcodeGen description of the Xcode project: `xcodegen generate` makes Halko.xcodeproj, which is never committed.
+name: Halko
+
+options:
+  bundleIdPrefix: com.zsr
+  developmentLanguage: en
+  deploymentTarget:
+    iOS: "26.0"
+    watchOS: "26.0"
+
+settings:
+  base:
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+    SWIFT_APPROACHABLE_CONCURRENCY: YES
+    SWIFT_TREAT_WARNINGS_AS_ERRORS: YES
+    GCC_TREAT_WARNINGS_AS_ERRORS: YES
+    LOCALIZATION_PREFERS_STRING_CATALOGS: YES
+    SWIFT_EMIT_LOC_STRINGS: YES
+    GENERATE_INFOPLIST_FILE: YES
+
+packages:
+  HalkoCore:
+    path: Packages/HalkoCore
+
+targets:
+  Halko:
+    type: application
+    platform: iOS
+    sources: [Halko]
+    dependencies:
+      - package: HalkoCore
+      - target: HalkoWatch
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.zsr.halko
+        TARGETED_DEVICE_FAMILY: "1"
+        INFOPLIST_KEY_CFBundleDisplayName: Halko
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.healthcare-fitness
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight
+
+  # Installed with the iPhone app, which sets it up; then it works on its own.
+  HalkoWatch:
+    type: application
+    platform: watchOS
+    sources: [HalkoWatch]
+    dependencies:
+      - package: HalkoCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.zsr.halko.watchkitapp
+        TARGETED_DEVICE_FAMILY: "4"
+        INFOPLIST_KEY_CFBundleDisplayName: Halko
+        INFOPLIST_KEY_WKCompanionAppBundleIdentifier: com.zsr.halko
+        INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp: NO
+
+  HalkoUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources: [HalkoUITests]
+    dependencies:
+      - target: Halko
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.zsr.halko.uitests
+        TARGETED_DEVICE_FAMILY: "1"
+        TEST_TARGET_NAME: Halko
+
+schemes:
+  Halko:
+    build:
+      targets:
+        Halko: all
+    test:
+      targets: [HalkoUITests]
+  HalkoWatch:
+    build:
+      targets:
+        HalkoWatch: all
