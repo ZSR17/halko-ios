@@ -61,8 +61,14 @@ jobs:
         run: xcodebuild build -project Halko.xcodeproj -scheme HalkoWatch -destination 'generic/platform=watchOS Simulator' -derivedDataPath build CODE_SIGNING_ALLOWED=NO
       - name: Test the iPhone app
         run: xcodebuild test -project Halko.xcodeproj -scheme Halko -destination "id=${{ steps.simulator.outputs.id }}" -derivedDataPath build -resultBundlePath Halko.xcresult
-      - name: Check the watch app is inside the iPhone app
-        run: test -d build/Build/Products/Debug-iphonesimulator/Halko.app/Watch/HalkoWatch.app
+      - name: Check the watch app is inside the iPhone app, and both have their icon
+        run: |
+          app=build/Build/Products/Debug-iphonesimulator/Halko.app
+          test -d "$app/Watch/HalkoWatch.app"
+          # A missing or unreadable icon does not fail the build: the icon name is then absent from Info.plist.
+          for plist in "$app/Info.plist" "$app/Watch/HalkoWatch.app/Info.plist"; do
+            test "$(plutil -extract CFBundleIcons.CFBundlePrimaryIcon.CFBundleIconName raw "$plist" 2>/dev/null || plutil -extract CFBundleIconName raw "$plist")" = AppIcon
+          done
       - name: Export the screenshots
         if: always() && hashFiles('Halko.xcresult/**') != ''
         run: xcrun xcresulttool export attachments --path Halko.xcresult --output-path screenshots
