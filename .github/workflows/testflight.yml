@@ -1,0 +1,78 @@
+# On a version tag (v0.2.0) of a commit of master: once the CI of the commit passed, the iPhone app (with the watch
+# app inside) archived, signed and sent to TestFlight, version 0.2.0. Signing is managed by Apple through the
+# App Store Connect API key; the team is a secret too.
+name: TestFlight
+
+on:
+  push:
+    tags: ['v*.*.*']
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  ci:
+    name: CI of this commit
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Wait for it to pass
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          for i in $(seq 1 30); do
+            id=$(gh run list --workflow ci.yml --commit "$GITHUB_SHA" --json databaseId -q '.[0].databaseId')
+            [ -n "$id" ] && break
+            sleep 10
+          done
+          if [ -z "$id" ]; then echo "No CI run for $GITHUB_SHA: is the commit on master?"; exit 1; fi
+          gh run watch "$id" --exit-status --interval 30 > /dev/null
+          echo "CI passed: https://github.com/$GH_REPO/actions/runs/$id"
+
+  upload:
+    needs: ci
+    runs-on: macos-26
+    env:
+      TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+    steps:
+      - uses: actions/checkout@v7
+      - run: brew install xcodegen
+      - run: xcodegen generate
+      - name: App Store Connect key and export options
+        env:
+          KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+        run: |
+          printf '%s\n' "$KEY_P8" > "$RUNNER_TEMP/AuthKey.p8"
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>upload</string>
+            <key>signingStyle</key><string>automatic</string>
+            <key>teamID</key><string>$TEAM_ID</string>
+            <key>manageAppVersionAndBuildNumber</key><false/>
+          </dict>
+          </plist>
+          PLIST
+      - name: Archive
+        run: |
+          # The version comes from the tag; the build number, which must grow with each upload, from the run number.
+          xcodebuild archive -project Halko.xcodeproj -scheme Halko -configuration Release \
+            -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/Halko.xcarchive" \
+            -allowProvisioningUpdates -authenticationKeyPath "$RUNNER_TEMP/AuthKey.p8" \
+            -authenticationKeyID "$KEY_ID" -authenticationKeyIssuerID "$ISSUER_ID" \
+            DEVELOPMENT_TEAM="$TEAM_ID" MARKETING_VERSION="${GITHUB_REF_NAME#v}" CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER"
+      - name: Send to TestFlight
+        run: |
+          xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/Halko.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" -exportPath "$RUNNER_TEMP/export" \
+            -allowProvisioningUpdates -authenticationKeyPath "$RUNNER_TEMP/AuthKey.p8" \
+            -authenticationKeyID "$KEY_ID" -authenticationKeyIssuerID "$ISSUER_ID"
+      - name: Remove the key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/AuthKey.p8"
