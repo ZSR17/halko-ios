@@ -1,0 +1,86 @@
+# On every push to master and pull request: HalkoCore's tests, then the Xcode project generated from project.yml,
+# the iPhone app (with the watch app inside) built and its interface tested on a simulator. The screenshots of the
+# interface tests are kept with the run. A change to the documentation only skips them.
+# "CI passed" sums it up: it is the check a pull request needs to be merged into master.
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  changes:
+    runs-on: ubuntu-24.04
+    outputs:
+      code: ${{ steps.diff.outputs.code }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - id: diff
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          # Anything but Markdown, docs/, LICENSE and NOTICE (everything when the base is unknown: a new branch).
+          if git cat-file -e "$BASE^{commit}" 2>/dev/null; then
+            files=$(git diff --name-only "$BASE" "$GITHUB_SHA")
+          else
+            files=everything
+          fi
+          code=$(echo "$files" | grep -Ev '\.md$|^docs/|^LICENSE$|^NOTICE$' | head -1)
+          echo "code=$([ -n "$code" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+  core:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v7
+      - run: xcodebuild -version
+      - run: swift test --package-path Packages/HalkoCore -Xswiftc -warnings-as-errors
+
+  apps:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v7
+      - run: brew install xcodegen
+      - run: xcodegen generate
+      - name: Pick an iPhone simulator
+        id: simulator
+        run: |
+          # The newest iOS runtime of this Xcode, and its first iPhone.
+          id=$(xcrun simctl list devices available --json | jq -r '
+            .devices | to_entries | map(select(.key | contains("iOS"))) | sort_by(.key | sub(".*iOS-"; "") | split("-") | map(tonumber))
+            | last.value | map(select(.name | startswith("iPhone"))) | first.udid')
+          xcrun simctl list devices | grep "$id"
+          echo "id=$id" >> "$GITHUB_OUTPUT"
+      - name: Build the watch app
+        run: xcodebuild build -project Halko.xcodeproj -scheme HalkoWatch -destination 'generic/platform=watchOS Simulator' -derivedDataPath build CODE_SIGNING_ALLOWED=NO
+      - name: Test the iPhone app
+        run: xcodebuild test -project Halko.xcodeproj -scheme Halko -destination "id=${{ steps.simulator.outputs.id }}" -derivedDataPath build -resultBundlePath Halko.xcresult
+      - name: Check the watch app is inside the iPhone app
+        run: test -d build/Build/Products/Debug-iphonesimulator/Halko.app/Watch/HalkoWatch.app
+      - name: Export the screenshots
+        if: always() && hashFiles('Halko.xcresult/**') != ''
+        run: xcrun xcresulttool export attachments --path Halko.xcresult --output-path screenshots
+      - uses: actions/upload-artifact@v7
+        if: always() && hashFiles('Halko.xcresult/**') != ''
+        with:
+          name: screenshots
+          path: screenshots
+          if-no-files-found: ignore
+
+  passed:
+    name: CI passed
+    needs: [changes, core, apps]
+    if: always()
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Every job passed or was not needed
+        run: |
+          echo "changes: ${{ needs.changes.result }}, core: ${{ needs.core.result }}, apps: ${{ needs.apps.result }}"
+          [[ "${{ needs.changes.result }}" == success ]]
+          [[ "${{ needs.core.result }}" =~ ^(success|skipped)$ && "${{ needs.apps.result }}" =~ ^(success|skipped)$ ]]

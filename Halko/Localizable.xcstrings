@@ -1,0 +1,56 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "Exercises" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exercices"
+          }
+        }
+      }
+    },
+    "History" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Historique"
+          }
+        }
+      }
+    },
+    "Settings" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réglages"
+          }
+        }
+      }
+    },
+    "Tools" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Outils"
+          }
+        }
+      }
+    },
+    "Workouts" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Séances"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}
