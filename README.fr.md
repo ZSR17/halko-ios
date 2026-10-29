@@ -34,8 +34,6 @@ Prérequis : Xcode 26 ou plus récent ; les apps tournent sur iOS 26 et watchOS 
 - `Packages/HalkoCore/` : le code commun aux deux apps (données, synchro, logique des séances), testé par `swift test`.
 - `HalkoUITests/` : les tests d'interface ; chaque écran testé est gardé en capture dans l'exécution de la CI.
 
-Une étiquette de version (`v0.2.0`) sur un commit de master envoie l'app sur TestFlight une fois la CI de ce commit passée.
-
 ## Licence
 
 [Apache 2.0](LICENSE).

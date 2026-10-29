@@ -34,8 +34,6 @@ Requirements: Xcode 26 or later; the apps run on iOS 26 and watchOS 26.
 - `Packages/HalkoCore/`: the code both apps share (data, sync, workout logic), tested with `swift test`.
 - `HalkoUITests/`: the interface tests; each screen tested is kept as a screenshot in the CI run.
 
-A version tag (`v0.2.0`) on a commit of master sends the app to TestFlight once the CI of that commit passed.
-
 ## License
 
 [Apache 2.0](LICENSE).
