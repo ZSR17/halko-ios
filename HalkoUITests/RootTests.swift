@@ -1,6 +1,7 @@
 import XCTest
 
 final class RootTests: XCTestCase {
+    @MainActor
     func testTabs() throws {
         let app = XCUIApplication()
         app.launchArguments = ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]

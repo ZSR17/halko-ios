@@ -69,6 +69,8 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.zsr.halko.uitests
+        # XCTestCase is not isolated: only the tests themselves run on the main actor.
+        SWIFT_DEFAULT_ACTOR_ISOLATION: nonisolated
         TARGETED_DEVICE_FAMILY: "1"
         TEST_TARGET_NAME: Halko
 
