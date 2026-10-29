@@ -30,13 +30,18 @@ targets:
   Halko:
     type: application
     platform: iOS
-    sources: [Halko]
+    sources:
+      - Halko
+      - path: AppIcon.icon
+        type: file
+        buildPhase: resources
     dependencies:
       - package: HalkoCore
       - target: HalkoWatch
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.zsr.halko
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         TARGETED_DEVICE_FAMILY: "1"
         INFOPLIST_KEY_CFBundleDisplayName: Halko
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.healthcare-fitness
@@ -51,12 +56,17 @@ targets:
   HalkoWatch:
     type: application
     platform: watchOS
-    sources: [HalkoWatch]
+    sources:
+      - HalkoWatch
+      - path: AppIcon.icon
+        type: file
+        buildPhase: resources
     dependencies:
       - package: HalkoCore
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.zsr.halko.watchkitapp
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         TARGETED_DEVICE_FAMILY: "4"
         INFOPLIST_KEY_CFBundleDisplayName: Halko
         INFOPLIST_KEY_WKCompanionAppBundleIdentifier: com.zsr.halko
