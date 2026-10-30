@@ -14,9 +14,9 @@ struct WorkoutCard: View {
         self.workout = workout
         let id = workout.id
         let sessionWorkoutID: String? = workout.id
-        _items = Query(filter: #Predicate<WorkoutItem> { !$0.deleted && $0.workoutID == id }, sort: \WorkoutItem.position)
+        _items = Query(filter: #Predicate<WorkoutItem> { !$0.removed && $0.workoutID == id }, sort: \WorkoutItem.position)
         var last = FetchDescriptor<Session>(
-            predicate: #Predicate { !$0.deleted && $0.workoutID == sessionWorkoutID && $0.endedAt != nil },
+            predicate: #Predicate { !$0.removed && $0.workoutID == sessionWorkoutID && $0.endedAt != nil },
             sortBy: [SortDescriptor(\.startedAt, order: .reverse)]
         )
         last.fetchLimit = 1

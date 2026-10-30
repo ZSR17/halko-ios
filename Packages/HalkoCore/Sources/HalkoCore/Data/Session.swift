@@ -9,8 +9,8 @@ public final class Session {
     @Attribute(.unique) public var id: String
     public var createdAt: Date
     public var updatedAt: Date
-    // Kept, so that the deletion reaches every device.
-    public var deleted: Bool
+    // Kept, so that the deletion reaches every device (`deleted` of the rows: Core Data keeps that name).
+    public var removed: Bool
     public var workoutID: String?
     public var sport: Sport
     public var name: String
@@ -22,7 +22,7 @@ public final class Session {
         id: String = newRowID(),
         createdAt: Date = .now,
         updatedAt: Date = .now,
-        deleted: Bool = false,
+        removed: Bool = false,
         workoutID: String? = nil,
         sport: Sport = .strength,
         name: String,
@@ -33,7 +33,7 @@ public final class Session {
         self.id = id
         self.createdAt = createdAt
         self.updatedAt = updatedAt
-        self.deleted = deleted
+        self.removed = removed
         self.workoutID = workoutID
         self.sport = sport
         self.name = name
@@ -51,7 +51,7 @@ public final class SetLog {
     @Attribute(.unique) public var id: String
     public var createdAt: Date
     public var updatedAt: Date
-    public var deleted: Bool
+    public var removed: Bool
     public var sessionID: String
     public var exerciseID: String
     public var workoutItemID: String?
@@ -71,7 +71,7 @@ public final class SetLog {
         id: String = newRowID(),
         createdAt: Date = .now,
         updatedAt: Date = .now,
-        deleted: Bool = false,
+        removed: Bool = false,
         sessionID: String,
         exerciseID: String,
         workoutItemID: String? = nil,
@@ -88,7 +88,7 @@ public final class SetLog {
         self.id = id
         self.createdAt = createdAt
         self.updatedAt = updatedAt
-        self.deleted = deleted
+        self.removed = removed
         self.sessionID = sessionID
         self.exerciseID = exerciseID
         self.workoutItemID = workoutItemID
@@ -143,7 +143,7 @@ extension Session: SyncedModel {
             id: row.id,
             createdAt: Date(epochMilliseconds: row.createdAt),
             updatedAt: Date(epochMilliseconds: row.updatedAt),
-            deleted: row.deleted,
+            removed: row.deleted,
             workoutID: row.workoutId,
             sport: row.sport,
             name: row.name,
@@ -156,7 +156,7 @@ extension Session: SyncedModel {
     public func update(from row: SessionRow) {
         createdAt = Date(epochMilliseconds: row.createdAt)
         updatedAt = Date(epochMilliseconds: row.updatedAt)
-        deleted = row.deleted
+        removed = row.deleted
         workoutID = row.workoutId
         sport = row.sport
         name = row.name
@@ -170,7 +170,7 @@ extension Session: SyncedModel {
             id: id,
             createdAt: createdAt.epochMilliseconds,
             updatedAt: updatedAt.epochMilliseconds,
-            deleted: deleted,
+            deleted: removed,
             workoutId: workoutID,
             sport: sport,
             name: name,
@@ -191,7 +191,7 @@ extension SetLog: SyncedModel {
             id: row.id,
             createdAt: Date(epochMilliseconds: row.createdAt),
             updatedAt: Date(epochMilliseconds: row.updatedAt),
-            deleted: row.deleted,
+            removed: row.deleted,
             sessionID: row.sessionId,
             exerciseID: row.exerciseId,
             workoutItemID: row.workoutItemId,
@@ -210,7 +210,7 @@ extension SetLog: SyncedModel {
     public func update(from row: SetLogRow) {
         createdAt = Date(epochMilliseconds: row.createdAt)
         updatedAt = Date(epochMilliseconds: row.updatedAt)
-        deleted = row.deleted
+        removed = row.deleted
         sessionID = row.sessionId
         exerciseID = row.exerciseId
         workoutItemID = row.workoutItemId
@@ -230,7 +230,7 @@ extension SetLog: SyncedModel {
             id: id,
             createdAt: createdAt.epochMilliseconds,
             updatedAt: updatedAt.epochMilliseconds,
-            deleted: deleted,
+            deleted: removed,
             sessionId: sessionID,
             exerciseId: exerciseID,
             workoutItemId: workoutItemID,

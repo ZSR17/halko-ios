@@ -35,10 +35,10 @@ extension ModelContext {
     // Deleted with its exercises; the sessions done from it stay in the history.
     public func removeWorkout(_ workout: Workout) throws {
         let now = Date.now
-        workout.deleted = true
+        workout.removed = true
         workout.updatedAt = now
         for item in try items(of: workout) {
-            item.deleted = true
+            item.removed = true
             item.updatedAt = now
         }
         try save()
@@ -68,7 +68,7 @@ extension ModelContext {
     private func items(of workout: Workout) throws -> [WorkoutItem] {
         let id = workout.id
         return try fetch(FetchDescriptor(
-            predicate: #Predicate<WorkoutItem> { !$0.deleted && $0.workoutID == id },
+            predicate: #Predicate<WorkoutItem> { !$0.removed && $0.workoutID == id },
             sortBy: [SortDescriptor(\.position)]
         ))
     }

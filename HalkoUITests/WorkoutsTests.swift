@@ -33,7 +33,8 @@ final class WorkoutsTests: XCTestCase {
     func testWorkoutsWithLargestText() throws {
         let app = launch(language: "en", locale: "en_US", textSize: "UICTContentSizeCategoryAccessibilityXXXL")
 
-        XCTAssertTrue(app.element(containing: "Abs, primary").waitForExistence(timeout: 30))
+        // The first card in no folder: the cards further down are not made until scrolled to.
+        XCTAssertTrue(app.element(containing: "Quads, primary").waitForExistence(timeout: 30))
         try app.auditWorkouts()
         snap("Workouts, largest text")
         app.scrollViews.firstMatch.swipeUp()

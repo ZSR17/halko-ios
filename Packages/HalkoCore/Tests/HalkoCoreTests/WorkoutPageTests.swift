@@ -88,7 +88,7 @@ struct WorkoutActionsTests {
         context.insert(WorkoutItem(workoutID: push.id, exerciseID: "bench", position: 0, targets: targets))
         context.insert(WorkoutItem(workoutID: push.id, exerciseID: "fly", position: 1, supersetGroup: "a", targets: targets))
         context.insert(WorkoutItem(workoutID: push.id, exerciseID: "dips", position: 2, supersetGroup: "a", targets: targets, bySide: false))
-        context.insert(WorkoutItem(deleted: true, workoutID: push.id, exerciseID: "gone", position: 3, targets: targets))
+        context.insert(WorkoutItem(removed: true, workoutID: push.id, exerciseID: "gone", position: 3, targets: targets))
 
         let copy = try context.duplicateWorkout(push, named: "Push (copy)")
         #expect(copy.id != push.id)
@@ -112,9 +112,9 @@ struct WorkoutActionsTests {
         context.insert(WorkoutItem(workoutID: push.id, exerciseID: "bench", position: 0, targets: []))
 
         try context.removeWorkout(push)
-        #expect(push.deleted)
+        #expect(push.removed)
         #expect(push.updatedAt > .distantPast)
-        #expect(try items(of: push).allSatisfy(\.deleted))
+        #expect(try items(of: push).allSatisfy(\.removed))
         #expect(try context.fetchCount(FetchDescriptor<Workout>()) == 1)
     }
 

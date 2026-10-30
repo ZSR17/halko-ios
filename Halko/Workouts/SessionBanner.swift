@@ -14,8 +14,8 @@ struct SessionBanner: View {
         // No row has an empty id: a session without a workout has no planned exercises.
         let workoutID = session.workoutID ?? ""
         let sessionID = session.id
-        _items = Query(filter: #Predicate<WorkoutItem> { !$0.deleted && $0.workoutID == workoutID }, sort: \WorkoutItem.position)
-        _sets = Query(filter: #Predicate<SetLog> { !$0.deleted && $0.sessionID == sessionID })
+        _items = Query(filter: #Predicate<WorkoutItem> { !$0.removed && $0.workoutID == workoutID }, sort: \WorkoutItem.position)
+        _sets = Query(filter: #Predicate<SetLog> { !$0.removed && $0.sessionID == sessionID })
     }
 
     var body: some View {

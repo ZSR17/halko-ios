@@ -9,8 +9,8 @@ public final class Exercise {
     @Attribute(.unique) public var id: String
     public var createdAt: Date
     public var updatedAt: Date
-    // Kept, so that the deletion reaches every device.
-    public var deleted: Bool
+    // Kept, so that the deletion reaches every device (`deleted` of the rows: Core Data keeps that name).
+    public var removed: Bool
     public var source: ExerciseSource
     public var name: String
     public var sport: Sport
@@ -37,7 +37,7 @@ public final class Exercise {
         id: String = newRowID(),
         createdAt: Date = .now,
         updatedAt: Date = .now,
-        deleted: Bool = false,
+        removed: Bool = false,
         source: ExerciseSource = .custom,
         name: String,
         sport: Sport = .strength,
@@ -58,7 +58,7 @@ public final class Exercise {
         self.id = id
         self.createdAt = createdAt
         self.updatedAt = updatedAt
-        self.deleted = deleted
+        self.removed = removed
         self.source = source
         self.name = name
         self.sport = sport
@@ -109,7 +109,7 @@ extension Exercise: SyncedModel {
             id: row.id,
             createdAt: Date(epochMilliseconds: row.createdAt),
             updatedAt: Date(epochMilliseconds: row.updatedAt),
-            deleted: row.deleted,
+            removed: row.deleted,
             source: row.source,
             name: row.name,
             sport: row.sport,
@@ -132,7 +132,7 @@ extension Exercise: SyncedModel {
     public func update(from row: ExerciseRow) {
         createdAt = Date(epochMilliseconds: row.createdAt)
         updatedAt = Date(epochMilliseconds: row.updatedAt)
-        deleted = row.deleted
+        removed = row.deleted
         source = row.source
         name = row.name
         sport = row.sport
@@ -156,7 +156,7 @@ extension Exercise: SyncedModel {
             id: id,
             createdAt: createdAt.epochMilliseconds,
             updatedAt: updatedAt.epochMilliseconds,
-            deleted: deleted,
+            deleted: removed,
             source: source,
             name: name,
             sport: sport,

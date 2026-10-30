@@ -9,7 +9,7 @@ struct WorkoutView: View {
 
     let workout: Workout
     @Query private var items: [WorkoutItem]
-    @Query(filter: #Predicate<Folder> { !$0.deleted }, sort: \Folder.position) private var folders: [Folder]
+    @Query(filter: #Predicate<Folder> { !$0.removed }, sort: \Folder.position) private var folders: [Folder]
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
     @State private var confirmingDelete = false
@@ -17,7 +17,7 @@ struct WorkoutView: View {
     init(workout: Workout) {
         self.workout = workout
         let id = workout.id
-        _items = Query(filter: #Predicate<WorkoutItem> { !$0.deleted && $0.workoutID == id }, sort: \WorkoutItem.position)
+        _items = Query(filter: #Predicate<WorkoutItem> { !$0.removed && $0.workoutID == id }, sort: \WorkoutItem.position)
     }
 
     var body: some View {
