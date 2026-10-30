@@ -91,11 +91,10 @@ struct SetsText {
         (Double(grams) / weightUnit.grams).formatted(.number.precision(.fractionLength(0...2)))
     }
 
-    // "40 s" under a minute, "1:30" above.
+    // "40 s" under a minute, "1:30" above. The symbol in every language: "40 secs" is the abbreviated English.
     private func duration(_ seconds: Double) -> String {
         guard seconds < 60 else { return clock(Int(seconds.rounded())) }
-        return Measurement(value: seconds, unit: UnitDuration.seconds)
-            .formatted(.measurement(width: .abbreviated, usage: .asProvided, numberFormatStyle: .number.precision(.fractionLength(0...1))))
+        return "\(seconds.formatted(.number.precision(.fractionLength(0...1)))) \(UnitDuration.seconds.symbol)"
     }
 
     private func clock(_ seconds: Int) -> String {
