@@ -20,6 +20,17 @@ struct BodyMapTests {
         #expect(backX?.allSatisfy { $0 > BodyMap.viewBox(.back).minX } == true)
     }
 
+    @Test("Groups the muscles in the areas the regions draw")
+    func areas() {
+        let drawn = Set(BodyMap.regionMuscles.values.filter { !$0.isEmpty })
+        #expect(Set(BodyMap.areas) == drawn)
+        #expect(BodyMap.areas.count == drawn.count)
+        #expect(BodyMap.areas.joined().count == Muscle.allCases.count)
+        #expect(BodyMap.area(of: .middleback) == [.lats, .middleback])
+        #expect(BodyMap.muscles(of: "obliques") == [.abs])
+        #expect(BodyMap.muscles(of: "head").isEmpty)
+    }
+
     @Test("Colors a region by the role of its muscles")
     func states() {
         #expect(BodyMap.state(of: "upper-back", primary: [.lats], secondary: []) == .primary)

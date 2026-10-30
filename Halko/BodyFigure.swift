@@ -33,6 +33,28 @@ struct BodyFigure: View {
         }
     }
 
+    // The area of the body (`BodyMap.areas`) drawn at `point` of a figure `size` big, or nil there (head, hands…).
+    // A tap a little off a small muscle still finds it.
+    static func area(at point: CGPoint, in size: CGSize, side: BodySide) -> [Muscle]? {
+        let box = BodyMap.viewBox(side)
+        let scale = min(size.width / box.width, size.height / box.height)
+        let reach = 8.0
+        let offsets = [CGPoint.zero] + (0..<8).map { step in
+            let angle = Double(step) * .pi / 4
+            return CGPoint(x: cos(angle) * reach, y: sin(angle) * reach)
+        }
+        for offset in offsets {
+            let outline = CGPoint(x: (point.x + offset.x) / scale + box.minX, y: (point.y + offset.y) / scale + box.minY)
+            if let shape = paths[side]?.last(where: { $0.path.contains(outline) }) {
+                let muscles = BodyMap.muscles(of: shape.region)
+                if !muscles.isEmpty {
+                    return muscles
+                }
+            }
+        }
+        return nil
+    }
+
     // Made once.
     private static let paths: [BodySide: [(region: String, path: Path)]] = BodyMap.shapes.mapValues { shapes in
         shapes.map { ($0.region, Path($0.commands)) }

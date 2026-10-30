@@ -9,13 +9,13 @@ final class WorkoutsTests: XCTestCase {
         XCTAssertTrue(app.element(containing: "Full body express").exists)
         // The muscles come from the exercise library, installed in the background at launch.
         XCTAssertTrue(app.element(containing: "Abs, primary").waitForExistence(timeout: 30))
-        try app.auditWorkouts()
+        try app.auditScreen()
         snap("Workouts")
 
         app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "PPL program")).firstMatch.tap()
         XCTAssertTrue(app.navigationBars["PPL program"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.element(containing: "Pull A").exists)
-        try app.auditWorkouts()
+        try app.auditScreen()
         snap("Workouts › Folder")
     }
 
@@ -35,7 +35,7 @@ final class WorkoutsTests: XCTestCase {
 
         // The first card in no folder: the cards further down are not made until scrolled to.
         XCTAssertTrue(app.element(containing: "Quads, primary").waitForExistence(timeout: 30))
-        try app.auditWorkouts()
+        try app.auditScreen()
         snap("Workouts, largest text")
         app.scrollViews.firstMatch.swipeUp()
         snap("Workouts, largest text, scrolled")
@@ -52,7 +52,7 @@ final class WorkoutsTests: XCTestCase {
         XCTAssertTrue(app.element(containing: "Superset · no rest in between").exists)
         XCTAssertTrue(app.element(containing: "One side at a time").exists)
         XCTAssertTrue(app.element(containing: "Primary muscles: chest").exists)
-        try app.auditWorkouts()
+        try app.auditScreen()
         snap("Workout")
         app.scrollViews.firstMatch.swipeUp()
         snap("Workout, scrolled")
@@ -90,36 +90,26 @@ final class WorkoutsTests: XCTestCase {
 
         app.openPushA()
         XCTAssertTrue(app.element(containing: "Auto warm-up").waitForExistence(timeout: 30))
-        try app.auditWorkouts()
+        try app.auditScreen()
         snap("Workout, largest text")
         app.scrollViews.firstMatch.swipeUp()
         snap("Workout, largest text, scrolled")
     }
-
-    // Sample workouts, in a database kept in memory.
-    @MainActor
-    private func launch(language: String, locale: String, textSize: String? = nil) -> XCUIApplication {
-        let app = XCUIApplication()
-        app.launchArguments = ["-demo", "-AppleLanguages", "(\(language))", "-AppleLocale", locale]
-        if let textSize {
-            app.launchArguments += ["-UIPreferredContentSizeCategoryName", textSize]
-        }
-        app.launch()
-        return app
-    }
 }
 
 extension XCUIApplication {
-    // The audit reports the texts of the cards as keeping their size or being clipped at larger sizes, though they
+    // The audit reports the texts of cards as keeping their size or being clipped at larger sizes, though they
     // grow and wrap (the largest-text screenshots show it), and measures the contrast of the cards scrolling under
-    // the fade of the bars. Every other issue fails the test.
+    // the fade of the bars, and of the drawing of the body behind the muscles VoiceOver reads on it (`muscle-…`).
+    // Every other issue fails the test.
     @MainActor
-    func auditWorkouts() throws {
+    func auditScreen() throws {
         let bars = [navigationBars.firstMatch.frame, tabBars.firstMatch.frame].map { $0.insetBy(dx: 0, dy: -40) }
         try performAccessibilityAudit { issue in
             switch issue.auditType {
             case .dynamicType, .textClipped: true
-            case .contrast: bars.contains { $0.intersects(issue.element?.frame ?? .zero) }
+            case .contrast:
+                issue.element?.identifier.hasPrefix("muscle-") == true || bars.contains { $0.intersects(issue.element?.frame ?? .zero) }
             default: false
             }
         }

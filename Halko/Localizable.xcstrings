@@ -231,6 +231,36 @@
         }
       }
     },
+    "All" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tous"
+          }
+        }
+      }
+    },
+    "Arms" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bras"
+          }
+        }
+      }
+    },
+    "Assisted bodyweight" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poids du corps assisté"
+          }
+        }
+      }
+    },
     "Auto warm-up: %@" : {
       "localizations" : {
         "fr" : {
@@ -251,12 +281,72 @@
         }
       }
     },
+    "Bands" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Élastiques"
+          }
+        }
+      }
+    },
+    "Barbell" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Barre"
+          }
+        }
+      }
+    },
+    "Best time" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meilleur temps"
+          }
+        }
+      }
+    },
     "Biceps" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Biceps"
+          }
+        }
+      }
+    },
+    "Body weight" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poids du corps"
+          }
+        }
+      }
+    },
+    "Bodyweight reps" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réps poids du corps"
+          }
+        }
+      }
+    },
+    "Cable" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poulie"
           }
         }
       }
@@ -277,6 +367,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pectoraux"
+          }
+        }
+      }
+    },
+    "Clear" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effacer"
+          }
+        }
+      }
+    },
+    "Core" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abdos"
           }
         }
       }
@@ -311,12 +421,82 @@
         }
       }
     },
+    "Distance and duration" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Distance et durée"
+          }
+        }
+      }
+    },
+    "Dumbbells" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Haltères"
+          }
+        }
+      }
+    },
     "Duplicate" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dupliquer"
+          }
+        }
+      }
+    },
+    "Duration" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Durée"
+          }
+        }
+      }
+    },
+    "Duration and weight" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Durée et poids"
+          }
+        }
+      }
+    },
+    "EZ bar" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Barre EZ"
+          }
+        }
+      }
+    },
+    "Equipment" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Matériel"
+          }
+        }
+      }
+    },
+    "Estimated 1RM" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1RM estimé"
           }
         }
       }
@@ -331,12 +511,32 @@
         }
       }
     },
+    "Exercise ball" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Swiss ball"
+          }
+        }
+      }
+    },
     "Exercises" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Exercices"
+          }
+        }
+      }
+    },
+    "Foam roller" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rouleau"
           }
         }
       }
@@ -391,12 +591,52 @@
         }
       }
     },
+    "How to" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exécution"
+          }
+        }
+      }
+    },
+    "Kettlebell" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kettlebell"
+          }
+        }
+      }
+    },
+    "Last time" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dernière fois"
+          }
+        }
+      }
+    },
     "Lats" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Grand dorsal"
+          }
+        }
+      }
+    },
+    "Legs" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jambes"
           }
         }
       }
@@ -411,12 +651,82 @@
         }
       }
     },
+    "Machine" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Machine"
+          }
+        }
+      }
+    },
+    "Max added weight" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lest max"
+          }
+        }
+      }
+    },
+    "Max distance" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Distance max"
+          }
+        }
+      }
+    },
+    "Max reps" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Répétitions max"
+          }
+        }
+      }
+    },
+    "Max weight" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Charge max"
+          }
+        }
+      }
+    },
+    "Medicine ball" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Médecine-ball"
+          }
+        }
+      }
+    },
     "Middle back" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Milieu du dos"
+          }
+        }
+      }
+    },
+    "Min assistance" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Assistance min"
           }
         }
       }
@@ -451,6 +761,26 @@
         }
       }
     },
+    "No equipment" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sans matériel"
+          }
+        }
+      }
+    },
+    "No exercises match." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun exercice ne correspond."
+          }
+        }
+      }
+    },
     "No folder" : {
       "localizations" : {
         "fr" : {
@@ -471,12 +801,42 @@
         }
       }
     },
+    "Not picked" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non choisi"
+          }
+        }
+      }
+    },
     "One side at a time" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Un côté à la fois"
+          }
+        }
+      }
+    },
+    "Other" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autre"
+          }
+        }
+      }
+    },
+    "Primary" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Principal"
           }
         }
       }
@@ -507,6 +867,66 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Quadriceps"
+          }
+        }
+      }
+    },
+    "Records" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Records"
+          }
+        }
+      }
+    },
+    "Search %lld exercises" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Search %lld exercise"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Search %lld exercises"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Rechercher parmi %lld exercice"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Rechercher parmi %lld exercices"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Secondary" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Secondaire"
           }
         }
       }
@@ -581,6 +1001,16 @@
         }
       }
     },
+    "Tap a muscle once for a primary muscle, twice for a secondary one." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Touche un muscle une fois pour un muscle principal, deux fois pour un secondaire."
+          }
+        }
+      }
+    },
     "Tools" : {
       "localizations" : {
         "fr" : {
@@ -621,6 +1051,36 @@
         }
       }
     },
+    "Weight and distance" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poids et distance"
+          }
+        }
+      }
+    },
+    "Weight and reps" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poids et réps"
+          }
+        }
+      }
+    },
+    "Weighted bodyweight" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poids du corps lesté"
+          }
+        }
+      }
+    },
     "Workouts" : {
       "localizations" : {
         "fr" : {
@@ -651,6 +1111,16 @@
         }
       }
     },
+    "custom" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "perso"
+          }
+        }
+      }
+    },
     "max" : {
       "localizations" : {
         "fr" : {
@@ -667,6 +1137,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "repos %@"
+          }
+        }
+      }
+    },
+    "your version" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ta version"
           }
         }
       }

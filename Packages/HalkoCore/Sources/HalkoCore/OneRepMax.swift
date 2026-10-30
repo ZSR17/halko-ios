@@ -27,6 +27,11 @@ public enum OneRepMax {
         return Int(formula.estimate(Double(weightG), reps: Double(min(reps, maxReps))).rounded())
     }
 
+    // The estimate of the records, as on the website: Epley, the reps counted up to 12, past which it grows too fast.
+    public static func recordEstimate(weightG: Int, reps: Int) -> Int {
+        estimate(weightG: weightG, reps: min(reps, 12), formula: .epley)
+    }
+
     // Reps the formula expects at `percent` of the max, rounded down (those can be done), or nil past `maxReps`.
     public static func reps(atPercent percent: Int, formula: OneRepMaxFormula) -> Int? {
         guard percent < 100 else { return 1 }

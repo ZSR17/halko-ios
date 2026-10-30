@@ -11,8 +11,7 @@ struct RootView: View {
             }
             Tab("Exercises", systemImage: "list.bullet") {
                 NavigationStack {
-                    List {}
-                        .navigationTitle("Exercises")
+                    ExercisesView()
                 }
             }
             Tab("History", systemImage: "clock") {

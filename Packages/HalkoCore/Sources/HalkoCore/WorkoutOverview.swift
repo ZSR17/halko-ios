@@ -7,6 +7,17 @@ public enum MuscleRole: Sendable {
 public struct WorkedMuscle: Hashable, Sendable {
     public let muscle: Muscle
     public let role: MuscleRole
+
+    public init(muscle: Muscle, role: MuscleRole) {
+        self.muscle = muscle
+        self.role = role
+    }
+
+    // The muscles of an exercise: a muscle both primary and secondary is a primary one.
+    public static func of(_ exercise: Exercise) -> [WorkedMuscle] {
+        exercise.primaryMuscles.map { WorkedMuscle(muscle: $0, role: .primary) }
+            + exercise.secondaryMuscles.filter { !exercise.primaryMuscles.contains($0) }.map { WorkedMuscle(muscle: $0, role: .secondary) }
+    }
 }
 
 public enum WorkedMuscles {
