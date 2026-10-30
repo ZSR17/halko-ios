@@ -95,9 +95,7 @@ final class ExercisesTests: XCTestCase {
         app.scrollViews.firstMatch.swipeUp()
         snap("Exercises, largest text, scrolled")
 
-        // The search field shows again at the top.
-        app.scrollViews.firstMatch.swipeDown()
-        app.scrollViews.firstMatch.swipeDown()
+        // The search field stays in view.
         app.searchFields.firstMatch.tap()
         app.searchFields.firstMatch.typeText("medium bench")
         let bench = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Barbell Bench Press - Medium Grip")).firstMatch

@@ -33,7 +33,8 @@ struct ExercisesView: View {
             }
             .padding([.horizontal, .bottom])
         }
-        .searchable(text: $catalog.filter.query, prompt: Text("Search \(catalog.pool) exercises"))
+        // Always open: folded under the large title, it is crushed to a line with the largest text sizes.
+        .searchable(text: $catalog.filter.query, placement: .navigationBarDrawer(displayMode: .always), prompt: Text("Search \(catalog.pool) exercises"))
         .navigationTitle("Exercises")
         .navigationDestination(for: Exercise.self) { exercise in
             ExerciseView(exercise: exercise)
