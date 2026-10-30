@@ -1,0 +1,92 @@
+import HalkoCore
+import SwiftData
+import SwiftUI
+
+// The Workouts tab: the session in progress, the folders, then the workouts in no folder.
+struct WorkoutsView: View {
+    @Query(filter: #Predicate<Session> { !$0.deleted && $0.endedAt == nil }, sort: \Session.startedAt, order: .reverse)
+    private var sessionsInProgress: [Session]
+    @Query(filter: #Predicate<Folder> { !$0.deleted }, sort: \Folder.position) private var folders: [Folder]
+    @Query(filter: #Predicate<Workout> { !$0.deleted && $0.folderID == nil }, sort: \Workout.position)
+    private var workouts: [Workout]
+    @ScaledMetric(relativeTo: .headline) private var folderWidth = 150.0
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                if let session = sessionsInProgress.first {
+                    SessionBanner(session: session)
+                }
+                if !folders.isEmpty {
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: folderWidth), spacing: 10)], spacing: 10) {
+                        ForEach(folders) { folder in
+                            NavigationLink(value: folder) {
+                                FolderCard(folder: folder)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+                if !folders.isEmpty && !workouts.isEmpty {
+                    Divider()
+                }
+                WorkoutCards(workouts: workouts)
+            }
+            .padding([.horizontal, .bottom])
+        }
+        .background(Color(.systemGroupedBackground))
+        .overlay {
+            if sessionsInProgress.isEmpty && folders.isEmpty && workouts.isEmpty {
+                NoWorkouts()
+            }
+        }
+        .navigationTitle("Workouts")
+        .navigationDestination(for: Folder.self) { folder in
+            FolderView(folder: folder)
+        }
+    }
+}
+
+// The workouts of a folder.
+struct FolderView: View {
+    let folder: Folder
+    @Query private var workouts: [Workout]
+
+    init(folder: Folder) {
+        self.folder = folder
+        let id: String? = folder.id
+        _workouts = Query(filter: #Predicate<Workout> { !$0.deleted && $0.folderID == id }, sort: \Workout.position)
+    }
+
+    var body: some View {
+        ScrollView {
+            WorkoutCards(workouts: workouts)
+                .padding([.horizontal, .bottom])
+        }
+        .background(Color(.systemGroupedBackground))
+        .overlay {
+            if workouts.isEmpty {
+                NoWorkouts()
+            }
+        }
+        .navigationTitle(folder.name)
+    }
+}
+
+private struct WorkoutCards: View {
+    let workouts: [Workout]
+
+    var body: some View {
+        LazyVStack(spacing: 10) {
+            ForEach(workouts) { workout in
+                WorkoutCard(workout: workout)
+            }
+        }
+    }
+}
+
+private struct NoWorkouts: View {
+    var body: some View {
+        ContentUnavailableView("No workouts", systemImage: "dumbbell", description: Text("Your workouts will appear here."))
+    }
+}

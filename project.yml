@@ -46,6 +46,9 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.zsr.halko
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        # Color(.musclePrimary)…: the colors of Assets.xcassets, checked by the compiler.
+        ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: YES
         TARGETED_DEVICE_FAMILY: "1"
         INFOPLIST_KEY_CFBundleDisplayName: Halko
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.healthcare-fitness
