@@ -28,7 +28,7 @@ struct WorkoutCard: View {
                     .font(.headline)
                 details
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color(.secondaryText))
             }
             MainMuscles(items: items)
         }
@@ -59,20 +59,11 @@ private struct MainMuscles: View {
     var body: some View {
         let muscles = WorkedMuscles.main(items: items, exercises: exercises, limit: 3)
         if !muscles.isEmpty {
-            ViewThatFits(in: .horizontal) {
-                HStack(spacing: 14) {
-                    chips(muscles)
-                }
-                VStack(alignment: .leading, spacing: 6) {
-                    chips(muscles)
+            FlowLayout(spacing: 14, lineSpacing: 6) {
+                ForEach(muscles, id: \.self) { muscle in
+                    MuscleChip(muscle: muscle)
                 }
             }
-        }
-    }
-
-    private func chips(_ muscles: [WorkedMuscle]) -> some View {
-        ForEach(muscles, id: \.self) { muscle in
-            MuscleChip(muscle: muscle)
         }
     }
 }
@@ -84,21 +75,22 @@ private struct MuscleChip: View {
 
     var body: some View {
         HStack(spacing: 6) {
-            switch muscle.role {
-            case .primary:
-                Circle()
-                    .fill(Color(.musclePrimary))
-                    .frame(width: dot, height: dot)
-            case .secondary:
-                Circle()
-                    .strokeBorder(Color(.muscleSecondary), lineWidth: 2)
-                    .frame(width: dot, height: dot)
+            Group {
+                switch muscle.role {
+                case .primary:
+                    Circle()
+                        .fill(Color(.musclePrimary))
+                case .secondary:
+                    Circle()
+                        .strokeBorder(Color(.muscleSecondary), lineWidth: 2)
+                }
             }
+            .frame(width: dot, height: dot)
+            .accessibilityHidden(true)
             Text(muscle.muscle.name)
+                .accessibilityLabel(label)
         }
         .font(.footnote)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(label)
     }
 
     private var label: Text {

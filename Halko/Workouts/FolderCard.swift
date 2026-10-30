@@ -24,7 +24,7 @@ struct FolderCard: View {
                     .font(.headline)
                 Text("\(workouts.count) workouts")
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color(.secondaryText))
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

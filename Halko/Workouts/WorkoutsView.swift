@@ -87,6 +87,12 @@ private struct WorkoutCards: View {
 
 private struct NoWorkouts: View {
     var body: some View {
-        ContentUnavailableView("No workouts", systemImage: "dumbbell", description: Text("Your workouts will appear here."))
+        // The description in a darker grey than the system's, for a contrast of 4.5:1.
+        ContentUnavailableView {
+            Label("No workouts", systemImage: "dumbbell")
+        } description: {
+            Text("Your workouts will appear here.")
+                .foregroundStyle(Color(.secondaryText))
+        }
     }
 }
