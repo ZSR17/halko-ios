@@ -68,25 +68,17 @@ private struct MainMuscles: View {
     }
 }
 
-// A primary muscle has a full dot, a secondary one a ring: not told apart by the color alone.
+// A muscle and the color of its role; VoiceOver says the role.
 private struct MuscleChip: View {
     let muscle: WorkedMuscle
     @ScaledMetric(relativeTo: .footnote) private var dot = 8.0
 
     var body: some View {
         HStack(spacing: 6) {
-            Group {
-                switch muscle.role {
-                case .primary:
-                    Circle()
-                        .fill(Color(.musclePrimary))
-                case .secondary:
-                    Circle()
-                        .strokeBorder(Color(.muscleSecondary), lineWidth: 2)
-                }
-            }
-            .frame(width: dot, height: dot)
-            .accessibilityHidden(true)
+            Circle()
+                .fill(muscle.role == .primary ? Color(.musclePrimary) : Color(.muscleSecondary))
+                .frame(width: dot, height: dot)
+                .accessibilityHidden(true)
             Text(muscle.muscle.name)
                 .accessibilityLabel(label)
         }

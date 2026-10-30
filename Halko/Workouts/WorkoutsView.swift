@@ -70,6 +70,7 @@ struct FolderView: View {
             }
         }
         .navigationTitle(folder.name)
+        .navigationSubtitle("\(workouts.count) workouts")
     }
 }
 

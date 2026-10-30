@@ -18,14 +18,16 @@ enum DemoData {
         let program = Folder(name: "PPL program", position: 0)
         let mobility = Folder(name: "Mobility", position: 1)
         let push = Workout(folderID: program.id, name: "Push A", position: 0)
+        let pull = Workout(folderID: program.id, name: "Pull A", position: 1)
+        let legs = Workout(folderID: program.id, name: "Legs", position: 2)
         let fullBody = Workout(name: "Full body express", position: 0)
         let core = Workout(name: "Core 15 min", position: 1)
         context.insert(program)
         context.insert(mobility)
         for workout in [
             push,
-            Workout(folderID: program.id, name: "Pull A", position: 1),
-            Workout(folderID: program.id, name: "Legs", position: 2),
+            pull,
+            legs,
             Workout(folderID: mobility.id, name: "Morning mobility", position: 0),
             Workout(folderID: mobility.id, name: "Hips", position: 1),
             fullBody,
@@ -36,6 +38,8 @@ enum DemoData {
 
         let plan: [(Workout, [String])] = [
             (push, ["Barbell_Bench_Press_-_Medium_Grip", "Dumbbell_Shoulder_Press", "Cable_Crossover", "Dips_-_Triceps_Version", "Side_Bridge"]),
+            (pull, ["Pullups", "Bent_Over_Barbell_Row", "Seated_Cable_Rows", "Romanian_Deadlift", "Hanging_Leg_Raise"]),
+            (legs, ["Barbell_Full_Squat", "Leg_Press", "Dumbbell_Lunges", "Romanian_Deadlift", "Standing_Calf_Raises", "Superman"]),
             (fullBody, ["Barbell_Full_Squat", "Barbell_Bench_Press_-_Medium_Grip", "Pullups", "Dumbbell_Lunges", "Barbell_Deadlift", "Plank"]),
             (core, ["Plank", "Crunches", "Side_Bridge", "Russian_Twist"]),
         ]

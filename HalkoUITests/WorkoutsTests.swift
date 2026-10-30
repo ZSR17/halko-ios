@@ -29,11 +29,25 @@ final class WorkoutsTests: XCTestCase {
         snap("Séances")
     }
 
+    @MainActor
+    func testWorkoutsWithLargestText() throws {
+        let app = launch(language: "en", locale: "en_US", textSize: "UICTContentSizeCategoryAccessibilityXXXL")
+
+        XCTAssertTrue(app.element(containing: "Abs, primary").waitForExistence(timeout: 30))
+        snap("Workouts, largest text")
+        app.swipeUp()
+        snap("Workouts, largest text, scrolled")
+        try app.performAccessibilityAudit()
+    }
+
     // Sample workouts, in a database kept in memory.
     @MainActor
-    private func launch(language: String, locale: String) -> XCUIApplication {
+    private func launch(language: String, locale: String, textSize: String? = nil) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments = ["-demo", "-AppleLanguages", "(\(language))", "-AppleLocale", locale]
+        if let textSize {
+            app.launchArguments += ["-UIPreferredContentSizeCategoryName", textSize]
+        }
         app.launch()
         return app
     }
