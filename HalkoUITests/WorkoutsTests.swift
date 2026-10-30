@@ -34,10 +34,10 @@ final class WorkoutsTests: XCTestCase {
         let app = launch(language: "en", locale: "en_US", textSize: "UICTContentSizeCategoryAccessibilityXXXL")
 
         XCTAssertTrue(app.element(containing: "Abs, primary").waitForExistence(timeout: 30))
+        try app.auditWorkouts()
         snap("Workouts, largest text")
         app.scrollViews.firstMatch.swipeUp()
         snap("Workouts, largest text, scrolled")
-        try app.auditWorkouts()
     }
 
     // Sample workouts, in a database kept in memory.
