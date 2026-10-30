@@ -9,13 +9,15 @@ final class ExercisesTests: XCTestCase {
 
         // The library, installed in the background at launch, and the exercise made by the user.
         XCTAssertTrue(app.element(containing: "Barbell Bench Press - Medium Grip").waitForExistence(timeout: 30))
-        XCTAssertTrue(app.element(containing: "877 exercises").exists)
+        XCTAssertTrue(app.element(containing: "877 exercises").waitForExistence(timeout: 5))
         try app.auditScreen()
         snap("Exercises")
 
-        // The chest picked on the body (as VoiceOver does), then the equipment at hand.
+        // The chest tapped on the body (VoiceOver reads the muscles as buttons, not where they are drawn), then the
+        // equipment at hand.
         let chest = app.buttons["muscle-chest"]
-        chest.tap()
+        XCTAssertEqual(chest.value as? String, "Not picked")
+        app.tapChest()
         XCTAssertEqual(chest.value as? String, "Primary")
         XCTAssertTrue(app.element(containing: "Primary muscle: chest").exists)
         // A toggle shown as a button.
@@ -24,7 +26,8 @@ final class ExercisesTests: XCTestCase {
         snap("Exercises, chest with a barbell")
 
         app.searchFields.firstMatch.tap()
-        app.searchFields.firstMatch.typeText("bench medium")
+        // Its words in any order.
+        app.searchFields.firstMatch.typeText("medium bench")
         let bench = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Barbell Bench Press - Medium Grip")).firstMatch
         XCTAssertTrue(bench.waitForExistence(timeout: 5))
         bench.tap()
@@ -66,7 +69,7 @@ final class ExercisesTests: XCTestCase {
         app.tabBars.buttons["Exercices"].tap()
 
         XCTAssertTrue(app.navigationBars["Exercices"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.element(containing: "Développé couché").waitForExistence(timeout: 30))
+        XCTAssertTrue(app.element(containing: "877 exercices").waitForExistence(timeout: 30))
         snap("Exercices")
 
         // Found without its accents, and by its English name.
@@ -94,8 +97,11 @@ final class ExercisesTests: XCTestCase {
         app.scrollViews.firstMatch.swipeUp()
         snap("Exercises, largest text, scrolled")
 
+        // The search field shows again at the top.
+        app.scrollViews.firstMatch.swipeDown()
+        app.scrollViews.firstMatch.swipeDown()
         app.searchFields.firstMatch.tap()
-        app.searchFields.firstMatch.typeText("bench medium")
+        app.searchFields.firstMatch.typeText("medium bench")
         let bench = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Barbell Bench Press - Medium Grip")).firstMatch
         XCTAssertTrue(bench.waitForExistence(timeout: 30))
         bench.tap()
@@ -104,5 +110,14 @@ final class ExercisesTests: XCTestCase {
         snap("Exercise, largest text")
         app.scrollViews.firstMatch.swipeUp()
         snap("Exercise, largest text, scrolled")
+    }
+}
+
+extension XCUIApplication {
+    // The chest on the body seen from the front, at the top of the Exercises tab (iPhone 17 Pro, default text size).
+    @MainActor
+    func tapChest() {
+        let bar = navigationBars["Exercises"].frame
+        coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: 44, dy: bar.maxY + 34)).tap()
     }
 }

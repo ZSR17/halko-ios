@@ -68,9 +68,11 @@ final class ExerciseCatalog {
 
     private func update() {
         let chosen = entries.filter { filter.chooses($0.exercise) }
-        let query = filter.queryKey
+        let words = filter.queryWords
         pool = chosen.count
-        results = query.isEmpty ? chosen : chosen.filter { $0.searchKeys.contains { $0.contains(query) } }
+        results = words.isEmpty ? chosen : chosen.filter { entry in
+            entry.searchKeys.contains { key in words.allSatisfy { key.contains($0) } }
+        }
     }
 }
 
@@ -138,12 +140,28 @@ private struct ChipRow<Content: View>: View {
             HStack(spacing: 8) {
                 content
             }
-            .toggleStyle(.button)
-            .buttonBorderShape(.capsule)
-            .controlSize(.large)
+            .toggleStyle(ChipToggleStyle())
         }
         .scrollIndicators(.hidden)
         .scrollClipDisabled()
+    }
+}
+
+// A capsule, filled with the accent color when on.
+private struct ChipToggleStyle: ToggleStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        Button {
+            configuration.isOn.toggle()
+        } label: {
+            configuration.label
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(configuration.isOn ? Color(.onAccent) : Color.primary)
+                .padding(.horizontal, 14)
+                .frame(minHeight: 44)
+                .background(configuration.isOn ? Color.accentColor : Color(.secondarySystemFill), in: .capsule)
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(configuration.isOn ? .isSelected : [])
     }
 }
 

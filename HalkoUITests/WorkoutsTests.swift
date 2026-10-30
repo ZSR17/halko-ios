@@ -100,14 +100,16 @@ final class WorkoutsTests: XCTestCase {
 extension XCUIApplication {
     // The audit reports the texts of cards as keeping their size or being clipped at larger sizes, though they
     // grow and wrap (the largest-text screenshots show it), and measures the contrast of the cards scrolling under
-    // the fade of the bars. Every other issue fails the test.
+    // the fade of the bars, and of the drawing of the body behind the muscles VoiceOver reads on it (`muscle-…`).
+    // Every other issue fails the test.
     @MainActor
     func auditScreen() throws {
         let bars = [navigationBars.firstMatch.frame, tabBars.firstMatch.frame].map { $0.insetBy(dx: 0, dy: -40) }
         try performAccessibilityAudit { issue in
             switch issue.auditType {
             case .dynamicType, .textClipped: true
-            case .contrast: bars.contains { $0.intersects(issue.element?.frame ?? .zero) }
+            case .contrast:
+                issue.element?.identifier.hasPrefix("muscle-") == true || bars.contains { $0.intersects(issue.element?.frame ?? .zero) }
             default: false
             }
         }

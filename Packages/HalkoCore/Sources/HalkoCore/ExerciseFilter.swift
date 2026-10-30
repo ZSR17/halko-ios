@@ -117,9 +117,9 @@ public struct ExerciseFilter: Equatable, Sendable {
         return needed.allSatisfy { Equipment(rawValue: $0).map(equipment.contains) ?? false }
     }
 
-    // The search as names are compared to it: empty when there is none.
-    public var queryKey: String {
-        Self.searchKey(query.trimmingCharacters(in: .whitespacesAndNewlines))
+    // The words of the search as names are compared to them: a name is found when it holds them all, in any order.
+    public var queryWords: [String] {
+        Self.searchKey(query).split(whereSeparator: \.isWhitespace).map(String.init)
     }
 
     // A name as the search compares it: case and accents left out ("Écarté" is found by "ecarte").

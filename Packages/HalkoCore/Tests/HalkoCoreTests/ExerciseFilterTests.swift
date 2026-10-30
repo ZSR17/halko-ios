@@ -88,10 +88,9 @@ struct ExerciseFilterTests {
     @Test("Searches without case or accents")
     func search() {
         var filter = ExerciseFilter()
-        #expect(filter.queryKey.isEmpty)
-        filter.query = "  DÉVELOPPÉ cou "
-        #expect(filter.queryKey == "developpe cou")
-        #expect(ExerciseFilter.searchKey(bench.name(in: "fr")).contains(filter.queryKey))
+        #expect(filter.queryWords.isEmpty)
+        filter.query = "  couché DÉVELOPPÉ "
+        #expect(filter.queryWords == ["couche", "developpe"])
         #expect(ExerciseFilter.searchKey("Écarté à la poulie") == "ecarte a la poulie")
     }
 }

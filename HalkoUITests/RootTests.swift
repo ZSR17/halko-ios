@@ -10,7 +10,7 @@ final class RootTests: XCTestCase {
         for tab in ["Workouts", "Exercises", "History", "Tools", "Settings"] {
             app.tabBars.buttons[tab].tap()
             XCTAssertTrue(app.navigationBars[tab].waitForExistence(timeout: 5))
-            try app.performAccessibilityAudit()
+            try app.auditScreen()
             snap(tab)
         }
     }
