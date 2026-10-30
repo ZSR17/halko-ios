@@ -7,6 +7,7 @@ struct SessionBanner: View {
     let session: Session
     @Query private var items: [WorkoutItem]
     @Query private var sets: [SetLog]
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     init(session: Session) {
         self.session = session
@@ -18,7 +19,11 @@ struct SessionBanner: View {
     }
 
     var body: some View {
-        HStack(spacing: 12) {
+        // With the largest text sizes, the icon goes above the text, which keeps the whole width.
+        let layout = dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8))
+            : AnyLayout(HStackLayout(spacing: 12))
+        layout {
             Image(systemName: "dumbbell")
                 .font(.title3)
                 .accessibilityHidden(true)
@@ -28,8 +33,8 @@ struct SessionBanner: View {
                 details
                     .font(.subheadline)
             }
-            Spacer(minLength: 0)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
         .foregroundStyle(Color(.onAccent))
