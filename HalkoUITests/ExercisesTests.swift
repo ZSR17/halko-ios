@@ -12,16 +12,19 @@ final class ExercisesTests: XCTestCase {
         try app.auditScreen()
         snap("Exercises")
 
-        // The chest tapped on the body (VoiceOver reads the muscles as buttons, not where they are drawn), then the
-        // equipment at hand.
-        let chest = app.buttons["muscle-chest"]
-        XCTAssertEqual(chest.value as? String, "Not picked")
+        // A muscle tapped on the body, around the chest: the muscles are a few points high, and where the body is
+        // drawn moves a little from one launch to the next. VoiceOver reads them as buttons.
+        XCTAssertEqual(app.buttons["muscle-chest"].value as? String, "Not picked")
         app.tapChest()
-        XCTAssertEqual(chest.value as? String, "Primary")
-        XCTAssertTrue(app.element(containing: "Primary muscle: chest").exists)
+        XCTAssertTrue(app.element(containing: "Primary muscle:").waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'muscle-' AND value == 'Primary'")).firstMatch.exists)
+        snap("Exercises, a muscle picked")
+        app.buttons["Clear"].tap()
+
+        // The equipment at hand.
         app.switches["Barbell"].tap()
         XCTAssertFalse(app.element(containing: "Home weighted push-ups").exists)
-        snap("Exercises, chest with a barbell")
+        snap("Exercises, with a barbell")
 
         app.searchFields.firstMatch.tap()
         // Its words in any order.
@@ -111,11 +114,11 @@ final class ExercisesTests: XCTestCase {
 }
 
 extension XCUIApplication {
-    // The left of the chest on the body seen from the front, under the search field at the top of the Exercises tab
-    // (iPhone 17 Pro, default text size).
+    // The left of the chest on the body seen from the front, placed from the hint centered beside the body (default
+    // text size).
     @MainActor
     func tapChest() {
-        let search = searchFields.firstMatch.frame
-        coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: 40, dy: search.maxY + 31)).tap()
+        let hint = staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Tap a muscle'")).firstMatch.frame
+        coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: hint.minX - 112, dy: hint.midY - 45)).tap()
     }
 }
