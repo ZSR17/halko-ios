@@ -20,6 +20,9 @@ struct HalkoWatchApp: App {
                 List {}
                     .navigationTitle("Workouts")
             }
+            .task {
+                await ExerciseLibrary.install(in: container)
+            }
         }
         .modelContainer(container)
     }

@@ -35,6 +35,10 @@ targets:
       - path: AppIcon.icon
         type: file
         buildPhase: resources
+      # Pictures of the embedded exercise library (HalkoCore's exercises.json), named by media id.
+      - path: ExerciseImages
+        type: folder
+        buildPhase: resources
     dependencies:
       - package: HalkoCore
       - target: HalkoWatch
