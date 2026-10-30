@@ -69,6 +69,10 @@ jobs:
           for plist in "$app/Info.plist" "$app/Watch/HalkoWatch.app/Info.plist"; do
             test "$(plutil -extract CFBundleIcons.CFBundlePrimaryIcon.CFBundleIconName raw "$plist" 2>/dev/null || plutil -extract CFBundleIconName raw "$plist")" = AppIcon
           done
+      - name: Check the iPhone app holds every picture of the exercise library, and no other
+        run: |
+          app=build/Build/Products/Debug-iphonesimulator/Halko.app
+          diff <(jq -r '.[].mediaIds[] + ".webp"' Packages/HalkoCore/Sources/HalkoCore/Resources/exercises.json | sort -u) <(ls "$app/ExerciseImages" | sort)
       - name: Export the screenshots
         if: always() && hashFiles('Halko.xcresult/**') != ''
         run: xcrun xcresulttool export attachments --path Halko.xcresult --output-path screenshots

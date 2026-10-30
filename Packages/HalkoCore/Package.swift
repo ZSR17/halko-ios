@@ -9,7 +9,7 @@ let package = Package(
         .library(name: "HalkoCore", targets: ["HalkoCore"]),
     ],
     targets: [
-        .target(name: "HalkoCore"),
+        .target(name: "HalkoCore", resources: [.copy("Resources/exercises.json")]),
         .testTarget(name: "HalkoCoreTests", dependencies: ["HalkoCore"]),
     ]
 )
