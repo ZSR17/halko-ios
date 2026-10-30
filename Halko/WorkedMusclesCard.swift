@@ -52,13 +52,15 @@ struct MuscleLegend: View {
     let role: MuscleRole
 
     var body: some View {
-        HStack(spacing: 6) {
-            Circle()
-                .fill(role == .primary ? Color(.musclePrimary) : Color(.muscleSecondary))
-                .frame(width: 8, height: 8)
+        // The dot in front of the first line, growing with the text.
+        HStack(alignment: .firstTextBaseline, spacing: 6) {
+            Image(systemName: "circle.fill")
+                .imageScale(.small)
+                .foregroundStyle(role == .primary ? Color(.musclePrimary) : Color(.muscleSecondary))
+                .accessibilityHidden(true)
             Text(text)
-                .font(.subheadline)
         }
+        .font(.subheadline)
     }
 
     private var text: LocalizedStringKey {
