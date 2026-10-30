@@ -70,7 +70,33 @@ enum DemoData {
             }
         }
 
+        // An exercise made by the user, beside the library's.
+        context.insert(Exercise(
+            name: "Home weighted push-ups",
+            exerciseType: .weightedBodyweight,
+            equipment: ["body only"],
+            primaryMuscles: [.chest],
+            secondaryMuscles: [.shoulders, .triceps]
+        ))
+
         context.insert(Session(workoutID: fullBody.id, name: fullBody.name, startedAt: .now - 5 * day, endedAt: .now - 5 * day + 3000))
+        // Push A done before, heavier on the bench press: its records, with the session in progress.
+        let earlier = Session(workoutID: push.id, name: push.name, startedAt: .now - 4 * day, endedAt: .now - 4 * day + 3600)
+        context.insert(earlier)
+        let benchSets: [(kind: SetKind, reps: Int, weightG: Int)] = [(.warmup, 10, 20_000), (.normal, 3, 85_000), (.normal, 3, 85_000)]
+        for (setIndex, set) in benchSets.enumerated() {
+            context.insert(SetLog(
+                sessionID: earlier.id,
+                exerciseID: pushItems[0].exerciseID,
+                workoutItemID: pushItems[0].id,
+                position: 0,
+                setIndex: setIndex,
+                kind: set.kind,
+                reps: set.reps,
+                weightG: set.weightG,
+                completedAt: earlier.startedAt + Double(5 + 4 * setIndex) * 60
+            ))
+        }
         context.insert(Session(workoutID: core.id, name: core.name, startedAt: .now - day, endedAt: .now - day + 900))
         // Push A in progress: the working sets of the first exercise done.
         let session = Session(workoutID: push.id, name: push.name, startedAt: .now - 24 * 60 - 12)

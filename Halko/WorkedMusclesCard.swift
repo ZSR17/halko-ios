@@ -1,7 +1,7 @@
 import HalkoCore
 import SwiftUI
 
-// The muscles a workout works: on the body seen from the front and from the back, and in words.
+// The muscles a workout or an exercise works: on the body seen from the front and from the back, and in words.
 struct WorkedMusclesCard: View {
     let muscles: [WorkedMuscle]
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -22,10 +22,10 @@ struct WorkedMusclesCard: View {
             .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 8) {
                 if !primary.isEmpty {
-                    legend(primary.count == 1 ? "Primary muscle: \(names(primary))" : "Primary muscles: \(names(primary))", color: Color(.musclePrimary))
+                    MuscleLegend(muscles: primary, role: .primary)
                 }
                 if !secondary.isEmpty {
-                    legend(secondary.count == 1 ? "Secondary muscle: \(names(secondary))" : "Secondary muscles: \(names(secondary))", color: Color(.muscleSecondary))
+                    MuscleLegend(muscles: secondary, role: .secondary)
                 }
             }
         }
@@ -44,19 +44,28 @@ struct WorkedMusclesCard: View {
                 .foregroundStyle(Color(.secondaryText))
         }
     }
+}
 
-    private func legend(_ text: LocalizedStringKey, color: Color) -> some View {
+// "● Primary muscles: shoulders, triceps"
+struct MuscleLegend: View {
+    let muscles: [Muscle]
+    let role: MuscleRole
+
+    var body: some View {
         HStack(spacing: 6) {
             Circle()
-                .fill(color)
+                .fill(role == .primary ? Color(.musclePrimary) : Color(.muscleSecondary))
                 .frame(width: 8, height: 8)
             Text(text)
                 .font(.subheadline)
         }
     }
 
-    // "shoulders, triceps"
-    private func names(_ muscles: [Muscle]) -> String {
-        muscles.map { String(localized: $0.name).localizedLowercase }.formatted(.list(type: .and, width: .narrow))
+    private var text: LocalizedStringKey {
+        let names = muscles.map { String(localized: $0.name).localizedLowercase }.formatted(.list(type: .and, width: .narrow))
+        return switch role {
+        case .primary: muscles.count == 1 ? "Primary muscle: \(names)" : "Primary muscles: \(names)"
+        case .secondary: muscles.count == 1 ? "Secondary muscle: \(names)" : "Secondary muscles: \(names)"
+        }
     }
 }

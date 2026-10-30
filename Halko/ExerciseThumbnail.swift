@@ -27,12 +27,18 @@ struct ExerciseThumbnail: View {
         .clipShape(.rect(cornerRadius: 12))
         .accessibilityHidden(true)
         .task(id: mediaID) {
-            guard let mediaID,
-                  let url = Bundle.main.url(forResource: mediaID, withExtension: "webp", subdirectory: "ExerciseImages"),
-                  let picture = UIImage(contentsOfFile: url.path) else { return }
+            guard let mediaID, let picture = UIImage.exercise(mediaID) else { return }
             // Filling the square, at the pixels of the screen.
             let scale = size * displayScale / min(picture.size.width, picture.size.height)
             image = await picture.byPreparingThumbnail(ofSize: CGSize(width: picture.size.width * scale, height: picture.size.height * scale))
         }
+    }
+}
+
+extension UIImage {
+    // A picture of the embedded library, by media id.
+    static func exercise(_ mediaID: String) -> UIImage? {
+        guard let url = Bundle.main.url(forResource: mediaID, withExtension: "webp", subdirectory: "ExerciseImages") else { return nil }
+        return UIImage(contentsOfFile: url.path)
     }
 }

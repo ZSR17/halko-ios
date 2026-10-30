@@ -1,7 +1,7 @@
 import Foundation
 import HalkoCore
 
-// How the page of a workout writes the sets planned for an exercise: "4 × 8 · 80 kg · rest 2:30".
+// How the pages of a workout and of an exercise write sets: "4 × 8 · 80 kg · rest 2:30".
 struct SetsText {
     let weightUnit: WeightUnit
     let distanceUnit: DistanceUnit
@@ -44,6 +44,23 @@ struct SetsText {
         return sets.workedOut ? String(localized: "Auto warm-up: \(list)") : String(localized: "Warm-up: \(list)")
     }
 
+    // A record of the page of an exercise: "85 kg", "101.3 kg", "12 reps", "1:30".
+    func record(_ record: ExerciseRecord) -> String {
+        switch record.kind {
+        case .maxWeight, .maxAddedWeight, .minAssistance: weight(Int(record.value))
+        // An estimate: a tenth is enough.
+        case .oneRepMax: weight(Int(record.value), digits: 0...1)
+        case .maxReps: String(localized: "\(Int(record.value)) reps")
+        case .bestTime: duration(record.value)
+        case .maxDistance: distance(record.value)
+        }
+    }
+
+    // A set done, its weight without its unit as on the page of a workout: "80 × 8".
+    func set(_ set: SetTarget, type: ExerciseType) -> String {
+        values(set, type: type, unit: false)
+    }
+
     // What each set is counted in: reps, time or distance.
     private func measure(_ set: SetTarget, type: ExerciseType) -> String {
         switch type {
@@ -82,9 +99,9 @@ struct SetsText {
         perSide ? String(localized: "\(text) per side") : text
     }
 
-    private func weight(_ grams: Int) -> String {
+    private func weight(_ grams: Int, digits: ClosedRange<Int> = 0...2) -> String {
         Measurement(value: Double(grams) / weightUnit.grams, unit: weightUnit == .kg ? UnitMass.kilograms : .pounds)
-            .formatted(.measurement(width: .abbreviated, usage: .asProvided, numberFormatStyle: .number.precision(.fractionLength(0...2))))
+            .formatted(.measurement(width: .abbreviated, usage: .asProvided, numberFormatStyle: .number.precision(.fractionLength(digits))))
     }
 
     private func number(_ grams: Int) -> String {

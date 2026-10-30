@@ -186,4 +186,8 @@ extension Exercise {
     public func name(in language: String) -> String {
         translations[language]?.name ?? name
     }
+
+    public func instructions(in language: String) -> [String] {
+        translations[language]?.instructions ?? instructions
+    }
 }

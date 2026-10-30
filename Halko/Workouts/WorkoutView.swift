@@ -115,7 +115,7 @@ private struct ItemBlockView: View {
     var body: some View {
         if block.isSuperset {
             VStack(alignment: .leading, spacing: 0) {
-                Tag("Superset · no rest in between", color: Color(.superset))
+                Tag(Text("Superset · no rest in between"), color: Color(.superset))
                     .padding(.top, 12)
                 rows
                     .padding(.leading, 12)
@@ -156,7 +156,7 @@ private struct PlannedExerciseRow: View {
                     Text(verbatim: name)
                         .font(.headline)
                     if item.doneBySide(exercise) {
-                        Tag("One side at a time", color: Color(.oneSide))
+                        Tag(Text("One side at a time"), color: Color(.oneSide))
                     }
                 }
                 Text(verbatim: text.working(sets, type: type, perSide: item.doneBySide(exercise), sidesPauseS: item.sidesPauseS(exercise)))
@@ -173,28 +173,7 @@ private struct PlannedExerciseRow: View {
         .accessibilityElement(children: .combine)
     }
 
-    // In the language of the app; the exercises of the library are read in the background at the first launch.
     private var name: String {
-        guard let exercise else { return String(localized: "Exercise") }
-        return exercise.name(in: Bundle.main.preferredLocalizations.first ?? "en")
-    }
-}
-
-private struct Tag: View {
-    let text: LocalizedStringKey
-    let color: Color
-
-    init(_ text: LocalizedStringKey, color: Color) {
-        self.text = text
-        self.color = color
-    }
-
-    var body: some View {
-        Text(text)
-            .font(.caption.weight(.semibold))
-            .foregroundStyle(color)
-            .padding(.horizontal, 7)
-            .padding(.vertical, 2)
-            .background(color.opacity(0.15), in: .rect(cornerRadius: 6))
+        exercise?.localizedName ?? String(localized: "Exercise")
     }
 }

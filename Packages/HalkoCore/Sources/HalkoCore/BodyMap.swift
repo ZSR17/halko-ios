@@ -51,6 +51,22 @@ public enum BodyMap {
         "tibialis": [],
     ]
 
+    // The muscles a region stands for: none for the head, the hands, the knees…
+    public static func muscles(of region: String) -> [Muscle] {
+        regionMuscles[region] ?? []
+    }
+
+    // The areas of the body, from head to feet, as it is drawn: the muscles of one region count as one (upper back:
+    // lats and middle back), and two regions with the same muscles as one (abs and obliques).
+    public static let areas: [[Muscle]] = [
+        [.neck], [.traps], [.shoulders], [.chest], [.biceps], [.triceps], [.forearms], [.abs], [.lats, .middleback],
+        [.lowerback], [.glutes, .abductors], [.adductors], [.quads], [.hamstrings], [.calves],
+    ]
+
+    public static func area(of muscle: Muscle) -> [Muscle] {
+        areas.first { $0.contains(muscle) } ?? [muscle]
+    }
+
     public static func state(of region: String, primary: Set<Muscle>, secondary: Set<Muscle>) -> RegionState {
         guard let muscles = regionMuscles[region] else { return .body }
         if muscles.contains(where: primary.contains) {
