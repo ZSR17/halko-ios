@@ -180,3 +180,10 @@ extension Exercise: SyncedModel {
         #Predicate { ids.contains($0.id) }
     }
 }
+
+extension Exercise {
+    // Its name in `language` ("fr"), if the library has it in it.
+    public func name(in language: String) -> String {
+        translations[language]?.name ?? name
+    }
+}

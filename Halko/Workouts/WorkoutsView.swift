@@ -44,6 +44,9 @@ struct WorkoutsView: View {
         .navigationDestination(for: Folder.self) { folder in
             FolderView(folder: folder)
         }
+        .navigationDestination(for: Workout.self) { workout in
+            WorkoutView(workout: workout)
+        }
     }
 }
 
@@ -80,7 +83,10 @@ private struct WorkoutCards: View {
     var body: some View {
         LazyVStack(spacing: 10) {
             ForEach(workouts) { workout in
-                WorkoutCard(workout: workout)
+                NavigationLink(value: workout) {
+                    WorkoutCard(workout: workout)
+                }
+                .buttonStyle(.plain)
             }
         }
     }

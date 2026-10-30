@@ -2,11 +2,13 @@ import HalkoCore
 import SwiftData
 import SwiftUI
 
-// A planned workout: its name, number of exercises, when it was last done and the muscles it works most.
+// A planned workout: its name, number of exercises, when it was last done and the muscles it works most. The whole
+// card opens the workout's page, where it starts: its Start is not a button of its own.
 struct WorkoutCard: View {
     let workout: Workout
     @Query private var items: [WorkoutItem]
     @Query private var lastSessions: [Session]
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     init(workout: Workout) {
         self.workout = workout
@@ -22,13 +24,26 @@ struct WorkoutCard: View {
     }
 
     var body: some View {
+        // With the largest text sizes, Start goes under the name, which keeps the whole width.
+        let header = dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 10))
+            : AnyLayout(HStackLayout(alignment: .top, spacing: 10))
         VStack(alignment: .leading, spacing: 10) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(workout.name)
+            header {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(workout.name)
+                        .font(.headline)
+                    details
+                        .font(.subheadline)
+                        .foregroundStyle(Color(.secondaryText))
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                Text("Start")
                     .font(.headline)
-                details
-                    .font(.subheadline)
-                    .foregroundStyle(Color(.secondaryText))
+                    .foregroundStyle(Color(.onAccent))
+                    .padding(.horizontal, 18)
+                    .frame(minHeight: 44)
+                    .background(.tint, in: .capsule)
             }
             MainMuscles(items: items)
         }

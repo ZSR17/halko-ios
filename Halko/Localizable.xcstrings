@@ -1,6 +1,36 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "%@ (copy)" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (copie)"
+          }
+        }
+      }
+    },
+    "%@ pause to change sides" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "pause %@ pour changer"
+          }
+        }
+      }
+    },
+    "%@ per side" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ par côté"
+          }
+        }
+      }
+    },
     "%@ · %@" : {
       "localizations" : {
         "fr" : {
@@ -91,6 +121,46 @@
         }
       }
     },
+    "%lld reps" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld rep"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld reps"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld rép"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld réps"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld workouts" : {
       "localizations" : {
         "en" : {
@@ -161,6 +231,26 @@
         }
       }
     },
+    "Auto warm-up: %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Échauffement auto : %@"
+          }
+        }
+      }
+    },
+    "Back" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dos"
+          }
+        }
+      }
+    },
     "Biceps" : {
       "localizations" : {
         "fr" : {
@@ -191,6 +281,56 @@
         }
       }
     },
+    "Delete" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer"
+          }
+        }
+      }
+    },
+    "Delete the workout" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer la séance"
+          }
+        }
+      }
+    },
+    "Delete the workout “%@”?" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer la séance « %@ » ?"
+          }
+        }
+      }
+    },
+    "Duplicate" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dupliquer"
+          }
+        }
+      }
+    },
+    "Exercise" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exercice"
+          }
+        }
+      }
+    },
     "Exercises" : {
       "localizations" : {
         "fr" : {
@@ -207,6 +347,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Avant-bras"
+          }
+        }
+      }
+    },
+    "Front" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Face"
           }
         }
       }
@@ -271,12 +421,42 @@
         }
       }
     },
+    "More actions" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plus d’actions"
+          }
+        }
+      }
+    },
+    "Move to folder" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déplacer"
+          }
+        }
+      }
+    },
     "Neck" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cou"
+          }
+        }
+      }
+    },
+    "No folder" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun dossier"
           }
         }
       }
@@ -291,12 +471,72 @@
         }
       }
     },
+    "One side at a time" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un côté à la fois"
+          }
+        }
+      }
+    },
+    "Primary muscle: %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Principal : %@"
+          }
+        }
+      }
+    },
+    "Primary muscles: %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Principaux : %@"
+          }
+        }
+      }
+    },
     "Quads" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Quadriceps"
+          }
+        }
+      }
+    },
+    "Secondary muscle: %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Secondaire : %@"
+          }
+        }
+      }
+    },
+    "Secondary muscles: %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Secondaires : %@"
+          }
+        }
+      }
+    },
+    "Sessions already done stay in the history." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les séances déjà faites restent dans l’historique."
           }
         }
       }
@@ -317,6 +557,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Épaules"
+          }
+        }
+      }
+    },
+    "Start" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Démarrer"
+          }
+        }
+      }
+    },
+    "Superset · no rest in between" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Superset · enchaîner sans repos"
           }
         }
       }
@@ -351,6 +611,16 @@
         }
       }
     },
+    "Warm-up: %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Échauffement : %@"
+          }
+        }
+      }
+    },
     "Workouts" : {
       "localizations" : {
         "fr" : {
@@ -367,6 +637,36 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tes séances apparaîtront ici."
+          }
+        }
+      }
+    },
+    "bodyweight" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "poids du corps"
+          }
+        }
+      }
+    },
+    "max" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "max"
+          }
+        }
+      }
+    },
+    "rest %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "repos %@"
           }
         }
       }

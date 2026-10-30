@@ -1,4 +1,4 @@
-// What the list of workouts shows of a workout or of a session in progress, at a glance.
+// What the list of workouts and the page of a workout show of a workout, or of a session in progress, at a glance.
 
 public enum MuscleRole: Sendable {
     case primary, secondary
@@ -69,5 +69,79 @@ public struct SessionProgress: Equatable, Sendable {
             done[item.id, default: 0] < item.targets.count(where: { $0.kind != .warmup })
         }
         self.init(exercise: (current ?? items.count - 1) + 1, exerciseCount: items.count)
+    }
+}
+
+// The exercises of a workout in blocks, in order: the items of a superset together, every other item alone.
+public struct ItemBlock: Identifiable {
+    public let items: [WorkoutItem]
+
+    public var id: String {
+        items[0].id
+    }
+
+    // Done in turn without rest: a superset needs two items at least.
+    public var isSuperset: Bool {
+        items.count > 1
+    }
+
+    // `items` in order.
+    public static func blocks(_ items: [WorkoutItem]) -> [ItemBlock] {
+        var blocks: [[WorkoutItem]] = []
+        for item in items {
+            if let group = item.supersetGroup, let last = blocks.last?.last, last.supersetGroup == group {
+                blocks[blocks.count - 1].append(item)
+            } else {
+                blocks.append([item])
+            }
+        }
+        return blocks.map(ItemBlock.init)
+    }
+}
+
+// The sets planned for an exercise of a workout, as its page shows them: the warm-ups with the values left to work
+// out filled in, then the working sets.
+public struct PlannedSets: Equatable, Sendable {
+    public let warmups: [SetTarget]
+    // Some warm-up value is worked out from the working sets rather than typed in.
+    public let workedOut: Bool
+    public let working: [SetTarget]
+
+    public init(_ targets: [SetTarget], type: ExerciseType, equipment: [String], unit: WeightUnit) {
+        let filled = Warmups.filledIn(targets, type: type, equipment: equipment, unit: unit)
+        warmups = filled.filter { $0.kind == .warmup }
+        workedOut = filled != targets
+        working = filled.filter { $0.kind != .warmup }
+    }
+
+    // The working sets all have the same values and rest: shown once, with their number.
+    public var alike: Bool {
+        working.allSatisfy { $0.sameValues(as: working[0]) && $0.restS == working[0].restS }
+    }
+
+    // The rest after each working set, when it is the same for all of them and there is one.
+    public var rest: Int? {
+        guard let rest = working.first?.restS, rest > 0, working.allSatisfy({ $0.restS == rest }) else { return nil }
+        return rest
+    }
+}
+
+extension SetTarget {
+    func sameValues(as other: SetTarget) -> Bool {
+        reps == other.reps && weightG == other.weightG && durationS == other.durationS && distanceM == other.distanceM
+    }
+}
+
+extension WorkoutItem {
+    // Whether its sets are done one side then the other: an exercise working one side at a time, unless the workout
+    // does it as a plain set.
+    public func doneBySide(_ exercise: Exercise?) -> Bool {
+        exercise?.unilateral == true && bySide != false
+    }
+
+    // The pause to change sides of a timed exercise done one side then the other; nil for any other.
+    public func sidesPauseS(_ exercise: Exercise?) -> Int? {
+        guard let exercise, doneBySide(exercise), exercise.exerciseType.metrics.contains(.duration) else { return nil }
+        return switchS ?? defaultSwitchSidesS
     }
 }
