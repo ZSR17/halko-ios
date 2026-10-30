@@ -8,8 +8,7 @@ final class ExercisesTests: XCTestCase {
         app.tabBars.buttons["Exercises"].tap()
 
         // The library, installed in the background at launch, and the exercise made by the user.
-        XCTAssertTrue(app.element(containing: "Barbell Bench Press - Medium Grip").waitForExistence(timeout: 30))
-        XCTAssertTrue(app.element(containing: "877 exercises").waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["877 exercises"].waitForExistence(timeout: 30))
         try app.auditScreen()
         snap("Exercises")
 
@@ -20,8 +19,7 @@ final class ExercisesTests: XCTestCase {
         app.tapChest()
         XCTAssertEqual(chest.value as? String, "Primary")
         XCTAssertTrue(app.element(containing: "Primary muscle: chest").exists)
-        // A toggle shown as a button.
-        app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", "Barbell")).firstMatch.tap()
+        app.switches["Barbell"].tap()
         XCTAssertFalse(app.element(containing: "Home weighted push-ups").exists)
         snap("Exercises, chest with a barbell")
 
@@ -105,7 +103,8 @@ final class ExercisesTests: XCTestCase {
         let bench = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Barbell Bench Press - Medium Grip")).firstMatch
         XCTAssertTrue(bench.waitForExistence(timeout: 30))
         bench.tap()
-        XCTAssertTrue(app.element(containing: "Max weight").waitForExistence(timeout: 5))
+        // The records are further down.
+        XCTAssertTrue(app.element(containing: "Weight and reps").waitForExistence(timeout: 5))
         try app.auditScreen()
         snap("Exercise, largest text")
         app.scrollViews.firstMatch.swipeUp()
@@ -114,10 +113,11 @@ final class ExercisesTests: XCTestCase {
 }
 
 extension XCUIApplication {
-    // The chest on the body seen from the front, at the top of the Exercises tab (iPhone 17 Pro, default text size).
+    // The left of the chest on the body seen from the front, under the search field at the top of the Exercises tab
+    // (iPhone 17 Pro, default text size).
     @MainActor
     func tapChest() {
-        let bar = navigationBars["Exercises"].frame
-        coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: 44, dy: bar.maxY + 34)).tap()
+        let search = searchFields.firstMatch.frame
+        coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: 40, dy: search.maxY + 31)).tap()
     }
 }
