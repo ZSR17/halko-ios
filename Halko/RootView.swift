@@ -6,8 +6,7 @@ struct RootView: View {
         TabView {
             Tab("Workouts", systemImage: "dumbbell") {
                 NavigationStack {
-                    List {}
-                        .navigationTitle("Workouts")
+                    WorkoutsView()
                 }
             }
             Tab("Exercises", systemImage: "list.bullet") {

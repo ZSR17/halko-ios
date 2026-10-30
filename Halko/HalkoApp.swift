@@ -8,6 +8,12 @@ struct HalkoApp: App {
 
     init() {
         do {
+            #if DEBUG
+            if DemoData.isRequested {
+                container = try DemoData.container()
+                return
+            }
+            #endif
             container = try HalkoStore.container()
         } catch {
             fatalError("Cannot open the local database: \(error)")
