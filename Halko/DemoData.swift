@@ -36,32 +36,43 @@ enum DemoData {
             context.insert(workout)
         }
 
+        // Push A as on the mockups: warm-ups worked out, a superset, an exercise done one side at a time.
+        let work = { (sets: Int, target: SetTarget) in Array(repeating: target, count: sets) }
+        let pushPlan: [(sourceRef: String, superset: String?, targets: [SetTarget])] = [
+            ("Barbell_Bench_Press_-_Medium_Grip", nil, Array(repeating: SetTarget(kind: .warmup, restS: 60), count: 4)
+                + work(4, SetTarget(kind: .normal, reps: 8, weightG: 80_000, restS: 150))),
+            ("Dumbbell_Shoulder_Press", nil, work(3, SetTarget(kind: .normal, reps: 10, weightG: 22_000, restS: 120))),
+            ("Cable_Crossover", "push-superset", work(3, SetTarget(kind: .normal, reps: 12, weightG: 15_000))),
+            ("Dips_-_Triceps_Version", "push-superset", work(3, SetTarget(kind: .normal, reps: 10, restS: 120))),
+            ("Side_Bridge", nil, work(3, SetTarget(kind: .normal, durationS: 40, restS: 60))),
+        ]
+        let pushItems = pushPlan.enumerated().map { position, plan in
+            WorkoutItem(workoutID: push.id, exerciseID: "lib-\(plan.sourceRef)", position: position, supersetGroup: plan.superset, targets: plan.targets)
+        }
+        for item in pushItems {
+            context.insert(item)
+        }
+
         let plan: [(Workout, [String])] = [
-            (push, ["Barbell_Bench_Press_-_Medium_Grip", "Dumbbell_Shoulder_Press", "Cable_Crossover", "Dips_-_Triceps_Version", "Side_Bridge"]),
             (pull, ["Pullups", "Bent_Over_Barbell_Row", "Seated_Cable_Rows", "Romanian_Deadlift", "Hanging_Leg_Raise"]),
             (legs, ["Barbell_Full_Squat", "Leg_Press", "Dumbbell_Lunges", "Romanian_Deadlift", "Standing_Calf_Raises", "Superman"]),
             (fullBody, ["Barbell_Full_Squat", "Barbell_Bench_Press_-_Medium_Grip", "Pullups", "Dumbbell_Lunges", "Barbell_Deadlift", "Plank"]),
             (core, ["Plank", "Crunches", "Side_Bridge", "Russian_Twist"]),
         ]
-        var pushItems: [WorkoutItem] = []
         for (workout, exercises) in plan {
             for (position, sourceRef) in exercises.enumerated() {
-                let item = WorkoutItem(
+                context.insert(WorkoutItem(
                     workoutID: workout.id,
                     exerciseID: "lib-\(sourceRef)",
                     position: position,
                     targets: Array(repeating: SetTarget(kind: .normal, reps: 8, weightG: 60_000, restS: 120), count: 4)
-                )
-                context.insert(item)
-                if workout === push {
-                    pushItems.append(item)
-                }
+                ))
             }
         }
 
         context.insert(Session(workoutID: fullBody.id, name: fullBody.name, startedAt: .now - 5 * day, endedAt: .now - 5 * day + 3000))
         context.insert(Session(workoutID: core.id, name: core.name, startedAt: .now - day, endedAt: .now - day + 900))
-        // Push A in progress: the first exercise done.
+        // Push A in progress: the working sets of the first exercise done.
         let session = Session(workoutID: push.id, name: push.name, startedAt: .now - 24 * 60 - 12)
         context.insert(session)
         for setIndex in 0..<4 {
@@ -72,7 +83,7 @@ enum DemoData {
                 position: 0,
                 setIndex: setIndex,
                 reps: 8,
-                weightG: 60_000,
+                weightG: 80_000,
                 completedAt: .now - Double(20 - 4 * setIndex) * 60
             ))
         }

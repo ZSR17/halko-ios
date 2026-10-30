@@ -10,7 +10,7 @@ struct FolderCard: View {
     init(folder: Folder) {
         self.folder = folder
         let id: String? = folder.id
-        _workouts = Query(filter: #Predicate<Workout> { !$0.deleted && $0.folderID == id })
+        _workouts = Query(filter: #Predicate<Workout> { !$0.removed && $0.folderID == id })
     }
 
     var body: some View {

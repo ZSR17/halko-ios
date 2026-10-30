@@ -114,7 +114,9 @@ struct SyncRowTests {
     func deletion() throws {
         try context.apply([folder("a", name: "A", updatedAt: 10)], to: Folder.self)
         try context.apply([folder("a", name: "A", updatedAt: 20, deleted: true)], to: Folder.self)
+        try context.save()
 
-        #expect(try folders()["a"]?.deleted == true)
+        #expect(try folders()["a"]?.removed == true)
+        #expect(try folders()["a"]?.row.deleted == true)
     }
 }

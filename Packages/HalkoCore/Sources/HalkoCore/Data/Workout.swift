@@ -9,16 +9,16 @@ public final class Folder {
     @Attribute(.unique) public var id: String
     public var createdAt: Date
     public var updatedAt: Date
-    // Kept, so that the deletion reaches every device.
-    public var deleted: Bool
+    // Kept, so that the deletion reaches every device (`deleted` of the rows: Core Data keeps that name).
+    public var removed: Bool
     public var name: String
     public var position: Int
 
-    public init(id: String = newRowID(), createdAt: Date = .now, updatedAt: Date = .now, deleted: Bool = false, name: String, position: Int) {
+    public init(id: String = newRowID(), createdAt: Date = .now, updatedAt: Date = .now, removed: Bool = false, name: String, position: Int) {
         self.id = id
         self.createdAt = createdAt
         self.updatedAt = updatedAt
-        self.deleted = deleted
+        self.removed = removed
         self.name = name
         self.position = position
     }
@@ -30,7 +30,7 @@ public final class Workout {
     @Attribute(.unique) public var id: String
     public var createdAt: Date
     public var updatedAt: Date
-    public var deleted: Bool
+    public var removed: Bool
     // nil: in no folder.
     public var folderID: String?
     public var sport: Sport
@@ -42,7 +42,7 @@ public final class Workout {
         id: String = newRowID(),
         createdAt: Date = .now,
         updatedAt: Date = .now,
-        deleted: Bool = false,
+        removed: Bool = false,
         folderID: String? = nil,
         sport: Sport = .strength,
         name: String,
@@ -52,7 +52,7 @@ public final class Workout {
         self.id = id
         self.createdAt = createdAt
         self.updatedAt = updatedAt
-        self.deleted = deleted
+        self.removed = removed
         self.folderID = folderID
         self.sport = sport
         self.name = name
@@ -69,7 +69,7 @@ public final class WorkoutItem {
     @Attribute(.unique) public var id: String
     public var createdAt: Date
     public var updatedAt: Date
-    public var deleted: Bool
+    public var removed: Bool
     public var workoutID: String
     public var exerciseID: String
     public var position: Int
@@ -88,7 +88,7 @@ public final class WorkoutItem {
         id: String = newRowID(),
         createdAt: Date = .now,
         updatedAt: Date = .now,
-        deleted: Bool = false,
+        removed: Bool = false,
         workoutID: String,
         exerciseID: String,
         position: Int,
@@ -102,7 +102,7 @@ public final class WorkoutItem {
         self.id = id
         self.createdAt = createdAt
         self.updatedAt = updatedAt
-        self.deleted = deleted
+        self.removed = removed
         self.workoutID = workoutID
         self.exerciseID = exerciseID
         self.position = position
@@ -158,7 +158,7 @@ extension Folder: SyncedModel {
             id: row.id,
             createdAt: Date(epochMilliseconds: row.createdAt),
             updatedAt: Date(epochMilliseconds: row.updatedAt),
-            deleted: row.deleted,
+            removed: row.deleted,
             name: row.name,
             position: row.position
         )
@@ -167,7 +167,7 @@ extension Folder: SyncedModel {
     public func update(from row: FolderRow) {
         createdAt = Date(epochMilliseconds: row.createdAt)
         updatedAt = Date(epochMilliseconds: row.updatedAt)
-        deleted = row.deleted
+        removed = row.deleted
         name = row.name
         position = row.position
     }
@@ -177,7 +177,7 @@ extension Folder: SyncedModel {
             id: id,
             createdAt: createdAt.epochMilliseconds,
             updatedAt: updatedAt.epochMilliseconds,
-            deleted: deleted,
+            deleted: removed,
             name: name,
             position: position
         )
@@ -194,7 +194,7 @@ extension Workout: SyncedModel {
             id: row.id,
             createdAt: Date(epochMilliseconds: row.createdAt),
             updatedAt: Date(epochMilliseconds: row.updatedAt),
-            deleted: row.deleted,
+            removed: row.deleted,
             folderID: row.folderId,
             sport: row.sport,
             name: row.name,
@@ -206,7 +206,7 @@ extension Workout: SyncedModel {
     public func update(from row: WorkoutRow) {
         createdAt = Date(epochMilliseconds: row.createdAt)
         updatedAt = Date(epochMilliseconds: row.updatedAt)
-        deleted = row.deleted
+        removed = row.deleted
         folderID = row.folderId
         sport = row.sport
         name = row.name
@@ -219,7 +219,7 @@ extension Workout: SyncedModel {
             id: id,
             createdAt: createdAt.epochMilliseconds,
             updatedAt: updatedAt.epochMilliseconds,
-            deleted: deleted,
+            deleted: removed,
             folderId: folderID,
             sport: sport,
             name: name,
@@ -239,7 +239,7 @@ extension WorkoutItem: SyncedModel {
             id: row.id,
             createdAt: Date(epochMilliseconds: row.createdAt),
             updatedAt: Date(epochMilliseconds: row.updatedAt),
-            deleted: row.deleted,
+            removed: row.deleted,
             workoutID: row.workoutId,
             exerciseID: row.exerciseId,
             position: row.position,
@@ -255,7 +255,7 @@ extension WorkoutItem: SyncedModel {
     public func update(from row: WorkoutItemRow) {
         createdAt = Date(epochMilliseconds: row.createdAt)
         updatedAt = Date(epochMilliseconds: row.updatedAt)
-        deleted = row.deleted
+        removed = row.deleted
         workoutID = row.workoutId
         exerciseID = row.exerciseId
         position = row.position
@@ -272,7 +272,7 @@ extension WorkoutItem: SyncedModel {
             id: id,
             createdAt: createdAt.epochMilliseconds,
             updatedAt: updatedAt.epochMilliseconds,
-            deleted: deleted,
+            deleted: removed,
             workoutId: workoutID,
             exerciseId: exerciseID,
             position: position,

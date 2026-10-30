@@ -23,6 +23,26 @@ public enum ExerciseType: String, Codable, Sendable, CaseIterable {
     case weightDistance = "weight_distance"
 }
 
+public enum Metric: Sendable {
+    case reps, weight, duration, distance
+}
+
+extension ExerciseType {
+    public var metrics: [Metric] {
+        switch self {
+        case .weightReps, .weightedBodyweight, .assistedBodyweight: [.weight, .reps]
+        case .bodyweightReps: [.reps]
+        case .duration: [.duration]
+        case .durationWeight: [.weight, .duration]
+        case .distanceDuration: [.duration, .distance]
+        case .weightDistance: [.weight, .distance]
+        }
+    }
+}
+
+// Seconds to change sides, for a workout item that does not set it.
+public let defaultSwitchSidesS = 5
+
 // Same granularity as free-exercise-db.
 public enum Muscle: String, Codable, Sendable, CaseIterable {
     case abs, abductors, adductors, biceps, calves, chest, forearms, glutes, hamstrings, lats

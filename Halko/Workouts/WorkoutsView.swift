@@ -4,10 +4,10 @@ import SwiftUI
 
 // The Workouts tab: the session in progress, the folders, then the workouts in no folder.
 struct WorkoutsView: View {
-    @Query(filter: #Predicate<Session> { !$0.deleted && $0.endedAt == nil }, sort: \Session.startedAt, order: .reverse)
+    @Query(filter: #Predicate<Session> { !$0.removed && $0.endedAt == nil }, sort: \Session.startedAt, order: .reverse)
     private var sessionsInProgress: [Session]
-    @Query(filter: #Predicate<Folder> { !$0.deleted }, sort: \Folder.position) private var folders: [Folder]
-    @Query(filter: #Predicate<Workout> { !$0.deleted && $0.folderID == nil }, sort: \Workout.position)
+    @Query(filter: #Predicate<Folder> { !$0.removed }, sort: \Folder.position) private var folders: [Folder]
+    @Query(filter: #Predicate<Workout> { !$0.removed && $0.folderID == nil }, sort: \Workout.position)
     private var workouts: [Workout]
     @ScaledMetric(relativeTo: .headline) private var folderWidth = 150.0
 
@@ -44,6 +44,9 @@ struct WorkoutsView: View {
         .navigationDestination(for: Folder.self) { folder in
             FolderView(folder: folder)
         }
+        .navigationDestination(for: Workout.self) { workout in
+            WorkoutView(workout: workout)
+        }
     }
 }
 
@@ -55,7 +58,7 @@ struct FolderView: View {
     init(folder: Folder) {
         self.folder = folder
         let id: String? = folder.id
-        _workouts = Query(filter: #Predicate<Workout> { !$0.deleted && $0.folderID == id }, sort: \Workout.position)
+        _workouts = Query(filter: #Predicate<Workout> { !$0.removed && $0.folderID == id }, sort: \Workout.position)
     }
 
     var body: some View {
@@ -80,7 +83,10 @@ private struct WorkoutCards: View {
     var body: some View {
         LazyVStack(spacing: 10) {
             ForEach(workouts) { workout in
-                WorkoutCard(workout: workout)
+                NavigationLink(value: workout) {
+                    WorkoutCard(workout: workout)
+                }
+                .buttonStyle(.plain)
             }
         }
     }
