@@ -63,8 +63,9 @@ final class ExerciseEditorTests: XCTestCase {
         XCTAssertTrue(app.buttons["Discard Changes"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["Are you sure you want to discard changes?"].exists)
         snap("Edit exercise, discard changes")
-        // A tap elsewhere keeps editing: the title is under the dialog, the note under the pictures is not.
-        app.staticTexts["The first picture is the thumbnail. Touch and hold one to move it."].tap()
+        // A tap elsewhere keeps editing: in the middle of the screen, on the note under the pictures, which XCUI
+        // does not let tap as an element while the dialog is up.
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         XCTAssertTrue(app.buttons["Discard Changes"].waitForNonExistence(timeout: 5))
         app.switches["Dumbbells"].tap()
         XCTAssertFalse(app.buttons["Save"].isEnabled)
