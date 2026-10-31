@@ -40,31 +40,25 @@ struct ItemEditor<Grip: View>: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 10) {
-                ExerciseThumbnail(mediaID: exercise?.mediaIDs.first, side: collapsed ? 36 : 44)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(verbatim: name)
-                        .font(.headline)
-                        .lineLimit(collapsed ? 1 : nil)
-                    if !collapsed, exercise?.unilateral == true {
-                        Tag(Text("One side at a time"), color: Color(.oneSide))
+            // With the largest text sizes, the name goes under the picture and the buttons, which would leave it
+            // too narrow a column beside them.
+            if stacked {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 10) {
+                        ExerciseThumbnail(mediaID: exercise?.mediaIDs.first, side: collapsed ? 36 : 44)
+                        Spacer()
+                        removeButton
+                        grip
                     }
-                    Text("\(item.targets.count) sets")
-                        .font(.subheadline)
-                        .foregroundStyle(Color(.secondaryText))
+                    title
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .accessibilityElement(children: .combine)
-                if !collapsed {
-                    Button(action: remove) {
-                        Label("Remove \(name)", systemImage: "trash")
-                            .labelStyle(.iconOnly)
-                            .frame(minWidth: 44, minHeight: 44)
-                            .contentShape(.rect)
-                    }
-                    .foregroundStyle(Color(.secondaryText))
+            } else {
+                HStack(spacing: 10) {
+                    ExerciseThumbnail(mediaID: exercise?.mediaIDs.first, side: collapsed ? 36 : 44)
+                    title
+                    removeButton
+                    grip
                 }
-                grip
             }
             if !collapsed {
                 Picker("Entry mode", selection: Binding { item.mode } set: { item.setMode($0) }) {
@@ -87,6 +81,37 @@ struct ItemEditor<Grip: View>: View {
         }
         .padding(12)
         .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 16))
+    }
+
+    // Its name, whether it is done one side at a time, its number of sets.
+    private var title: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(verbatim: name)
+                .font(.headline)
+                .lineLimit(collapsed ? 1 : nil)
+            if !collapsed, exercise?.unilateral == true {
+                Tag(Text("One side at a time"), color: Color(.oneSide))
+            }
+            Text("\(item.targets.count) sets")
+                .font(.subheadline)
+                .foregroundStyle(Color(.secondaryText))
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .combine)
+    }
+
+    // Hidden while the exercises are put in order.
+    @ViewBuilder
+    private var removeButton: some View {
+        if !collapsed {
+            Button(action: remove) {
+                Label("Remove \(name)", systemImage: "trash")
+                    .labelStyle(.iconOnly)
+                    .frame(minWidth: 44, minHeight: 44)
+                    .contentShape(.rect)
+            }
+            .foregroundStyle(Color(.secondaryText))
+        }
     }
 
     // MARK: Simple mode
