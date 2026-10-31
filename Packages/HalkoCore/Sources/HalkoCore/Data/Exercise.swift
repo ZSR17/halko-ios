@@ -24,8 +24,7 @@ public final class Exercise {
     public var instructions: [String]
     public var mediaIDs: [String]
     public var mediaURLs: [String]
-    // Works one side at a time: its sets are done one side then the other, values per side. Set by the
-    // library, not by the user.
+    // Works one side at a time: its sets are done one side then the other, values per side.
     public var unilateral: Bool
     public var customized: Bool
     // By language code ("fr").

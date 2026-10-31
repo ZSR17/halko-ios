@@ -1,30 +1,32 @@
 import HalkoCore
 import SwiftUI
 
-// The body from the front and from the back, to find the exercises working some muscles: a tap on a muscle picks
-// it as a primary muscle, a second tap as a secondary one, a third lets it go. VoiceOver reads the body as the list
-// of its areas.
+// The body from the front and from the back, to pick muscles: to find the exercises working them, or to say what an
+// exercise works. A tap on a muscle picks it as a primary muscle, a second tap as a secondary one, a third lets it
+// go. VoiceOver reads the body as the list of its areas.
 struct MusclePicker: View {
-    @Binding var filter: ExerciseFilter
+    let pick: MusclePick
+    let cycle: ([Muscle]) -> Void
+    // To let every muscle picked go at once, in the filter of the exercises.
+    var clear: (() -> Void)?
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @ScaledMetric(relativeTo: .body) private var figureHeight = 114.0
 
     var body: some View {
-        let pick = filter.pick
         // With the largest text sizes, the words go under the body, which keeps the whole width.
         let layout = dynamicTypeSize.isAccessibilitySize
             ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
             : AnyLayout(HStackLayout(spacing: 12))
         layout {
             HStack(spacing: 10) {
-                figure(.front, "Front", pick: pick)
-                figure(.back, "Back", pick: pick)
+                figure(.front, "Front")
+                figure(.back, "Back")
             }
             .accessibilityRepresentation {
                 VStack {
                     ForEach(BodyMap.areas, id: \.self) { area in
                         Button(area.map { String(localized: $0.name) }.joined(separator: ", ")) {
-                            filter.cycle(area)
+                            cycle(area)
                         }
                         .accessibilityValue(value(pick.role(of: area)))
                         .accessibilityIdentifier("muscle-" + area.map(\.rawValue).joined(separator: "-"))
@@ -43,11 +45,15 @@ struct MusclePicker: View {
                     if !pick.secondary.isEmpty {
                         MuscleLegend(muscles: pick.secondary, role: .secondary)
                     }
-                    Button("Clear") {
-                        filter.clearPick()
+                    if let clear {
+                        Button("Clear", action: clear)
+                            .font(.subheadline.weight(.semibold))
+                            .frame(minHeight: 44)
+                    } else {
+                        Text("1 tap: primary · 2: secondary · 3: removed")
+                            .font(.footnote)
+                            .foregroundStyle(Color(.secondaryText))
                     }
-                    .font(.subheadline.weight(.semibold))
-                    .frame(minHeight: 44)
                 }
             }
         }
@@ -55,7 +61,7 @@ struct MusclePicker: View {
         .sensoryFeedback(.selection, trigger: pick)
     }
 
-    private func figure(_ side: BodySide, _ caption: LocalizedStringKey, pick: MusclePick) -> some View {
+    private func figure(_ side: BodySide, _ caption: LocalizedStringKey) -> some View {
         VStack(spacing: 2) {
             BodyFigure(side: side, primary: Set(pick.primary), secondary: Set(pick.secondary))
                 .frame(height: min(figureHeight, 180))
@@ -65,7 +71,7 @@ struct MusclePicker: View {
                             .contentShape(.rect)
                             .gesture(SpatialTapGesture().onEnded { tap in
                                 if let area = BodyFigure.area(at: tap.location, in: geometry.size, side: side) {
-                                    filter.cycle(area)
+                                    cycle(area)
                                 }
                             })
                     }

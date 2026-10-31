@@ -7,11 +7,12 @@ import SwiftUI
 struct ExercisesView: View {
     @Query(filter: #Predicate<Exercise> { !$0.removed }) private var exercises: [Exercise]
     @State private var catalog = ExerciseCatalog()
+    @State private var creating = false
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
-                MusclePicker(filter: $catalog.filter)
+                MusclePicker(pick: catalog.filter.pick, cycle: { catalog.filter.cycle($0) }, clear: { catalog.filter.clearPick() })
                 FilterChips(filter: $catalog.filter)
                 Text("\(catalog.results.count) exercises")
                     .font(.subheadline)
@@ -36,6 +37,16 @@ struct ExercisesView: View {
         // Always open: folded under the large title, it is crushed to a line with the largest text sizes.
         .searchable(text: $catalog.filter.query, placement: .navigationBarDrawer(displayMode: .always), prompt: Text("Search \(catalog.pool) exercises"))
         .navigationTitle("Exercises")
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button("New exercise", systemImage: "plus") {
+                    creating = true
+                }
+            }
+        }
+        .sheet(isPresented: $creating) {
+            ExerciseEditor(exercise: nil)
+        }
         .navigationDestination(for: Exercise.self) { exercise in
             ExerciseView(exercise: exercise)
         }
@@ -145,24 +156,6 @@ private struct ChipRow<Content: View>: View {
         }
         .scrollIndicators(.hidden)
         .scrollClipDisabled()
-    }
-}
-
-// A capsule, filled with the accent color when on.
-private struct ChipToggleStyle: ToggleStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        Button {
-            configuration.isOn.toggle()
-        } label: {
-            configuration.label
-                .font(.subheadline.weight(.medium))
-                .foregroundStyle(configuration.isOn ? Color(.onAccent) : Color.primary)
-                .padding(.horizontal, 14)
-                .frame(minHeight: 44)
-                .background(configuration.isOn ? Color.accentColor : Color(.secondarySystemFill), in: .capsule)
-        }
-        .buttonStyle(.plain)
-        .accessibilityAddTraits(configuration.isOn ? .isSelected : [])
     }
 }
 

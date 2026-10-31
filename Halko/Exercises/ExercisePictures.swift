@@ -1,25 +1,37 @@
+import AVKit
 import SwiftUI
 import UIKit
 
 // The pictures of an exercise, its start and end positions: shown in turn, as a loop of the movement, or side by
-// side when motion is reduced. A picture only: the steps say the movement in words.
+// side when motion is reduced; or its video, played when the user asks. A picture only: the steps say the movement
+// in words.
 struct ExercisePictures: View {
     let mediaIDs: [String]
     @State private var pictures: [UIImage] = []
+    @State private var player: AVPlayer?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         Color(.tertiarySystemFill)
             .aspectRatio(3 / 2, contentMode: .fit)
             .overlay {
-                content
+                if let player {
+                    VideoPlayer(player: player)
+                } else {
+                    content
+                        .accessibilityHidden(true)
+                }
             }
             .clipShape(.rect(cornerRadius: 18))
-            .accessibilityHidden(true)
             .task(id: mediaIDs) {
+                if let video = mediaIDs.lazy.compactMap(ExerciseMedia.video).first {
+                    player = AVPlayer(url: video)
+                    return
+                }
+                player = nil
                 var loaded: [UIImage] = []
                 for mediaID in mediaIDs {
-                    guard let picture = UIImage.exercise(mediaID) else { continue }
+                    guard let picture = ExerciseMedia.image(mediaID) else { continue }
                     loaded.append(await picture.byPreparingForDisplay() ?? picture)
                 }
                 pictures = loaded

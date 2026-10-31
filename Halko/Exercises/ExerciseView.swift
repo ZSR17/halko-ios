@@ -3,11 +3,13 @@ import SwiftData
 import SwiftUI
 
 // The page of an exercise: its pictures, what it is, the muscles it works, the records from the sets done of it, and
-// how to do it, in the language of the app.
+// how to do it, in the language of the app. "Edit" changes it in a sheet.
 struct ExerciseView: View {
     let exercise: Exercise
     @Query private var sets: [SetLog]
+    @State private var editing = false
     @Environment(\.locale) private var locale
+    @Environment(\.dismiss) private var dismiss
 
     init(exercise: Exercise) {
         self.exercise = exercise
@@ -48,6 +50,21 @@ struct ExerciseView: View {
         }
         .background(Color(.systemGroupedBackground))
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button("Edit") {
+                    editing = true
+                }
+            }
+        }
+        .sheet(isPresented: $editing, onDismiss: {
+            // Deleted in the sheet: back to the list.
+            if exercise.removed {
+                dismiss()
+            }
+        }) {
+            ExerciseEditor(exercise: exercise)
+        }
     }
 }
 

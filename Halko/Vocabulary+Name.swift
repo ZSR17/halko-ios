@@ -94,17 +94,16 @@ extension RecordKind {
 }
 
 extension Exercise {
-    // The library has its exercises in English and French; the exercises of the library are read in the background
-    // at the first launch.
-    private static var language: String {
+    // The language the exercises of the library are read in: the app's, English or French.
+    static var appLanguage: String {
         Bundle.main.preferredLocalizations.first ?? "en"
     }
 
     var localizedName: String {
-        name(in: Self.language)
+        name(in: Self.appLanguage)
     }
 
     var localizedInstructions: [String] {
-        instructions(in: Self.language)
+        instructions(in: Self.appLanguage)
     }
 }
