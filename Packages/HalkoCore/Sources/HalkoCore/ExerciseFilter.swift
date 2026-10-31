@@ -31,13 +31,20 @@ public enum Equipment: String, Sendable, CaseIterable {
     case other
 }
 
-// Muscles picked on the body: a first tap on an area picks it as a primary muscle, a second as a secondary one, a
-// third lets it go. An area may stand for several muscles (upper back: lats and middle back).
+// Muscles picked on the body, to find exercises or to say what one works: a first tap on an area picks it as a
+// primary muscle, a second as a secondary one, a third lets it go. An area may stand for several muscles (upper
+// back: lats and middle back).
 public struct MusclePick: Equatable, Sendable {
     public private(set) var primary: [Muscle] = []
     public private(set) var secondary: [Muscle] = []
 
     public init() {}
+
+    // The muscles of an exercise; one among both stays primary.
+    public init(primary: [Muscle], secondary: [Muscle]) {
+        self.primary = primary
+        self.secondary = secondary.filter { !primary.contains($0) }
+    }
 
     public var isEmpty: Bool {
         primary.isEmpty && secondary.isEmpty
@@ -53,7 +60,7 @@ public struct MusclePick: Equatable, Sendable {
         return nil
     }
 
-    mutating func cycle(_ area: [Muscle]) {
+    public mutating func cycle(_ area: [Muscle]) {
         let role = role(of: area)
         primary.removeAll(where: area.contains)
         secondary.removeAll(where: area.contains)
