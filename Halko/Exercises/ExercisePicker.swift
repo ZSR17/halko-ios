@@ -24,6 +24,8 @@ struct ExercisePicker: View {
                 .buttonStyle(.plain)
                 .accessibilityAddTraits(isChosen ? .isSelected : [])
             }
+            // ✕ and Add stay while searching.
+            .searchPresentationToolbarBehavior(.avoidHidingContent)
             .navigationTitle("Add exercises")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

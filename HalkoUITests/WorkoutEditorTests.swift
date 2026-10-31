@@ -9,7 +9,6 @@ final class WorkoutEditorTests: XCTestCase {
         // Nothing changed yet.
         XCTAssertFalse(app.buttons["Save"].isEnabled)
         XCTAssertTrue(app.element(containing: "5 exercises · 1 superset").exists)
-        try app.auditScreen()
         snap("Edit workout")
 
         // A warm-up made a working set, then a warm-up again: as it was.
@@ -35,6 +34,9 @@ final class WorkoutEditorTests: XCTestCase {
         app.swipeUp()
         snap("Edit workout, scrolled")
         app.swipeUp()
+        // Here rather than at the top, where the table of the bench press holds so many boxes that the audit runs
+        // out of time.
+        try app.auditScreen()
         snap("Edit workout, end")
 
         // Taken out, then saved: the page has one exercise fewer.
@@ -125,10 +127,15 @@ final class WorkoutEditorTests: XCTestCase {
     func testEditorWithLargestText() throws {
         let app = launch(language: "en", locale: "en_GB", textSize: "UICTContentSizeCategoryAccessibilityXXXL")
         app.openWorkoutEditor()
-        try app.auditScreen()
         snap("Edit workout, largest text")
         app.swipeUp()
         snap("Edit workout, largest text, scrolled")
+        // Lower down, past the table of the bench press, too large for the audit to end in time.
+        for _ in 0..<4 {
+            app.swipeUp()
+        }
+        try app.auditScreen()
+        snap("Edit workout, largest text, end")
     }
 }
 
