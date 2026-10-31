@@ -38,16 +38,23 @@ enum DemoData {
 
         // Push A as on the mockups: warm-ups worked out, a superset, an exercise done one side at a time.
         let work = { (sets: Int, target: SetTarget) in Array(repeating: target, count: sets) }
-        let pushPlan: [(sourceRef: String, superset: String?, targets: [SetTarget])] = [
-            ("Barbell_Bench_Press_-_Medium_Grip", nil, Array(repeating: SetTarget(kind: .warmup, restS: 60), count: 4)
+        let pushPlan: [(sourceRef: String, mode: ItemMode, superset: String?, targets: [SetTarget])] = [
+            ("Barbell_Bench_Press_-_Medium_Grip", .perSet, nil, Array(repeating: SetTarget(kind: .warmup, restS: 60), count: 4)
                 + work(4, SetTarget(kind: .normal, reps: 8, weightG: 80_000, restS: 150))),
-            ("Dumbbell_Shoulder_Press", nil, work(3, SetTarget(kind: .normal, reps: 10, weightG: 22_000, restS: 120))),
-            ("Cable_Crossover", "push-superset", work(3, SetTarget(kind: .normal, reps: 12, weightG: 15_000))),
-            ("Dips_-_Triceps_Version", "push-superset", work(3, SetTarget(kind: .normal, reps: 10, restS: 120))),
-            ("Side_Bridge", nil, work(3, SetTarget(kind: .normal, durationS: 40, restS: 60))),
+            ("Dumbbell_Shoulder_Press", .simple, nil, work(3, SetTarget(kind: .normal, reps: 10, weightG: 22_000, restS: 120))),
+            ("Cable_Crossover", .simple, "push-superset", work(3, SetTarget(kind: .normal, reps: 12, weightG: 15_000))),
+            ("Dips_-_Triceps_Version", .simple, "push-superset", work(3, SetTarget(kind: .normal, reps: 10, restS: 120))),
+            ("Side_Bridge", .simple, nil, work(3, SetTarget(kind: .normal, durationS: 40, restS: 60))),
         ]
         let pushItems = pushPlan.enumerated().map { position, plan in
-            WorkoutItem(workoutID: push.id, exerciseID: "lib-\(plan.sourceRef)", position: position, supersetGroup: plan.superset, targets: plan.targets)
+            WorkoutItem(
+                workoutID: push.id,
+                exerciseID: "lib-\(plan.sourceRef)",
+                position: position,
+                mode: plan.mode,
+                supersetGroup: plan.superset,
+                targets: plan.targets
+            )
         }
         for item in pushItems {
             context.insert(item)

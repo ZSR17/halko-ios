@@ -5,37 +5,15 @@ import SwiftUI
 // The Exercises tab: the embedded library and the exercises made on the device, narrowed down by muscles,
 // equipment and a search of their names. All of it local: the same offline.
 struct ExercisesView: View {
-    @Query(filter: #Predicate<Exercise> { !$0.removed }) private var exercises: [Exercise]
-    @State private var catalog = ExerciseCatalog()
     @State private var creating = false
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 12) {
-                MusclePicker(pick: catalog.filter.pick, cycle: { catalog.filter.cycle($0) }, clear: { catalog.filter.clearPick() })
-                FilterChips(filter: $catalog.filter)
-                Text("\(catalog.results.count) exercises")
-                    .font(.subheadline)
-                    .foregroundStyle(Color(.secondaryText))
-                    .padding(.top, 4)
-                LazyVStack(alignment: .leading, spacing: 0) {
-                    ForEach(catalog.results) { entry in
-                        NavigationLink(value: entry.exercise) {
-                            ExerciseListRow(entry: entry)
-                        }
-                        .buttonStyle(.plain)
-                        Divider()
-                    }
-                }
-                if catalog.results.isEmpty {
-                    Text("No exercises match.")
-                        .foregroundStyle(Color(.secondaryText))
-                }
+        ExerciseBrowser { entry in
+            NavigationLink(value: entry.exercise) {
+                ExerciseListRow(entry: entry)
             }
-            .padding([.horizontal, .bottom])
+            .buttonStyle(.plain)
         }
-        // Always open: folded under the large title, it is crushed to a line with the largest text sizes.
-        .searchable(text: $catalog.filter.query, placement: .navigationBarDrawer(displayMode: .always), prompt: Text("Search \(catalog.pool) exercises"))
         .navigationTitle("Exercises")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
@@ -50,6 +28,40 @@ struct ExercisesView: View {
         .navigationDestination(for: Exercise.self) { exercise in
             ExerciseView(exercise: exercise)
         }
+    }
+}
+
+// The silhouette, the filters, the search and the exercises they keep, each shown by `row`: the Exercises tab, and
+// the choice of the exercises to add to a workout.
+struct ExerciseBrowser<Row: View>: View {
+    @ViewBuilder let row: (ExerciseEntry) -> Row
+    @Query(filter: #Predicate<Exercise> { !$0.removed }) private var exercises: [Exercise]
+    @State private var catalog = ExerciseCatalog()
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 12) {
+                MusclePicker(pick: catalog.filter.pick, cycle: { catalog.filter.cycle($0) }, clear: { catalog.filter.clearPick() })
+                FilterChips(filter: $catalog.filter)
+                Text("\(catalog.results.count) exercises")
+                    .font(.subheadline)
+                    .foregroundStyle(Color(.secondaryText))
+                    .padding(.top, 4)
+                LazyVStack(alignment: .leading, spacing: 0) {
+                    ForEach(catalog.results) { entry in
+                        row(entry)
+                        Divider()
+                    }
+                }
+                if catalog.results.isEmpty {
+                    Text("No exercises match.")
+                        .foregroundStyle(Color(.secondaryText))
+                }
+            }
+            .padding([.horizontal, .bottom])
+        }
+        // Always open: folded under the large title, it is crushed to a line with the largest text sizes.
+        .searchable(text: $catalog.filter.query, placement: .navigationBarDrawer(displayMode: .always), prompt: Text("Search \(catalog.pool) exercises"))
         .onChange(of: exercises, initial: true) { _, exercises in
             catalog.show(exercises)
         }
@@ -159,9 +171,11 @@ private struct ChipRow<Content: View>: View {
     }
 }
 
-// An exercise of the list: its picture, its name, its primary muscles and its equipment.
-private struct ExerciseListRow: View {
+// An exercise of the list: its picture, its name, its primary muscles and its equipment; with `chosen`, a mark
+// telling whether it is chosen.
+struct ExerciseListRow: View {
     let entry: ExerciseEntry
+    var chosen: Bool?
 
     var body: some View {
         HStack(spacing: 12) {
@@ -175,6 +189,12 @@ private struct ExerciseListRow: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             ExerciseBadge(exercise: entry.exercise)
+            if let chosen {
+                Image(systemName: chosen ? "checkmark.circle.fill" : "circle")
+                    .font(.title2)
+                    .foregroundStyle(chosen ? Color.accentColor : Color(.secondaryText))
+                    .accessibilityHidden(true)
+            }
         }
         .padding(.vertical, 10)
         .contentShape(.rect)
