@@ -58,12 +58,15 @@ struct WorkoutEditor: View {
                             .font(.subheadline)
                             .foregroundStyle(Color(.secondaryText))
                         Spacer()
-                        Button("How editing works", systemImage: "info.circle") {
+                        Button {
                             showsHelp = true
+                        } label: {
+                            Label("How editing works", systemImage: "info.circle")
+                                .labelStyle(.iconOnly)
+                                .frame(minWidth: 44, minHeight: 44)
+                                .contentShape(.rect)
                         }
-                        .labelStyle(.iconOnly)
                         .foregroundStyle(Color(.secondaryText))
-                        .frame(minWidth: 44, minHeight: 44)
                         .popover(isPresented: $showsHelp) {
                             EditorHelp()
                                 .presentationCompactAdaptation(.popover)

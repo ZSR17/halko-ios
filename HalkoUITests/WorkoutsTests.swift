@@ -107,7 +107,8 @@ extension XCUIApplication {
         // Under the fade of the screen's bottom edge too, where a sheet has no tab bar.
         let window = windows.firstMatch.frame
         let bottomEdge = CGRect(x: window.minX, y: window.maxY - 60, width: window.width, height: 60)
-        let bars = [navigationBars.firstMatch.frame, tabBars.firstMatch.frame].map { $0.insetBy(dx: 0, dy: -40) } + [bottomEdge]
+        // The fade under the bar of a sheet reaches lower than under the bar of a tab.
+        let bars = [navigationBars.firstMatch.frame, tabBars.firstMatch.frame].map { $0.insetBy(dx: 0, dy: -60) } + [bottomEdge]
         // On a slow runner, the audit of a large screen sometimes runs out of time: only that is tried again.
         for attempt in 1... {
             do {

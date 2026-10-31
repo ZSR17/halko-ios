@@ -56,10 +56,13 @@ struct ItemEditor<Grip: View>: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .accessibilityElement(children: .combine)
                 if !collapsed {
-                    Button("Remove \(name)", systemImage: "trash", action: remove)
-                        .labelStyle(.iconOnly)
-                        .foregroundStyle(Color(.secondaryText))
-                        .frame(minWidth: 44, minHeight: 44)
+                    Button(action: remove) {
+                        Label("Remove \(name)", systemImage: "trash")
+                            .labelStyle(.iconOnly)
+                            .frame(minWidth: 44, minHeight: 44)
+                            .contentShape(.rect)
+                    }
+                    .foregroundStyle(Color(.secondaryText))
                 }
                 grip
             }
@@ -132,7 +135,6 @@ struct ItemEditor<Grip: View>: View {
                 }
                 .font(.caption)
                 .foregroundStyle(Color(.secondaryText))
-                .accessibilityHidden(true)
             }
             ForEach(item.setIDs, id: \.self) { id in
                 let index = item.setIDs.firstIndex(of: id) ?? 0
@@ -329,7 +331,6 @@ struct ItemEditor<Grip: View>: View {
                     .foregroundStyle(Color(.secondaryText))
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
-                    .accessibilityHidden(true)
                 box()
             }
             .frame(maxWidth: .infinity)
