@@ -3,12 +3,13 @@ import os
 import SwiftData
 import SwiftUI
 
-// Changing a workout, in a sheet: its name, its exercises in order, how each one's sets are planned, the supersets
+// Creating a workout, or changing one, in a sheet: its name, its exercises in order, how each one's sets are planned, the supersets
 // and the notes. Nothing is written before ✓, then only to the local database: the same offline.
 struct WorkoutEditor: View {
     private static let logger = Logger(subsystem: "com.zsr.halko", category: "workouts")
 
-    let workout: Workout
+    // nil: a new workout, written only once saved.
+    let workout: Workout?
     // As the sheet opened, to know whether anything changed.
     @State private var original: WorkoutDraft
     @State private var draft: WorkoutDraft
@@ -22,9 +23,9 @@ struct WorkoutEditor: View {
     @Environment(\.locale) private var locale
 
     // `items`: its exercises, in order.
-    init(workout: Workout, items: [WorkoutItem]) {
+    init(workout: Workout?, items: [WorkoutItem]) {
         self.workout = workout
-        let draft = WorkoutDraft(workout, items: items)
+        let draft = workout.map { WorkoutDraft($0, items: items) } ?? WorkoutDraft()
         _original = State(initialValue: draft)
         _draft = State(initialValue: draft)
     }
@@ -91,7 +92,7 @@ struct WorkoutEditor: View {
             }
             .scrollDismissesKeyboard(.interactively)
             .background(Color(.systemGroupedBackground))
-            .navigationTitle("Edit workout")
+            .navigationTitle(workout == nil ? Text("New workout") : Text("Edit workout"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 // ✕ and ✓, as in the exercise editor. With changes, ✕ turns into "Discard Changes": a tap elsewhere
@@ -135,6 +136,12 @@ struct WorkoutEditor: View {
             .alert("The workout could not be saved.", isPresented: $failed) {
                 Button("OK") {}
             }
+            .task {
+                // A new workout starts with its name.
+                if workout == nil {
+                    focus = .name
+                }
+            }
         }
     }
 
@@ -160,7 +167,11 @@ struct WorkoutEditor: View {
 
     private func save() {
         do {
-            try modelContext.saveWorkout(workout, with: draft)
+            if let workout {
+                try modelContext.saveWorkout(workout, with: draft)
+            } else {
+                _ = try modelContext.createWorkout(with: draft)
+            }
             dismiss()
         } catch {
             Self.logger.error("Cannot save the workout: \(String(describing: error))")

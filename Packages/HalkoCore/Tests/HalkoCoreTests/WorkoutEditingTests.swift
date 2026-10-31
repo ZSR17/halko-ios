@@ -147,6 +147,21 @@ struct WorkoutEditingTests {
         #expect(workout.name == "Push B")
     }
 
+    @Test("Creates a workout last on the page, with its exercises")
+    func create() throws {
+        var draft = WorkoutDraft()
+        #expect(!draft.canSave)
+        draft.name = " Legs B "
+        draft.items = [ItemDraft(exerciseID: "a", mode: .simple, targets: [SetTarget(kind: .normal, reps: 5)])]
+        let created = try context.createWorkout(with: draft)
+        #expect(created.name == "Legs B")
+        #expect(created.folderID == nil)
+        #expect(created.position == workout.position + 1)
+        let id = created.id
+        let items = try context.fetch(FetchDescriptor(predicate: #Predicate<WorkoutItem> { $0.workoutID == id }))
+        #expect(items.map(\.exerciseID) == ["a"])
+    }
+
     @Test("Leaving set by set keeps the first working set as the model")
     func simpleMode() {
         var item = ItemDraft(exerciseID: "a", mode: .perSet, targets: [

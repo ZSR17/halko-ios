@@ -10,6 +10,7 @@ struct WorkoutsView: View {
     @Query(filter: #Predicate<Workout> { !$0.removed && $0.folderID == nil }, sort: \Workout.position)
     private var workouts: [Workout]
     @ScaledMetric(relativeTo: .headline) private var folderWidth = 150.0
+    @State private var creating = false
 
     var body: some View {
         ScrollView {
@@ -37,10 +38,22 @@ struct WorkoutsView: View {
         .background(Color(.systemGroupedBackground))
         .overlay {
             if sessionsInProgress.isEmpty && folders.isEmpty && workouts.isEmpty {
-                NoWorkouts()
+                NoWorkouts {
+                    creating = true
+                }
             }
         }
         .navigationTitle("Workouts")
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button("New workout", systemImage: "plus") {
+                    creating = true
+                }
+            }
+        }
+        .sheet(isPresented: $creating) {
+            WorkoutEditor(workout: nil, items: [])
+        }
         .navigationDestination(for: Folder.self) { folder in
             FolderView(folder: folder)
         }
@@ -92,7 +105,10 @@ private struct WorkoutCards: View {
     }
 }
 
+// `create`: a button to make the first one.
 private struct NoWorkouts: View {
+    var create: (() -> Void)?
+
     var body: some View {
         // The description in a darker grey than the system's, for a contrast of 4.5:1.
         ContentUnavailableView {
@@ -100,6 +116,15 @@ private struct NoWorkouts: View {
         } description: {
             Text("Your workouts will appear here.")
                 .foregroundStyle(Color(.secondaryText))
+        } actions: {
+            if let create {
+                // The text in the color made to be read on the accent color, in light and dark appearance.
+                Button(action: create) {
+                    Text("New workout")
+                        .foregroundStyle(Color(.onAccent))
+                }
+                .buttonStyle(.borderedProminent)
+            }
         }
     }
 }

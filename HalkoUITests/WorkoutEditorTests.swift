@@ -107,6 +107,43 @@ final class WorkoutEditorTests: XCTestCase {
     }
 
     @MainActor
+    func testNewWorkout() throws {
+        let app = launch(language: "en", locale: "en_GB")
+        app.navigationBars["Workouts"].buttons["New workout"].tap()
+        XCTAssertTrue(app.navigationBars["New workout"].waitForExistence(timeout: 5))
+        // No name yet.
+        XCTAssertFalse(app.buttons["Save"].isEnabled)
+        XCTAssertTrue(app.element(containing: "0 exercises").exists)
+        try app.auditScreen()
+        snap("New workout")
+
+        let name = app.textFields["Workout name"]
+        name.tap()
+        name.typeText("Legs B")
+        XCTAssertTrue(app.buttons["Save"].isEnabled)
+        app.buttons["Add an exercise"].tap()
+        XCTAssertTrue(app.staticTexts["877 exercises"].waitForExistence(timeout: 30))
+        app.searchFields.firstMatch.tap()
+        app.searchFields.firstMatch.typeText("full squat")
+        let squat = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Barbell Full Squat,")).firstMatch
+        XCTAssertTrue(squat.waitForExistence(timeout: 5))
+        squat.tap()
+        if !squat.isSelected {
+            // The first tap only put the keyboard away.
+            squat.tap()
+        }
+        app.buttons["Add 1"].tap()
+        XCTAssertTrue(app.element(containing: "1 exercise").waitForExistence(timeout: 5))
+        snap("New workout, filled in")
+        app.buttons["Save"].tap()
+
+        // Last on the page, with its exercise.
+        let card = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Legs B")).firstMatch
+        XCTAssertTrue(card.waitForExistence(timeout: 5))
+        XCTAssertTrue(card.label.contains("1 exercise"))
+    }
+
+    @MainActor
     func testEditorInFrench() throws {
         let app = launch(language: "fr", locale: "fr_FR")
         app.openPushA()

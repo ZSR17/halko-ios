@@ -101,7 +101,8 @@ extension XCUIApplication {
     // The audit reports the texts of cards as keeping their size or being clipped at larger sizes, though they
     // grow and wrap (the largest-text screenshots show it): those two are not audited. It also measures the contrast
     // of the cards scrolling under the fade of the bars, and of the drawing of the body behind the muscles VoiceOver
-    // reads on it (`muscle-…`). Every other issue fails the test, at once.
+    // reads on it (`muscle-…`). The keyboard is the system's: its keys are not checked. Every other issue fails the
+    // test, at once.
     @MainActor
     func auditScreen() throws {
         // Under the fade of the screen's bottom edge too, where a sheet has no tab bar.
@@ -116,8 +117,14 @@ extension XCUIApplication {
             for attempt in 1... {
                 do {
                     try performAccessibilityAudit(for: kind) { issue in
-                        issue.auditType == .contrast
-                            && (issue.element?.identifier.hasPrefix("muscle-") == true || bars.contains { $0.intersects(issue.element?.frame ?? .zero) })
+                        let frame = issue.element?.frame ?? .zero
+                        // Up or not by the time the audit ends, so looked for then.
+                        let keyboard = self.keyboards.firstMatch
+                        if keyboard.exists && keyboard.frame.intersects(frame) {
+                            return true
+                        }
+                        return issue.auditType == .contrast
+                            && (issue.element?.identifier.hasPrefix("muscle-") == true || bars.contains { $0.intersects(frame) })
                     }
                     break
                 } catch let error as NSError where error.domain == "com.apple.xcode.xctest.accessibilityAudit" && error.code == -56 && attempt < 3 {
