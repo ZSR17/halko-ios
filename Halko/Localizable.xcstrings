@@ -266,7 +266,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Êtes-vous sûr de vouloir annuler les modifications ?"
+            "value" : "Es-tu sûr de vouloir annuler les modifications ?"
           }
         }
       }
@@ -747,16 +747,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Exécution"
-          }
-        }
-      }
-    },
-    "Keep Editing" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Continuer la modification"
           }
         }
       }

@@ -166,7 +166,8 @@ struct ExerciseEditor: View {
             .navigationTitle(exercise == nil ? Text("New exercise") : Text("Edit exercise"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                // ✕ and ✓, as in the apps of the iPhone.
+                // ✕ and ✓, as in the apps of the iPhone. With changes, ✕ turns into "Discard Changes": a tap
+                // elsewhere keeps editing.
                 ToolbarItem(placement: .cancellationAction) {
                     Button(role: .cancel) {
                         if hasChanges {
@@ -179,7 +180,6 @@ struct ExerciseEditor: View {
                         Button("Discard Changes", role: .destructive) {
                             dismiss()
                         }
-                        Button("Keep Editing", role: .cancel) {}
                     }
                     .accessibilityLabel(Text("Cancel"))
                 }
