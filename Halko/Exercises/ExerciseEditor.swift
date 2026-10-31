@@ -63,13 +63,15 @@ struct ExerciseEditor: View {
                         imported.insert(id)
                     }
                 } header: {
-                    Text("Photos and video")
+                    SectionText("Photos and video")
                 } footer: {
-                    Text("The first picture is the thumbnail. Touch and hold one to move it.")
+                    SectionText("The first picture is the thumbnail. Touch and hold one to move it.")
                 }
-                Section("Name") {
-                    TextField("Name", text: $draft.name)
+                Section {
+                    TextField("Name", text: $draft.name, prompt: Text("Name").foregroundStyle(Color(.secondaryText)))
                         .font(.title3.weight(.semibold))
+                } header: {
+                    SectionText("Name")
                 }
                 Section {
                     Picker("Exercise type", selection: exerciseType) {
@@ -80,7 +82,7 @@ struct ExerciseEditor: View {
                     .pickerStyle(.menu)
                     Toggle("One side at a time", isOn: $draft.unilateral)
                 }
-                Section("Equipment") {
+                Section {
                     FlowLayout(spacing: 8, lineSpacing: 8) {
                         ForEach(showsAllEquipment ? Equipment.allCases : Self.commonEquipment, id: \.self) { equipment in
                             Toggle(isOn: Binding { draft.uses(equipment) } set: { _ in draft.toggle(equipment) }) {
@@ -93,12 +95,16 @@ struct ExerciseEditor: View {
                     }
                     .toggleStyle(ChipToggleStyle())
                     .padding(.vertical, 4)
+                } header: {
+                    SectionText("Equipment")
                 }
-                Section("Muscles worked") {
+                Section {
                     MusclePicker(pick: draft.muscles) { area in
                         draft.muscles.cycle(area)
                     }
                     .padding(.vertical, 4)
+                } header: {
+                    SectionText("Muscles worked")
                 }
                 Section {
                     ForEach($draft.steps) { $step in
@@ -121,10 +127,10 @@ struct ExerciseEditor: View {
                         focusedStep = step.id
                     }
                 } header: {
-                    Text("How to")
+                    SectionText("How to")
                 } footer: {
                     if !draft.steps.isEmpty {
-                        Text("Swipe a step left to delete it.")
+                        SectionText("Swipe a step left to delete it.")
                     }
                 }
                 if let exercise {
@@ -248,5 +254,20 @@ struct ExerciseEditor: View {
             Self.logger.error("Cannot save the exercise: \(String(describing: error))")
             failed = true
         }
+    }
+}
+
+// The title or note of a section, in the gray of the app's secondary texts: the system's is too light to read
+// easily (4.5:1).
+private struct SectionText: View {
+    let text: LocalizedStringKey
+
+    init(_ text: LocalizedStringKey) {
+        self.text = text
+    }
+
+    var body: some View {
+        Text(text)
+            .foregroundStyle(Color(.secondaryText))
     }
 }

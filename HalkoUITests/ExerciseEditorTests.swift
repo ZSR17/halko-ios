@@ -73,8 +73,7 @@ final class ExerciseEditorTests: XCTestCase {
         // Back to the library's.
         app.buttons["Edit"].tap()
         let revert = app.buttons["Revert to original"]
-        app.swipeUp()
-        XCTAssertTrue(revert.waitForExistence(timeout: 5))
+        app.scroll(to: revert)
         revert.tap()
         app.buttons["Go back to the original"].tap()
         XCTAssertTrue(app.staticTexts["Barbell Bench Press - Medium Grip"].waitForExistence(timeout: 5))
@@ -94,8 +93,7 @@ final class ExerciseEditorTests: XCTestCase {
         app.buttons["Edit"].tap()
         XCTAssertTrue(app.navigationBars["Edit exercise"].waitForExistence(timeout: 5))
         let delete = app.buttons["Delete exercise"]
-        app.swipeUp()
-        XCTAssertTrue(delete.waitForExistence(timeout: 5))
+        app.scroll(to: delete)
         snap("Edit exercise, custom")
         delete.tap()
         app.buttons["Delete the exercise"].tap()
@@ -148,6 +146,15 @@ extension XCUIApplication {
         XCTAssertTrue(bench.waitForExistence(timeout: 30))
         bench.tap()
         XCTAssertTrue(buttons["Edit"].waitForExistence(timeout: 5))
+    }
+
+    // Down the form, which makes its rows only when they come into view.
+    @MainActor
+    func scroll(to element: XCUIElement) {
+        for _ in 0..<6 where !element.exists {
+            swipeUp()
+        }
+        XCTAssertTrue(element.waitForExistence(timeout: 5))
     }
 
     // The type of the exercise being edited, from its menu.
