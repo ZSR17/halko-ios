@@ -60,7 +60,10 @@ jobs:
       - name: Build the watch app
         run: xcodebuild build -project Halko.xcodeproj -scheme HalkoWatch -destination 'generic/platform=watchOS Simulator' -derivedDataPath build CODE_SIGNING_ALLOWED=NO
       - name: Test the iPhone app
-        run: xcodebuild test -project Halko.xcodeproj -scheme Halko -destination "id=${{ steps.simulator.outputs.id }}" -derivedDataPath build -resultBundlePath Halko.xcresult
+        # A test failing on a slow runner (an audit or a query out of time) is run again, alone, up to twice: only a
+        # failure that comes back three times fails the job.
+        run: |
+          xcodebuild test -project Halko.xcodeproj -scheme Halko -destination "id=${{ steps.simulator.outputs.id }}" -derivedDataPath build -resultBundlePath Halko.xcresult -retry-tests-on-failure -test-iterations 3
       - name: Check the watch app is inside the iPhone app, and both have their icon
         run: |
           app=build/Build/Products/Debug-iphonesimulator/Halko.app

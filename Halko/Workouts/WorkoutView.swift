@@ -13,6 +13,7 @@ struct WorkoutView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
     @State private var confirmingDelete = false
+    @State private var editing = false
 
     init(workout: Workout) {
         self.workout = workout
@@ -31,6 +32,9 @@ struct WorkoutView: View {
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Menu("More actions", systemImage: "ellipsis") {
+                    Button("Edit", systemImage: "pencil") {
+                        editing = true
+                    }
                     Button("Duplicate", systemImage: "plus.square.on.square") {
                         change { _ = try context.duplicateWorkout(workout, named: String(localized: "\(workout.name) (copy)")) }
                     }
@@ -50,6 +54,9 @@ struct WorkoutView: View {
                     }
                 }
             }
+        }
+        .sheet(isPresented: $editing) {
+            WorkoutEditor(workout: workout, items: items)
         }
         .confirmationDialog("Delete the workout “\(workout.name)”?", isPresented: $confirmingDelete, titleVisibility: .visible) {
             Button("Delete the workout", role: .destructive) {
