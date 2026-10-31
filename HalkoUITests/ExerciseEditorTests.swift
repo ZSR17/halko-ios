@@ -124,7 +124,7 @@ final class ExerciseEditorTests: XCTestCase {
         app.searchFields.firstMatch.typeText("developpe couche")
         let bench = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Développé couché,")).firstMatch
         XCTAssertTrue(bench.waitForExistence(timeout: 5))
-        bench.tap()
+        app.open(bench, showing: app.buttons["Modifier"])
 
         app.buttons["Modifier"].tap()
         XCTAssertTrue(app.navigationBars["Modifier l’exercice"].waitForExistence(timeout: 5))
@@ -157,8 +157,17 @@ extension XCUIApplication {
         searchFields.firstMatch.typeText("medium bench")
         let bench = buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Barbell Bench Press - Medium Grip")).firstMatch
         XCTAssertTrue(bench.waitForExistence(timeout: 30))
-        bench.tap()
-        XCTAssertTrue(buttons["Edit"].waitForExistence(timeout: 5))
+        open(bench, showing: buttons["Edit"])
+    }
+
+    // A row of the list, tapped again if the first tap only put the keyboard of the search away.
+    @MainActor
+    func open(_ row: XCUIElement, showing page: XCUIElement) {
+        row.tap()
+        if !page.waitForExistence(timeout: 5) {
+            row.tap()
+        }
+        XCTAssertTrue(page.waitForExistence(timeout: 5))
     }
 
     // Down the form, which makes its rows only when they come into view.
