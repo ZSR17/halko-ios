@@ -119,7 +119,7 @@ extension XCUIApplication {
                     try performAccessibilityAudit(for: kind) { issue in
                         let frame = issue.element?.frame ?? .zero
                         // Up or not by the time the audit ends, so looked for then.
-                        let keyboard = keyboards.firstMatch
+                        let keyboard = self.keyboards.firstMatch
                         if keyboard.exists && keyboard.frame.intersects(frame) {
                             return true
                         }
