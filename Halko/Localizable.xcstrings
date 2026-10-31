@@ -1281,6 +1281,16 @@
         }
       }
     },
+    "New workout" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nouvelle séance"
+          }
+        }
+      }
+    },
     "No equipment" : {
       "localizations" : {
         "fr" : {

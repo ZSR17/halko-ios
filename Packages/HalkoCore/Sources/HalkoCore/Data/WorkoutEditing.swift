@@ -101,6 +101,12 @@ public struct WorkoutDraft: Equatable, Sendable {
     public var name: String
     public var items: [ItemDraft]
 
+    // A new workout: no name, no exercises yet.
+    public init() {
+        name = ""
+        items = []
+    }
+
     // `items`: the exercises of the workout, in order.
     public init(_ workout: Workout, items: [WorkoutItem]) {
         name = workout.name
@@ -260,6 +266,14 @@ extension ModelContext {
             workout.updatedAt = now
         }
         try save()
+    }
+
+    // A new workout from the draft, last on the workouts page, in no folder.
+    public func createWorkout(with draft: WorkoutDraft) throws -> Workout {
+        let workout = Workout(name: draft.savedName, position: try nextPosition())
+        insert(workout)
+        try saveWorkout(workout, with: draft)
+        return workout
     }
 
     // An exercise added to a workout starts from what is known of it: the plan of another workout using it (sets,
