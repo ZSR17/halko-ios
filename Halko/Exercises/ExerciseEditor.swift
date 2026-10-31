@@ -68,7 +68,8 @@ struct ExerciseEditor: View {
                     SectionText("The first picture is the thumbnail. Touch and hold one to move it.")
                 }
                 Section {
-                    TextField("Name", text: $draft.name, prompt: Text("Name").foregroundStyle(Color(.secondaryText)))
+                    // No gray placeholder, too light to read: the section says what goes in it.
+                    TextField("Name", text: $draft.name, prompt: Text(verbatim: ""))
                         .font(.title3.weight(.semibold))
                 } header: {
                     SectionText("Name")
