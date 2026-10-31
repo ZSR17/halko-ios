@@ -63,8 +63,8 @@ final class ExerciseEditorTests: XCTestCase {
         XCTAssertTrue(app.buttons["Discard Changes"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["Are you sure you want to discard changes?"].exists)
         snap("Edit exercise, discard changes")
-        // A tap elsewhere keeps editing.
-        app.navigationBars["Edit exercise"].staticTexts["Edit exercise"].tap()
+        // A tap elsewhere keeps editing: the title is under the dialog, the note under the pictures is not.
+        app.staticTexts["The first picture is the thumbnail. Touch and hold one to move it."].tap()
         XCTAssertTrue(app.buttons["Discard Changes"].waitForNonExistence(timeout: 5))
         app.switches["Dumbbells"].tap()
         XCTAssertFalse(app.buttons["Save"].isEnabled)
