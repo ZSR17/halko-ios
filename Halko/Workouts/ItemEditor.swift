@@ -259,7 +259,7 @@ struct ItemEditor<Grip: View>: View {
     }
 
     private var note: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 8) {
+        HStack(spacing: 8) {
             Image(systemName: "pencil")
                 .foregroundStyle(Color(.secondaryText))
                 .accessibilityHidden(true)

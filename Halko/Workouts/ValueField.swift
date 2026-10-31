@@ -63,7 +63,8 @@ struct ValueField: View {
 
     var body: some View {
         let dimmed = workedOut && !isFocused
-        TextField(text: $text) {
+        // Without a value, a dash rather than the label.
+        TextField(text: $text, prompt: Text(verbatim: "–").foregroundStyle(Color(.secondaryText))) {
             label
         }
         .focused(focus, equals: field)
