@@ -12,12 +12,14 @@ struct WorkoutEditingTests {
     init() throws {
         container = try HalkoStore.container(inMemory: true)
         context = ModelContext(container)
-        workout = Workout(name: "Push A", position: 0)
+        let workout = Workout(name: "Push A", position: 0)
+        self.workout = workout
         context.insert(workout)
         let set = SetTarget(kind: .normal, reps: 8, weightG: 80_000, restS: 150)
-        items = ["a", "b", "c", "d"].enumerated().map { position, exercise in
+        let items = ["a", "b", "c", "d"].enumerated().map { position, exercise in
             WorkoutItem(workoutID: workout.id, exerciseID: exercise, position: position, targets: [set, set, set])
         }
+        self.items = items
         for item in items {
             context.insert(item)
         }

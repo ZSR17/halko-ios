@@ -235,7 +235,8 @@ private struct EditorItems: View {
     // Where each row is laid out, before it is moved aside.
     @State private var frames: [String: CGRect] = [:]
 
-    private static let space = "workout-editor-items"
+    // Read by the measures of the rows, off the main actor.
+    nonisolated private static let space = "workout-editor-items"
 
     init(draft: Binding<WorkoutDraft>, fields: FieldText, focus: FocusState<EditorField?>.Binding) {
         _draft = draft
