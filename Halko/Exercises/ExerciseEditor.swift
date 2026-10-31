@@ -166,22 +166,25 @@ struct ExerciseEditor: View {
             .navigationTitle(exercise == nil ? Text("New exercise") : Text("Edit exercise"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                // ✕ and ✓, as in the apps of the iPhone.
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
+                    Button(role: .cancel) {
                         if hasChanges {
                             confirmsDiscard = true
                         } else {
                             dismiss()
                         }
                     }
-                    .confirmationDialog("Discard the changes?", isPresented: $confirmsDiscard, titleVisibility: .visible) {
-                        Button("Discard changes", role: .destructive) {
+                    .confirmationDialog("Are you sure you want to discard changes?", isPresented: $confirmsDiscard, titleVisibility: .visible) {
+                        Button("Discard Changes", role: .destructive) {
                             dismiss()
                         }
+                        Button("Keep Editing", role: .cancel) {}
                     }
+                    .accessibilityLabel(Text("Cancel"))
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
+                    Button(role: .confirm) {
                         change {
                             if let exercise {
                                 try modelContext.updateExercise(exercise, with: draft)
@@ -190,10 +193,11 @@ struct ExerciseEditor: View {
                             }
                         }
                     }
+                    .accessibilityLabel(Text("Save"))
                     .disabled(!draft.canSave || !hasChanges)
                 }
             }
-            // Pulled down with changes, the sheet stays: "Cancel" asks before losing them.
+            // Pulled down with changes, the sheet stays: ✕ asks before losing them.
             .interactiveDismissDisabled(hasChanges)
             .alert(Text("Switch to “\(String(localized: (pendingType ?? original.exerciseType).name))”?"), isPresented: Binding {
                 pendingType != nil

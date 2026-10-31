@@ -261,6 +261,16 @@
         }
       }
     },
+    "Are you sure you want to discard changes?" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Veux-tu vraiment supprimer les modifications ?"
+          }
+        }
+      }
+    },
     "Arms" : {
       "localizations" : {
         "fr" : {
@@ -491,22 +501,12 @@
         }
       }
     },
-    "Discard changes" : {
+    "Discard Changes" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Supprimer les modifications"
-          }
-        }
-      }
-    },
-    "Discard the changes?" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Supprimer les modifications ?"
           }
         }
       }
@@ -747,6 +747,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Exécution"
+          }
+        }
+      }
+    },
+    "Keep Editing" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continuer à modifier"
           }
         }
       }

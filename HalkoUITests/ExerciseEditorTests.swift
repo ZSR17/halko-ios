@@ -57,6 +57,17 @@ final class ExerciseEditorTests: XCTestCase {
         alert.buttons["Cancel"].tap()
         XCTAssertFalse(app.buttons["Save"].isEnabled)
 
+        // A change, then ✕: asked before losing it.
+        app.switches["Dumbbells"].tap()
+        app.buttons["Cancel"].tap()
+        let keepEditing = app.buttons["Keep Editing"]
+        XCTAssertTrue(keepEditing.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Are you sure you want to discard changes?"].exists)
+        snap("Edit exercise, discard changes")
+        keepEditing.tap()
+        app.switches["Dumbbells"].tap()
+        XCTAssertFalse(app.buttons["Save"].isEnabled)
+
         app.swipeUp()
         snap("Edit exercise, scrolled")
         app.swipeDown()
