@@ -34,7 +34,6 @@ struct MediaStrip: View {
                             .font(.title3.weight(.semibold))
                         Text("Photo or video")
                             .font(.footnote.weight(.semibold))
-                            .foregroundStyle(Color.primary)
                             .multilineTextAlignment(.center)
                     }
                     .padding(6)

@@ -104,7 +104,10 @@ extension XCUIApplication {
     // Every other issue fails the test.
     @MainActor
     func auditScreen() throws {
-        let bars = [navigationBars.firstMatch.frame, tabBars.firstMatch.frame].map { $0.insetBy(dx: 0, dy: -40) }
+        // Under the fade of the screen's bottom edge too, where a sheet has no tab bar.
+        let window = windows.firstMatch.frame
+        let bottomEdge = CGRect(x: window.minX, y: window.maxY - 60, width: window.width, height: 60)
+        let bars = [navigationBars.firstMatch.frame, tabBars.firstMatch.frame].map { $0.insetBy(dx: 0, dy: -40) } + [bottomEdge]
         try performAccessibilityAudit { issue in
             switch issue.auditType {
             case .dynamicType, .textClipped: true
