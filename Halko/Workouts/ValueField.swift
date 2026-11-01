@@ -108,8 +108,6 @@ struct SwipeToDelete<Content: View>: View {
     let delete: () -> Void
     @ViewBuilder let content: Content
     @State private var pull: CGFloat = 0
-    // Whether the drag going on is a sideways one (a scroll otherwise).
-    @State private var sideways: Bool?
 
     private static var openWidth: CGFloat {
         92
@@ -140,19 +138,9 @@ struct SwipeToDelete<Content: View>: View {
                 .accessibilityHidden(width == 0)
             }
             .clipped()
-            .simultaneousGesture(DragGesture(minimumDistance: 16).onChanged { value in
-                guard enabled else { return }
-                if sideways == nil {
-                    sideways = abs(value.translation.width) > abs(value.translation.height)
-                }
-                if sideways == true {
-                    pull = value.translation.width
-                }
-            }.onEnded { _ in
-                defer {
-                    sideways = nil
-                }
-                guard sideways == true else { return }
+            .gesture(SidewaysPan(enabled: enabled) { translation in
+                pull = translation
+            } ended: {
                 let pulled = width
                 withAnimation(.snappy) {
                     pull = 0
@@ -164,5 +152,49 @@ struct SwipeToDelete<Content: View>: View {
                     }
                 }
             })
+    }
+}
+
+// A pan that starts only when the finger first moves sideways. One that starts up or down fails at once, so the scroll
+// view gets it untouched, rather than a SwiftUI drag holding the touch until the boxes and buttons under it take it.
+private struct SidewaysPan: UIGestureRecognizerRepresentable {
+    let enabled: Bool
+    let changed: (CGFloat) -> Void
+    let ended: () -> Void
+
+    final class Coordinator: NSObject, UIGestureRecognizerDelegate {
+        var enabled = true
+
+        func gestureRecognizerShouldBegin(_ recognizer: UIGestureRecognizer) -> Bool {
+            guard enabled, let pan = recognizer as? UIPanGestureRecognizer else { return false }
+            let velocity = pan.velocity(in: pan.view)
+            return abs(velocity.x) > abs(velocity.y)
+        }
+    }
+
+    func makeCoordinator(converter: CoordinateSpaceConverter) -> Coordinator {
+        Coordinator()
+    }
+
+    func makeUIGestureRecognizer(context: Context) -> UIPanGestureRecognizer {
+        let pan = UIPanGestureRecognizer()
+        context.coordinator.enabled = enabled
+        pan.delegate = context.coordinator
+        return pan
+    }
+
+    func updateUIGestureRecognizer(_ recognizer: UIPanGestureRecognizer, context: Context) {
+        context.coordinator.enabled = enabled
+    }
+
+    func handleUIGestureRecognizerAction(_ recognizer: UIPanGestureRecognizer, context: Context) {
+        switch recognizer.state {
+        case .changed:
+            changed(recognizer.translation(in: recognizer.view).x)
+        case .ended, .cancelled, .failed:
+            ended()
+        default:
+            break
+        }
     }
 }
