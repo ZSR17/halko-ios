@@ -1,0 +1,123 @@
+import XCTest
+
+final class AddToWorkoutTests: XCTestCase {
+    @MainActor
+    func testAddToWorkout() throws {
+        let app = launch(language: "en", locale: "en_GB")
+        app.openBenchPress()
+        app.buttons["Add to a workout"].tap()
+
+        XCTAssertTrue(app.navigationBars["Add to a workout"].waitForExistence(timeout: 5))
+        // Push A plans the bench press already; Pull A does not.
+        XCTAssertTrue(app.choice("Push A").label.contains("already has this exercise"))
+        XCTAssertFalse(app.choice("Pull A").label.contains("already has this exercise"))
+        try app.auditScreen()
+        snap("Add to a workout")
+
+        app.choice("Pull A").tap()
+        XCTAssertTrue(app.navigationBars["Edit workout"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.element(containing: "6 exercises").waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Remove Barbell Bench Press - Medium Grip"].exists)
+        snap("Add to a workout, editor")
+        app.buttons["Save"].tap()
+
+        // Back on the exercise's page, now in Pull A.
+        XCTAssertTrue(app.buttons["Add to a workout"].waitForExistence(timeout: 5))
+        app.buttons["Add to a workout"].tap()
+        let pull = app.choice("Pull A")
+        XCTAssertTrue(pull.waitForExistence(timeout: 5))
+        XCTAssertTrue(pull.label.contains("6 exercises"))
+        XCTAssertTrue(pull.label.contains("already has this exercise"))
+    }
+
+    @MainActor
+    func testCancelLeavesTheWorkout() throws {
+        let app = launch(language: "en", locale: "en_GB")
+        app.openBenchPress()
+        app.buttons["Add to a workout"].tap()
+        app.choice("Pull A").tap()
+        XCTAssertTrue(app.element(containing: "6 exercises").waitForExistence(timeout: 5))
+        // The exercise added counts as a change.
+        app.buttons["Cancel"].tap()
+        app.buttons["Discard Changes"].tap()
+
+        XCTAssertTrue(app.buttons["Add to a workout"].waitForExistence(timeout: 5))
+        app.buttons["Add to a workout"].tap()
+        let pull = app.choice("Pull A")
+        XCTAssertTrue(pull.waitForExistence(timeout: 5))
+        XCTAssertTrue(pull.label.contains("5 exercises"))
+    }
+
+    @MainActor
+    func testAddToNewWorkout() throws {
+        let app = launch(language: "en", locale: "en_GB")
+        app.openBenchPress()
+        app.buttons["Add to a workout"].tap()
+        app.buttons["New workout"].tap()
+
+        XCTAssertTrue(app.navigationBars["New workout"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.element(containing: "1 exercise").waitForExistence(timeout: 5))
+        // No name yet.
+        XCTAssertFalse(app.buttons["Save"].isEnabled)
+        let name = app.textFields["Workout name"]
+        name.tap()
+        name.typeText("Chest day")
+        app.buttons["Save"].tap()
+
+        XCTAssertTrue(app.buttons["Add to a workout"].waitForExistence(timeout: 5))
+        app.buttons["Add to a workout"].tap()
+        let chest = app.choice("Chest day")
+        XCTAssertTrue(chest.waitForExistence(timeout: 5))
+        XCTAssertTrue(chest.label.contains("1 exercise"))
+    }
+
+    @MainActor
+    func testAddToWorkoutInFrench() throws {
+        let app = launch(language: "fr", locale: "fr_FR")
+        app.tabBars.buttons["Exercices"].tap()
+        app.searchFields.firstMatch.tap()
+        app.searchFields.firstMatch.typeText("developpe couche")
+        let bench = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Développé couché,")).firstMatch
+        XCTAssertTrue(bench.waitForExistence(timeout: 30))
+        bench.tap()
+        app.buttons["Ajouter à une séance"].tap()
+        XCTAssertTrue(app.navigationBars["Ajouter à une séance"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.choice("Push A").label.contains("contient déjà cet exercice"))
+        snap("Ajouter à une séance")
+    }
+
+    @MainActor
+    func testAddToWorkoutWithLargestText() throws {
+        let app = launch(language: "en", locale: "en_GB", textSize: "UICTContentSizeCategoryAccessibilityXXXL")
+        app.openBenchPress()
+        app.buttons["Add to a workout"].tap()
+        XCTAssertTrue(app.navigationBars["Add to a workout"].waitForExistence(timeout: 5))
+        try app.auditScreen()
+        snap("Add to a workout, largest text")
+    }
+}
+
+extension XCUIApplication {
+    // The page of the bench press, from the Exercises tab.
+    @MainActor
+    func openBenchPress() {
+        tabBars.buttons["Exercises"].tap()
+        searchFields.firstMatch.tap()
+        searchFields.firstMatch.typeText("medium bench")
+        let bench = buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Barbell Bench Press - Medium Grip")).firstMatch
+        // The library is installed in the background at launch.
+        XCTAssertTrue(bench.waitForExistence(timeout: 30))
+        bench.tap()
+        if !buttons["Add to a workout"].waitForExistence(timeout: 5) {
+            // The first tap only put the keyboard away.
+            bench.tap()
+        }
+        XCTAssertTrue(buttons["Add to a workout"].waitForExistence(timeout: 5))
+    }
+
+    // A workout of the sheet, by its name.
+    @MainActor
+    func choice(_ name: String) -> XCUIElement {
+        buttons.matching(NSPredicate(format: "label BEGINSWITH %@", name)).firstMatch
+    }
+}
