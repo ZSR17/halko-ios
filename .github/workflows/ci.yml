@@ -46,6 +46,8 @@ jobs:
     needs: changes
     if: needs.changes.outputs.code == 'true'
     runs-on: macos-26
+    # A simulator stuck for good fails the part instead of holding the runner for six hours.
+    timeout-minutes: 45
     strategy:
       # Every part to the end: the failures of all of them at once.
       fail-fast: false
@@ -76,12 +78,16 @@ jobs:
             | last.value | map(select(.name | startswith("iPhone"))) | first.udid')
           xcrun simctl list devices | grep "$id"
           echo "id=$id" >> "$GITHUB_OUTPUT"
+      - name: Start the simulator
+        # Booted before the tests: a simulator still starting up can make the first launch of the app time out.
+        run: xcrun simctl bootstatus "${{ steps.simulator.outputs.id }}" -b
       - name: Build the watch app
         if: matrix.checks
         run: xcodebuild build -project Halko.xcodeproj -scheme HalkoWatch -destination 'generic/platform=watchOS Simulator' -derivedDataPath build CODE_SIGNING_ALLOWED=NO
       - name: Test the iPhone app
         # A test failing on a slow runner (an audit or a query out of time) is run again, alone, up to twice: only a
-        # failure that comes back three times fails the job.
+        # failure that comes back three times fails the job. A test still running after 8 minutes (the longest take
+        # about 4 on a slow runner) is stopped and counts as failed, so that a stuck launch is retried, not waited for.
         env:
           ONLY: ${{ matrix.only }}
           SKIP: ${{ matrix.skip }}
@@ -89,7 +95,7 @@ jobs:
           tests=()
           for class in $ONLY; do tests+=("-only-testing:HalkoUITests/$class"); done
           for class in $SKIP; do tests+=("-skip-testing:HalkoUITests/$class"); done
-          xcodebuild test -project Halko.xcodeproj -scheme Halko -destination "id=${{ steps.simulator.outputs.id }}" -derivedDataPath build -resultBundlePath Halko.xcresult -retry-tests-on-failure -test-iterations 3 "${tests[@]}"
+          xcodebuild test -project Halko.xcodeproj -scheme Halko -destination "id=${{ steps.simulator.outputs.id }}" -derivedDataPath build -resultBundlePath Halko.xcresult -retry-tests-on-failure -test-iterations 3 -test-timeouts-enabled YES -default-test-execution-time-allowance 480 "${tests[@]}"
       - name: Check the watch app is inside the iPhone app, and both have their icon
         if: matrix.checks
         run: |
