@@ -319,31 +319,23 @@ extension ModelContext {
     }
 }
 
-// The values of a set done, without the empty ones.
-struct DoneValues: Equatable {
-    var reps: Int?
-    var weightG: Int?
-    var durationS: Double?
-    var distanceM: Double?
-}
-
 // What was done of an exercise: the values of each set by its rank among warm-ups or among working sets ("2nd
 // working set"), since two workouts may plan a different number of warm-ups; and the values of the working sets
 // when they were all done the same way.
 struct DoneSets {
-    let values: [String: DoneValues]
-    let model: DoneValues?
+    let values: [String: SetValues]
+    let model: SetValues?
 
     // `sets` in order.
     init(_ sets: [SetLog]) {
         let kinds = sets.map { SetTarget(kind: $0.kind) }
-        var values: [String: DoneValues] = [:]
+        var values: [String: SetValues] = [:]
         for (index, set) in sets.enumerated() {
-            values[DonePlan.rank(kinds, index)] = DoneValues(reps: set.reps, weightG: set.weightG, durationS: set.durationS, distanceM: set.distanceM)
+            values[DonePlan.rank(kinds, index)] = SetValues(reps: set.reps, weightG: set.weightG, durationS: set.durationS, distanceM: set.distanceM)
         }
         self.values = values
         let working = sets.filter { $0.kind != .warmup }
-            .map { DoneValues(reps: $0.reps, weightG: $0.weightG, durationS: $0.durationS, distanceM: $0.distanceM) }
+            .map { SetValues(reps: $0.reps, weightG: $0.weightG, durationS: $0.durationS, distanceM: $0.distanceM) }
         model = working.first.flatMap { first in working.allSatisfy { $0 == first } ? first : nil }
     }
 }
@@ -381,7 +373,7 @@ enum DonePlan {
 
 extension SetTarget {
     // With the values done that are there.
-    func with(_ values: DoneValues) -> SetTarget {
+    func with(_ values: SetValues) -> SetTarget {
         var changed = self
         changed.reps = values.reps ?? reps
         changed.weightG = values.weightG ?? weightG

@@ -28,6 +28,11 @@ public struct ExerciseRecord: Equatable, Sendable {
     public let kind: RecordKind
     // In stored units: grams, reps, seconds, metres.
     public let value: Double
+
+    public init(kind: RecordKind, value: Double) {
+        self.kind = kind
+        self.value = value
+    }
 }
 
 public struct ExerciseRecords: Equatable, Sendable {

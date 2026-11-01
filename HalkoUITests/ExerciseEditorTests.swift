@@ -47,12 +47,12 @@ final class ExerciseEditorTests: XCTestCase {
         try app.auditScreen()
         snap("Edit exercise")
 
-        // Done 7 times as weight and reps (sample sessions): asked first, and left as it was.
+        // Done 11 times as weight and reps (sample sessions, warm-ups included): asked first, and left as it was.
         app.chooseType("Duration")
         let alert = app.alerts.firstMatch
         XCTAssertTrue(alert.waitForExistence(timeout: 5))
         XCTAssertTrue(alert.label.contains("Duration"))
-        XCTAssertTrue(alert.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS %@", "Your 7 sets")).firstMatch.exists)
+        XCTAssertTrue(alert.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS %@", "Your 11 sets")).firstMatch.exists)
         snap("Edit exercise, type change")
         alert.buttons["Cancel"].tap()
         XCTAssertFalse(app.buttons["Save"].isEnabled)

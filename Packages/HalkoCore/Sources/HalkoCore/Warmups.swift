@@ -39,11 +39,18 @@ public enum Warmups {
         return if index == 0 && count > 1 { 10 } else if share <= 0.6 { 5 } else if share <= 0.75 { 3 } else { 2 }
     }
 
-    // `targets` with the warm-up values left to work out filled in from the first working set.
-    public static func filledIn(_ targets: [SetTarget], type: ExerciseType, equipment: [String], unit: WeightUnit) -> [SetTarget] {
+    // `targets` with the warm-up values left to work out filled in from the first working set, or from `workingG`
+    // (the weight of the working sets of the day, in a session).
+    public static func filledIn(
+        _ targets: [SetTarget],
+        type: ExerciseType,
+        equipment: [String],
+        unit: WeightUnit,
+        workingG: Int? = nil
+    ) -> [SetTarget] {
         let count = targets.count(where: { $0.kind == .warmup })
         guard count > 0, weighted.contains(type),
-              let workingG = targets.first(where: { $0.kind != .warmup })?.weightG, workingG > 0 else {
+              let workingG = workingG ?? targets.first(where: { $0.kind != .warmup })?.weightG, workingG > 0 else {
             return targets
         }
         let steps = plan(count: count, workingG: workingG, barG: equipment.contains("barbell") ? unit.barG : nil, unit: unit)

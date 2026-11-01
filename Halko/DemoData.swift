@@ -90,7 +90,9 @@ enum DemoData {
         // Push A done before, heavier on the bench press: its records, with the session in progress.
         let earlier = Session(workoutID: push.id, name: push.name, startedAt: .now - 4 * day, endedAt: .now - 4 * day + 3600)
         context.insert(earlier)
-        let benchSets: [(kind: SetKind, reps: Int, weightG: Int)] = [(.warmup, 10, 20_000), (.normal, 3, 85_000), (.normal, 3, 85_000)]
+        typealias DoneSet = (kind: SetKind, reps: Int, weightG: Int)
+        let warmups: [DoneSet] = [(.warmup, 10, 20_000), (.warmup, 5, 32_500), (.warmup, 3, 50_000), (.warmup, 2, 67_500)]
+        let benchSets: [DoneSet] = warmups + [(.normal, 3, 85_000), (.normal, 3, 85_000)]
         for (setIndex, set) in benchSets.enumerated() {
             context.insert(SetLog(
                 sessionID: earlier.id,
@@ -105,19 +107,21 @@ enum DemoData {
             ))
         }
         context.insert(Session(workoutID: core.id, name: core.name, startedAt: .now - day, endedAt: .now - day + 900))
-        // Push A in progress: the working sets of the first exercise done.
+        // Push A in progress, as on the mockups: the warm-ups and the first working set of the bench press done.
         let session = Session(workoutID: push.id, name: push.name, startedAt: .now - 24 * 60 - 12)
         context.insert(session)
-        for setIndex in 0..<4 {
+        let todaySets: [DoneSet] = warmups + [(.normal, 8, 80_000)]
+        for (setIndex, set) in todaySets.enumerated() {
             context.insert(SetLog(
                 sessionID: session.id,
                 exerciseID: pushItems[0].exerciseID,
                 workoutItemID: pushItems[0].id,
                 position: 0,
                 setIndex: setIndex,
-                reps: 8,
-                weightG: 80_000,
-                completedAt: .now - Double(20 - 4 * setIndex) * 60
+                kind: set.kind,
+                reps: set.reps,
+                weightG: set.weightG,
+                completedAt: .now - Double(20 - 3 * setIndex) * 60
             ))
         }
         try context.save()
