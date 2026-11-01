@@ -60,6 +60,9 @@ jobs:
     needs: changes
     if: needs.changes.outputs.code == 'true'
     runs-on: macos-26
+    # All the tests take ~35 min; a simulator stuck on a launch waits forever (GitHub's own limit is 6 h): stopped here,
+    # to be rerun.
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v7
       - run: brew install xcodegen
