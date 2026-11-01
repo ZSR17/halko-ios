@@ -1,8 +1,13 @@
+import HalkoCore
 import SwiftUI
 
-// The five tabs, which become a sidebar when there is room. Each tab has its own navigation stack.
+// The five tabs, which become a sidebar when there is room. Each tab has its own navigation stack. The session in
+// progress covers them, in full screen.
 struct RootView: View {
+    @Environment(LiveSessionStore.self) private var liveSession
+
     var body: some View {
+        @Bindable var liveSession = liveSession
         TabView {
             Tab("Workouts", systemImage: "dumbbell") {
                 NavigationStack {
@@ -34,5 +39,8 @@ struct RootView: View {
             }
         }
         .tabViewStyle(.sidebarAdaptable)
+        .fullScreenCover(isPresented: $liveSession.isPresented) {
+            SessionCover()
+        }
     }
 }

@@ -1,9 +1,12 @@
 import HalkoCore
+import os
 import SwiftData
 import SwiftUI
 
 // The Workouts tab: the session in progress, the folders, then the workouts in no folder.
 struct WorkoutsView: View {
+    private static let logger = Logger(subsystem: "com.zsr.halko", category: "workouts")
+
     @Query(filter: #Predicate<Session> { !$0.removed && $0.endedAt == nil }, sort: \Session.startedAt, order: .reverse)
     private var sessionsInProgress: [Session]
     @Query(filter: #Predicate<Folder> { !$0.removed }, sort: \Folder.position) private var folders: [Folder]
@@ -11,12 +14,24 @@ struct WorkoutsView: View {
     private var workouts: [Workout]
     @ScaledMetric(relativeTo: .headline) private var folderWidth = 150.0
     @State private var creating = false
+    @Environment(LiveSessionStore.self) private var liveSession
+    @Environment(\.modelContext) private var context
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 if let session = sessionsInProgress.first {
-                    SessionBanner(session: session)
+                    Button {
+                        do {
+                            try liveSession.open(session, in: context)
+                        } catch {
+                            Self.logger.error("Cannot open the session in progress: \(String(describing: error))")
+                        }
+                    } label: {
+                        SessionBanner(session: session)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityHint(Text("Opens the session."))
                 }
                 if !folders.isEmpty {
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: folderWidth), spacing: 10)], spacing: 10) {

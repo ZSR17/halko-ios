@@ -12,8 +12,13 @@ struct WorkoutView: View {
     @Query(filter: #Predicate<Folder> { !$0.removed }, sort: \Folder.position) private var folders: [Folder]
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
+    @Query(filter: #Predicate<Session> { !$0.removed && $0.endedAt == nil }, sort: \Session.startedAt, order: .reverse)
+    private var sessionsInProgress: [Session]
+    @Environment(LiveSessionStore.self) private var liveSession
     @State private var confirmingDelete = false
     @State private var editing = false
+    // Another workout's session is in progress: one at a time.
+    @State private var otherSession: Session?
 
     init(workout: Workout) {
         self.workout = workout
@@ -27,6 +32,34 @@ struct WorkoutView: View {
                 .padding([.horizontal, .bottom])
         }
         .background(Color(.systemGroupedBackground))
+        .safeAreaInset(edge: .bottom) {
+            if !items.isEmpty {
+                Button(action: start) {
+                    // The text in the color made to be read on the accent color, in light and dark appearance.
+                    Text("Start the workout")
+                        .font(.headline)
+                        .foregroundStyle(Color(.onAccent))
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                }
+                .buttonStyle(.borderedProminent)
+                .buttonBorderShape(.capsule)
+                .controlSize(.large)
+                .padding(.horizontal)
+                .padding(.bottom, 8)
+            }
+        }
+        .alert(
+            "A session is already in progress",
+            isPresented: Binding { otherSession != nil } set: { if !$0 { otherSession = nil } },
+            presenting: otherSession
+        ) { session in
+            Button("Resume it") {
+                change { try liveSession.open(session, in: context) }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: { session in
+            Text("Finish “\(session.name)” before starting another one.")
+        }
         .navigationTitle(workout.name)
         .navigationSubtitle("\(items.count) exercises")
         .toolbar {
@@ -73,6 +106,22 @@ struct WorkoutView: View {
             workout.folderID
         } set: { folderID in
             change { try context.moveWorkout(workout, to: folderID) }
+        }
+    }
+
+    // Starts a session of the workout, or brings back the one in progress (one at a time, on any device).
+    private func start() {
+        if let session = sessionsInProgress.first {
+            if session.workoutID == workout.id {
+                change { try liveSession.open(session, in: context) }
+            } else {
+                otherSession = session
+            }
+            return
+        }
+        change {
+            liveSession.set(try context.startSession(of: workout))
+            liveSession.isPresented = true
         }
     }
 

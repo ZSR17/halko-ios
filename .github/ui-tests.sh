@@ -29,11 +29,14 @@ while IFS= read -r file; do
     # The list and the page of an exercise, which the editor and « Add to a workout » open from.
     Halko/Exercises/*) tests+=(ExercisesTests ExerciseEditorTests AddToWorkoutTests) ;;
     # The workout editor, which « Add to a workout » opens too.
-    Halko/Workouts/WorkoutEditor.swift | Halko/Workouts/ItemEditor.swift | Halko/Workouts/ValueField.swift)
+    Halko/Workouts/WorkoutEditor.swift | Halko/Workouts/ItemEditor.swift)
       tests+=(WorkoutEditorTests AddToWorkoutTests)
       ;;
-    # The tab and the page of a workout, which the editor opens from.
-    Halko/Workouts/*) tests+=(WorkoutsTests WorkoutEditorTests) ;;
+    # Its boxes and the swipe to delete a set, which the session uses too.
+    Halko/Workouts/ValueField.swift) tests+=(WorkoutEditorTests AddToWorkoutTests LiveSessionTests) ;;
+    # The tab and the page of a workout, which the editor and the session open from.
+    Halko/Workouts/*) tests+=(WorkoutsTests WorkoutEditorTests LiveSessionTests) ;;
+    Halko/Session/*) tests+=(LiveSessionTests) ;;
     # Anything else (the views shared by the screens, the colours, the sample data, the project, the CI): all.
     *)
       echo all
