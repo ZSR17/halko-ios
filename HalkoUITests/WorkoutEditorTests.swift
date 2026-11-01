@@ -114,6 +114,10 @@ final class WorkoutEditorTests: XCTestCase {
         // No name yet.
         XCTAssertFalse(app.buttons["Save"].isEnabled)
         XCTAssertTrue(app.element(containing: "0 exercises").exists)
+        // The name is being typed: the keyboard put away first, since the audit does not always tell it from the
+        // screen while it comes up.
+        app.buttons["Done"].firstMatch.tap()
+        XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 5))
         try app.auditScreen()
         snap("New workout")
 
