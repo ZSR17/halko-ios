@@ -111,8 +111,12 @@ extension XCUIApplication {
         // The fade under the bar of a sheet reaches lower than under the bar of a tab.
         let bars = [navigationBars.firstMatch.frame, tabBars.firstMatch.frame].map { $0.insetBy(dx: 0, dy: -60) } + [bottomEdge]
         // One kind of check at a time: the audit of a large screen in one go runs out of time on a slow runner, and
-        // Xcode does not let one give it more. Each is tried twice more if it still does.
-        let kinds: [XCUIAccessibilityAuditType] = [.contrast, .hitRegion, .sufficientElementDescription, .elementDetection, .trait]
+        // Xcode does not let one give it more. Each is tried twice more if it still does. With the largest text sizes,
+        // no contrast: measured on every pixel of the huge text it runs out of time every time, and the colors are the
+        // same as at the usual sizes, where it is checked.
+        let largestText = launchArguments.contains("-UIPreferredContentSizeCategoryName")
+        let kinds: [XCUIAccessibilityAuditType] = (largestText ? [] : [.contrast])
+            + [.hitRegion, .sufficientElementDescription, .elementDetection, .trait]
         for kind in kinds {
             for attempt in 1... {
                 do {
