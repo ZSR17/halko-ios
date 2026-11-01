@@ -10,9 +10,10 @@ final class AddToWorkoutTests: XCTestCase {
         XCTAssertTrue(app.navigationBars["Add to a workout"].waitForExistence(timeout: 5))
         // Push A plans the bench press already; Pull A does not.
         XCTAssertTrue(app.choice("Push A").label.contains("already has this exercise"))
-        XCTAssertFalse(app.choice("Pull A").label.contains("already has this exercise"))
         try app.auditScreen()
         snap("Add to a workout")
+        XCTAssertFalse(app.choice("Pull A").label.contains("already has this exercise"))
+        snap("Add to a workout, full height")
 
         app.choice("Pull A").tap()
         XCTAssertTrue(app.navigationBars["Edit workout"].waitForExistence(timeout: 5))
@@ -98,9 +99,15 @@ final class AddToWorkoutTests: XCTestCase {
 }
 
 extension XCUIApplication {
-    // A workout of the sheet, by its name.
+    // A workout of the sheet, by its name. The list only makes the rows in view: it is pulled up (the sheet to its
+    // full height, then the list) until the row shows.
     @MainActor
     func choice(_ name: String) -> XCUIElement {
-        buttons.matching(NSPredicate(format: "label BEGINSWITH %@", name)).firstMatch
+        let row = buttons.matching(NSPredicate(format: "label BEGINSWITH %@", name)).firstMatch
+        XCTAssertTrue(navigationBars.matching(NSPredicate(format: "identifier IN %@", ["Add to a workout", "Ajouter à une séance"])).firstMatch.waitForExistence(timeout: 5))
+        for _ in 0..<4 where !row.exists || !row.isHittable {
+            collectionViews.firstMatch.swipeUp()
+        }
+        return row
     }
 }
