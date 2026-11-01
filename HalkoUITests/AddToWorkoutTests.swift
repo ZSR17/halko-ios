@@ -79,7 +79,7 @@ final class AddToWorkoutTests: XCTestCase {
         app.searchFields.firstMatch.typeText("developpe couche")
         let bench = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Développé couché,")).firstMatch
         XCTAssertTrue(bench.waitForExistence(timeout: 30))
-        bench.tap()
+        app.open(bench, showing: app.buttons["Ajouter à une séance"])
         app.buttons["Ajouter à une séance"].tap()
         XCTAssertTrue(app.navigationBars["Ajouter à une séance"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.choice("Push A").label.contains("contient déjà cet exercice"))
@@ -98,23 +98,6 @@ final class AddToWorkoutTests: XCTestCase {
 }
 
 extension XCUIApplication {
-    // The page of the bench press, from the Exercises tab.
-    @MainActor
-    func openBenchPress() {
-        tabBars.buttons["Exercises"].tap()
-        searchFields.firstMatch.tap()
-        searchFields.firstMatch.typeText("medium bench")
-        let bench = buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Barbell Bench Press - Medium Grip")).firstMatch
-        // The library is installed in the background at launch.
-        XCTAssertTrue(bench.waitForExistence(timeout: 30))
-        bench.tap()
-        if !buttons["Add to a workout"].waitForExistence(timeout: 5) {
-            // The first tap only put the keyboard away.
-            bench.tap()
-        }
-        XCTAssertTrue(buttons["Add to a workout"].waitForExistence(timeout: 5))
-    }
-
     // A workout of the sheet, by its name.
     @MainActor
     func choice(_ name: String) -> XCUIElement {
