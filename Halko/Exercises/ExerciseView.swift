@@ -3,11 +3,12 @@ import SwiftData
 import SwiftUI
 
 // The page of an exercise: its pictures, what it is, the muscles it works, the records from the sets done of it, and
-// how to do it, in the language of the app. "Edit" changes it in a sheet.
+// how to do it, in the language of the app. "Edit" changes it in a sheet; "Add to a workout" asks which one, then opens
+// its editor with the exercise added.
 struct ExerciseView: View {
     let exercise: Exercise
     @Query private var sets: [SetLog]
-    @State private var editing = false
+    @State private var sheet: ExerciseSheet?
     @Environment(\.locale) private var locale
     @Environment(\.dismiss) private var dismiss
 
@@ -49,21 +50,63 @@ struct ExerciseView: View {
             .padding([.horizontal, .bottom])
         }
         .background(Color(.systemGroupedBackground))
+        // Below the steps, never over them.
+        .safeAreaInset(edge: .bottom) {
+            Button {
+                sheet = .choosing
+            } label: {
+                // The text in the color made to be read on the accent color, in light and dark appearance.
+                Label("Add to a workout", systemImage: "plus")
+                    .font(.headline)
+                    .foregroundStyle(Color(.onAccent))
+                    .frame(maxWidth: .infinity, minHeight: 44)
+            }
+            .buttonStyle(.borderedProminent)
+            .buttonBorderShape(.capsule)
+            .controlSize(.large)
+            .padding(.horizontal)
+            .padding(.bottom, 8)
+        }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button("Edit") {
-                    editing = true
+                    sheet = .editing
                 }
             }
         }
-        .sheet(isPresented: $editing, onDismiss: {
+        .sheet(item: $sheet, onDismiss: {
             // Deleted in the sheet: back to the list.
             if exercise.removed {
                 dismiss()
             }
-        }) {
-            ExerciseEditor(exercise: exercise)
+        }) { sheet in
+            switch sheet {
+            case .editing:
+                ExerciseEditor(exercise: exercise)
+            case .choosing:
+                // The choice closes this sheet and opens the editor.
+                AddToWorkoutSheet(exercise: exercise) { workout in
+                    self.sheet = .adding(workout)
+                }
+            case .adding(let workout):
+                AddingEditor(workout: workout, exercise: exercise)
+            }
+        }
+    }
+}
+
+private enum ExerciseSheet: Identifiable {
+    case editing
+    case choosing
+    // nil: a new workout.
+    case adding(Workout?)
+
+    var id: String {
+        switch self {
+        case .editing: "editing"
+        case .choosing: "choosing"
+        case .adding(let workout): "adding-\(workout?.id ?? "")"
         }
     }
 }

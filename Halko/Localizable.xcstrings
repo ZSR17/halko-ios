@@ -401,6 +401,16 @@
         }
       }
     },
+    "Add to a workout" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter à une séance"
+          }
+        }
+      }
+    },
     "Adductors" : {
       "localizations" : {
         "fr" : {
@@ -2053,6 +2063,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tes séances apparaîtront ici."
+          }
+        }
+      }
+    },
+    "already has this exercise" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "contient déjà cet exercice"
           }
         }
       }

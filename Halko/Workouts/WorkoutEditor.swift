@@ -10,6 +10,8 @@ struct WorkoutEditor: View {
 
     // nil: a new workout, written only once saved.
     let workout: Workout?
+    // Added at the end as the sheet opens, from the exercise's page: ✕ leaves the workout as it was.
+    let adding: Exercise?
     // As the sheet opened, to know whether anything changed.
     @State private var original: WorkoutDraft
     @State private var draft: WorkoutDraft
@@ -17,14 +19,16 @@ struct WorkoutEditor: View {
     @State private var picking = false
     @State private var showsHelp = false
     @State private var failed = false
+    @State private var added = false
     @FocusState private var focus: EditorField?
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @Environment(\.locale) private var locale
 
     // `items`: its exercises, in order.
-    init(workout: Workout?, items: [WorkoutItem]) {
+    init(workout: Workout?, items: [WorkoutItem], adding: Exercise? = nil) {
         self.workout = workout
+        self.adding = adding
         let draft = workout.map { WorkoutDraft($0, items: items) } ?? WorkoutDraft()
         _original = State(initialValue: draft)
         _draft = State(initialValue: draft)
@@ -137,6 +141,10 @@ struct WorkoutEditor: View {
                 Button("OK") {}
             }
             .task {
+                if let adding, !added {
+                    added = true
+                    add([adding])
+                }
                 // A new workout starts with its name.
                 if workout == nil {
                     focus = .name
