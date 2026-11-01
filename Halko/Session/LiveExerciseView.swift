@@ -252,6 +252,8 @@ private struct LiveSetRow: View {
         return table.number(item, set: set)
             .font(.body.weight(isCurrent ? .bold : .semibold))
             .foregroundStyle(warmup ? Color(.warmup) : isCurrent ? Color.accentColor : .primary)
+            // Its element as large as a touch, like every element of the row.
+            .frame(minWidth: 44, minHeight: 44)
             .accessibilityLabel(Text(verbatim: table.spokenNumber(item, set: set)))
             .accessibilityValue(isCurrent ? Text("Current set") : isDone ? Text("Done") : Text(verbatim: ""))
     }
@@ -263,6 +265,7 @@ private struct LiveSetRow: View {
             .foregroundStyle(Color(.secondaryText))
             .lineLimit(1)
             .minimumScaleFactor(0.8)
+            .frame(minWidth: 44, minHeight: 44)
             .accessibilityLabel(Text("Previous"))
             .accessibilityValue(Text(verbatim: last.map { table.setText(item, values: $0) } ?? String(localized: "none")))
     }
@@ -289,6 +292,7 @@ private struct LiveSetRow: View {
                 .monospacedDigit()
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
+                .frame(minWidth: 44, minHeight: 44)
                 .accessibilityLabel(Text(verbatim: spoken))
                 .accessibilityValue(Text(verbatim: values[field].map { table.fields.text($0, of: field) } ?? String(localized: "none")))
         }
@@ -344,7 +348,7 @@ struct SetCell: View {
     let id: LiveField
     let commit: (Double?) -> Void
     @State private var text: String
-    @ScaledMetric(relativeTo: .body) private var height: CGFloat = 36
+    @ScaledMetric(relativeTo: .body) private var height: CGFloat = 44
 
     init(
         label: String,
@@ -381,7 +385,7 @@ struct SetCell: View {
         .font(.body.weight(boxed ? .bold : .regular))
         .monospacedDigit()
         .padding(.horizontal, 4)
-        .frame(minHeight: max(36, height))
+        .frame(minWidth: 44, minHeight: max(44, height))
         .background {
             if boxed || isFocused {
                 RoundedRectangle(cornerRadius: 8)

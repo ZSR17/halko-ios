@@ -14,17 +14,19 @@ private struct Panel<Content: View>: View {
         .padding(.top, 14)
         .padding(.bottom, 8)
         .frame(maxWidth: .infinity, alignment: .leading)
+        // Fixed over the sets: with the largest text sizes, it would hide them all.
+        .dynamicTypeSize(...DynamicTypeSize.accessibility1)
         .background {
-            UnevenRoundedRectangle(topLeadingRadius: 24, topTrailingRadius: 24)
-                .fill(Color(.secondarySystemGroupedBackground))
-                .overlay {
-                    if let tint {
-                        UnevenRoundedRectangle(topLeadingRadius: 24, topTrailingRadius: 24)
-                            .fill(tint.opacity(0.12))
-                    }
+            ZStack {
+                Color(.secondarySystemGroupedBackground)
+                if let tint {
+                    tint.opacity(0.12)
                 }
-                .shadow(color: .black.opacity(0.2), radius: 12, y: -4)
-                .ignoresSafeArea(edges: .bottom)
+            }
+            .clipShape(UnevenRoundedRectangle(topLeadingRadius: 24, topTrailingRadius: 24))
+            .shadow(color: .black.opacity(0.2), radius: 12, y: -4)
+            // Down to the bottom edge of the screen.
+            .ignoresSafeArea(edges: .bottom)
         }
     }
 }
@@ -93,7 +95,7 @@ struct SetPanel: View {
     }
 }
 
-// A value of the set to do, with − and + buttons. For VoiceOver, one element to swipe up or down.
+// A value of the set to do, between − and + buttons.
 private struct ValueStepper: View {
     let title: String
     let unit: String
@@ -106,6 +108,7 @@ private struct ValueStepper: View {
     var body: some View {
         HStack(spacing: 4) {
             button("minus", by: -1)
+                .accessibilityLabel(Text(verbatim: field == .reps ? String(localized: "One rep less") : String(localized: "Remove \(amount)")))
             VStack(spacing: 0) {
                 Text(verbatim: text)
                     .font(.title2.weight(.bold))
@@ -116,20 +119,24 @@ private struct ValueStepper: View {
             }
             .lineLimit(1)
             .minimumScaleFactor(0.7)
-            .frame(maxWidth: .infinity)
+            .frame(maxWidth: .infinity, minHeight: 44)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(Text(verbatim: title))
+            .accessibilityValue(Text(verbatim: text))
             button("plus", by: 1)
+                .accessibilityLabel(Text(verbatim: field == .reps ? String(localized: "One rep more") : String(localized: "Add \(amount)")))
         }
         .padding(4)
         .background(Color(.tertiarySystemFill), in: .rect(cornerRadius: 16))
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text(verbatim: title))
-        .accessibilityValue(Text(verbatim: text))
-        .accessibilityAdjustableAction { direction in
-            switch direction {
-            case .increment: step(by: 1)
-            case .decrement: step(by: -1)
-            @unknown default: break
-            }
+    }
+
+    // What a button adds or removes: "2.5 kg", "5 s".
+    private var amount: String {
+        switch field {
+        case .weight: "\(fields.text(increment, of: .weight)) \((fields.weightUnit == .kg ? UnitMass.kilograms : UnitMass.pounds).symbol)"
+        case .distance: "\(fields.text(increment, of: .distance)) \((fields.distanceUnit == .km ? UnitLength.kilometers : UnitLength.miles).symbol)"
+        case .reps: "1"
+        case .duration, .rest: "\(Int(increment)) \(UnitDuration.seconds.symbol)"
         }
     }
 
@@ -158,7 +165,7 @@ private struct ValueStepper: View {
             Image(systemName: symbol)
                 .font(.title3.weight(.semibold))
                 .frame(width: buttonSide, height: buttonSide)
-                .background(Color(.secondarySystemFill), in: .rect(cornerRadius: 12))
+                .contentShape(.rect)
         }
         .buttonStyle(.plain)
         .disabled(direction < 0 && (value ?? 0) <= 0)

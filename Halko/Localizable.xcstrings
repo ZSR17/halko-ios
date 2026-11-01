@@ -401,6 +401,16 @@
         }
       }
     },
+    "Add %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter %@"
+          }
+        }
+      }
+    },
     "Add %lld" : {
       "localizations" : {
         "fr" : {
@@ -1607,6 +1617,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
+          }
+        }
+      }
+    },
+    "One rep less" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une répétition de moins"
+          }
+        }
+      }
+    },
+    "One rep more" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une répétition de plus"
           }
         }
       }
