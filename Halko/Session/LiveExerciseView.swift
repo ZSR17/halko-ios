@@ -161,13 +161,6 @@ struct LiveExerciseView: View {
         }
     }
 
-    // "Set, Previous, kilograms, Reps".
-    private var columnNames: String {
-        ([String(localized: "Set"), String(localized: "Previous")]
-            + table.metrics(index).map { table.columnTitle($0, item: index, long: true) })
-            .formatted(.list(type: .and, width: .narrow))
-    }
-
     private var columnTitles: some View {
         HStack(spacing: 8) {
             Text("Set")
@@ -185,11 +178,7 @@ struct LiveExerciseView: View {
         .foregroundStyle(Color(.secondaryText))
         .lineLimit(1)
         .minimumScaleFactor(0.8)
-        // Read once, as the header of the sets.
         .frame(minHeight: 44)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text(verbatim: columnNames))
-        .accessibilityAddTraits(.isHeader)
     }
 }
 
@@ -264,7 +253,6 @@ private struct LiveSetRow: View {
             .font(.body.weight(isCurrent ? .bold : .semibold))
             .foregroundStyle(warmup ? Color(.warmup) : isCurrent ? Color.accentColor : .primary)
             .frame(minWidth: 44, minHeight: 44)
-            .accessibilityElement(children: .ignore)
             .accessibilityLabel(Text(verbatim: table.spokenNumber(item, set: set)))
             .accessibilityValue(isCurrent ? Text("Current set") : isDone ? Text("Done") : Text(verbatim: ""))
     }
@@ -277,7 +265,6 @@ private struct LiveSetRow: View {
             .lineLimit(1)
             .minimumScaleFactor(0.8)
             .frame(minWidth: 44, minHeight: 44)
-            .accessibilityElement(children: .ignore)
             .accessibilityLabel(Text("Previous"))
             .accessibilityValue(Text(verbatim: last.map { table.setText(item, values: $0) } ?? String(localized: "none")))
     }
@@ -305,7 +292,6 @@ private struct LiveSetRow: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
                 .frame(minWidth: 44, minHeight: 44)
-                .accessibilityElement(children: .ignore)
                 .accessibilityLabel(Text(verbatim: spoken))
                 .accessibilityValue(Text(verbatim: values[field].map { table.fields.text($0, of: field) } ?? String(localized: "none")))
         }

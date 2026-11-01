@@ -15,10 +15,12 @@ final class LiveSessionTests: XCTestCase {
         try app.auditScreen()
         snap("Session")
 
-        // A set more for this session, like the last one: its button, under the sets, shown first.
+        // A set more for this session, like the last one: its button, under the sets, brought above the bottom block
+        // first (XCUI would touch the block over it).
         let addSet = app.buttons["Add a set"].firstMatch
-        for _ in 0..<3 where !addSet.isHittable {
-            app.scrollViews.firstMatch.swipeUp()
+        let panel = app.descendants(matching: .any)["bottom-panel"]
+        for _ in 0..<4 where addSet.frame.maxY > panel.frame.minY - 8 {
+            app.scrollViews.firstMatch.swipeUp(velocity: .slow)
         }
         addSet.tap()
         XCTAssertTrue(app.element(containing: "Set 2 of 5").waitForExistence(timeout: 5))
