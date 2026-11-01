@@ -50,6 +50,8 @@ struct AddToWorkoutSheet: View {
         }
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)
+        // A list is content: never on glass, which at half height shows the page through it.
+        .presentationBackground(Color(.systemGroupedBackground))
     }
 }
 
@@ -61,9 +63,10 @@ private struct ChoiceRow: View {
         let count = Text("\(choice.exerciseCount) exercises")
         HStack {
             VStack(alignment: .leading, spacing: 2) {
+                // In the color of text, not the tint of the button.
                 Text(verbatim: choice.workout.name)
                     .font(.headline)
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(Color(.label))
                 Group {
                     if choice.hasExercise {
                         Text("\(count) · \(Text("already has this exercise"))")
