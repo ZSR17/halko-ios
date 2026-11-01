@@ -100,9 +100,10 @@ final class WorkoutsTests: XCTestCase {
 extension XCUIApplication {
     // The audit reports the texts of cards as keeping their size or being clipped at larger sizes, though they
     // grow and wrap (the largest-text screenshots show it): those two are not audited. It also measures the contrast
-    // of the cards scrolling under the fade of the bars or the session's bottom block, and of the drawing of the body behind the muscles VoiceOver
-    // reads on it (`muscle-…`). The keyboard is the system's: its keys are not checked. Every other issue fails the
-    // test, at once.
+    // of the cards scrolling under the fade of the bars or under the session's bottom block, and of the drawing of the
+    // body behind the muscles VoiceOver reads on it (`muscle-…`). Its hit region (44 pt to touch) is for what can be
+    // touched: a text alone, whose element SwiftUI keeps as large as its letters, is not checked. The keyboard is the
+    // system's: its keys are not checked. Every other issue fails the test, at once.
     @MainActor
     func auditScreen() throws {
         // Under the fade of the screen's bottom edge too, where a sheet has no tab bar.
@@ -110,8 +111,8 @@ extension XCUIApplication {
         let bottomEdge = CGRect(x: window.minX, y: window.maxY - 60, width: window.width, height: 60)
         // The fade under the bar of a sheet reaches lower than under the bar of a tab.
         let bars = [navigationBars.firstMatch.frame, tabBars.firstMatch.frame].map { $0.insetBy(dx: 0, dy: -60) } + [bottomEdge]
-            // And under the block fixed at the bottom of the session.
-            + otherElements.matching(identifier: "bottom-panel").allElementsBoundByIndex.map(\.frame)
+            // And under the block fixed at the bottom of the session, with its shadow.
+            + descendants(matching: .any).matching(identifier: "bottom-panel").allElementsBoundByIndex.map { $0.frame.insetBy(dx: 0, dy: -24) }
         // One kind of check at a time: the audit of a large screen in one go runs out of time on a slow runner, and
         // Xcode does not let one give it more. Each is tried twice more if it still does. With the largest text sizes,
         // no contrast: measured on every pixel of the huge text it runs out of time every time, and the colors are the
@@ -128,6 +129,9 @@ extension XCUIApplication {
                         let keyboard = self.keyboards.firstMatch
                         if keyboard.exists && keyboard.frame.intersects(frame) {
                             return true
+                        }
+                        if issue.auditType == .hitRegion {
+                            return issue.element?.elementType == .staticText
                         }
                         return issue.auditType == .contrast
                             && (issue.element?.identifier.hasPrefix("muscle-") == true || bars.contains { $0.intersects(frame) })

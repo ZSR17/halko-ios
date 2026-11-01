@@ -263,8 +263,6 @@ private struct LiveSetRow: View {
         return table.number(item, set: set)
             .font(.body.weight(isCurrent ? .bold : .semibold))
             .foregroundStyle(warmup ? Color(.warmup) : isCurrent ? Color.accentColor : .primary)
-            // Its element as large as a touch, like every element of the row: the frame is an element of its own (the
-            // text's, even combined, is only as large as its letters).
             .frame(minWidth: 44, minHeight: 44)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(Text(verbatim: table.spokenNumber(item, set: set)))

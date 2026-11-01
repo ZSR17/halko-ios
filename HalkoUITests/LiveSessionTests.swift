@@ -16,8 +16,11 @@ final class LiveSessionTests: XCTestCase {
         snap("Session")
 
         // A set more for this session, like the last one: its button, under the sets, shown first.
-        app.scrollViews.firstMatch.swipeUp()
-        app.buttons["Add a set"].firstMatch.tap()
+        let addSet = app.buttons["Add a set"].firstMatch
+        for _ in 0..<3 where !addSet.isHittable {
+            app.scrollViews.firstMatch.swipeUp()
+        }
+        addSet.tap()
         XCTAssertTrue(app.element(containing: "Set 2 of 5").waitForExistence(timeout: 5))
         app.scrollViews.firstMatch.swipeDown()
 
