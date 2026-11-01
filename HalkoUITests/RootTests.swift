@@ -4,7 +4,7 @@ final class RootTests: XCTestCase {
     @MainActor
     func testTabs() throws {
         let app = XCUIApplication()
-        app.launchArguments = ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+        app.launchArguments = ["-noAnimations", "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
         app.launch()
 
         for tab in ["Workouts", "Exercises", "History", "Tools", "Settings"] {

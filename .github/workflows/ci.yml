@@ -9,6 +9,12 @@ on:
     branches: [master]
   pull_request:
 
+# A new push to a pull request stops the run of the one before: only the last is checked. Every merge into master is
+# checked to the end.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   changes:
     runs-on: ubuntu-24.04

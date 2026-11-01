@@ -50,7 +50,7 @@ final class WorkoutEditorTests: XCTestCase {
     }
 
     @MainActor
-    func testDiscardChanges() throws {
+    func testDiscardChangesThenReorder() throws {
         let app = launch(language: "en", locale: "en_GB")
         app.openWorkoutEditor()
         let name = app.textFields["Workout name"]
@@ -60,12 +60,12 @@ final class WorkoutEditorTests: XCTestCase {
         XCTAssertTrue(app.buttons["Discard Changes"].waitForExistence(timeout: 5))
         app.buttons["Discard Changes"].tap()
         XCTAssertTrue(app.navigationBars["Push A"].waitForExistence(timeout: 5))
-    }
 
-    @MainActor
-    func testReorder() throws {
-        let app = launch(language: "en", locale: "en_GB")
-        app.openWorkoutEditor()
+        // Opened again, without the change.
+        app.buttons["More actions"].tap()
+        app.buttons["Edit"].tap()
+        XCTAssertTrue(app.navigationBars["Edit workout"].waitForExistence(timeout: 5))
+        XCTAssertEqual(name.value as? String, "Push A")
         let bench = app.handle("Move Barbell Bench Press - Medium Grip")
         XCTAssertTrue(bench.waitForExistence(timeout: 5))
         // Held and taken to the bottom of the screen: last.

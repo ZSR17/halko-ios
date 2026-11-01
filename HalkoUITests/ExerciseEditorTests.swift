@@ -32,6 +32,16 @@ final class ExerciseEditorTests: XCTestCase {
         XCTAssertTrue(created.label.contains("custom"))
         created.tap()
         XCTAssertTrue(app.element(containing: "Duration").waitForExistence(timeout: 5))
+
+        // Deleted: back on the list, without it.
+        app.buttons["Edit"].tap()
+        XCTAssertTrue(app.navigationBars["Edit exercise"].waitForExistence(timeout: 5))
+        let delete = app.buttons["Delete exercise"]
+        app.scroll(to: delete)
+        snap("Edit exercise, custom")
+        delete.tap()
+        app.buttons["Delete the exercise"].tap()
+        XCTAssertTrue(app.element(containing: "No exercises match.").waitForExistence(timeout: 5))
     }
 
     @MainActor
@@ -91,28 +101,6 @@ final class ExerciseEditorTests: XCTestCase {
         app.buttons["Go back to the original"].tap()
         XCTAssertTrue(app.staticTexts["Barbell Bench Press - Medium Grip"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.element(containing: "your version").exists)
-    }
-
-    @MainActor
-    func testDeleteCustomExercise() throws {
-        let app = launch(language: "en", locale: "en_GB")
-        app.tabBars.buttons["Exercises"].tap()
-        app.searchFields.firstMatch.tap()
-        app.searchFields.firstMatch.typeText("home weighted")
-        let custom = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Home weighted push-ups")).firstMatch
-        XCTAssertTrue(custom.waitForExistence(timeout: 30))
-        custom.tap()
-
-        app.buttons["Edit"].tap()
-        XCTAssertTrue(app.navigationBars["Edit exercise"].waitForExistence(timeout: 5))
-        let delete = app.buttons["Delete exercise"]
-        app.scroll(to: delete)
-        snap("Edit exercise, custom")
-        delete.tap()
-        app.buttons["Delete the exercise"].tap()
-
-        // Back on the list, without it.
-        XCTAssertTrue(app.element(containing: "No exercises match.").waitForExistence(timeout: 5))
     }
 
     @MainActor

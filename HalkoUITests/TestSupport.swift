@@ -10,11 +10,11 @@ extension XCTestCase {
         add(attachment)
     }
 
-    // The sample data, in a database kept in memory.
+    // The sample data, in a database kept in memory, without animations.
     @MainActor
     func launch(language: String, locale: String, textSize: String? = nil) -> XCUIApplication {
         let app = XCUIApplication()
-        app.launchArguments = ["-demo", "-AppleLanguages", "(\(language))", "-AppleLocale", locale]
+        app.launchArguments = ["-demo", "-noAnimations", "-AppleLanguages", "(\(language))", "-AppleLocale", locale]
         if let textSize {
             app.launchArguments += ["-UIPreferredContentSizeCategoryName", textSize]
         }

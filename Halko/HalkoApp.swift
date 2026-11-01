@@ -1,12 +1,19 @@
 import HalkoCore
 import SwiftData
 import SwiftUI
+import UIKit
 
 @main
 struct HalkoApp: App {
     private let container: ModelContainer
 
     init() {
+        #if DEBUG
+        // The interface tests, without animations: no step waits for one to end.
+        if ProcessInfo.processInfo.arguments.contains("-noAnimations") {
+            UIView.setAnimationsEnabled(false)
+        }
+        #endif
         do {
             #if DEBUG
             if DemoData.isRequested {

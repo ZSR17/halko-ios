@@ -1,9 +1,11 @@
 import XCTest
 
 final class WorkoutsTests: XCTestCase {
+    // The tab, a folder, then the page of a workout: one launch for the three.
     @MainActor
     func testWorkouts() throws {
-        let app = launch(language: "en", locale: "en_US")
+        // Kilograms, as the sample workouts.
+        let app = launch(language: "en", locale: "en_GB")
 
         XCTAssertTrue(app.element(containing: "Push A · in progress").waitForExistence(timeout: 5))
         XCTAssertTrue(app.element(containing: "Full body express").exists)
@@ -17,36 +19,9 @@ final class WorkoutsTests: XCTestCase {
         XCTAssertTrue(app.element(containing: "Pull A").exists)
         try app.auditScreen()
         snap("Workouts › Folder")
-    }
 
-    @MainActor
-    func testWorkoutsInFrench() throws {
-        let app = launch(language: "fr", locale: "fr_FR")
-
-        XCTAssertTrue(app.navigationBars["Séances"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.element(containing: "Push A · en cours").waitForExistence(timeout: 5))
-        XCTAssertTrue(app.element(containing: "Abdos, principal").waitForExistence(timeout: 30))
-        snap("Séances")
-    }
-
-    @MainActor
-    func testWorkoutsWithLargestText() throws {
-        let app = launch(language: "en", locale: "en_US", textSize: "UICTContentSizeCategoryAccessibilityXXXL")
-
-        // The first card in no folder: the cards further down are not made until scrolled to.
-        XCTAssertTrue(app.element(containing: "Quads, primary").waitForExistence(timeout: 30))
-        try app.auditScreen()
-        snap("Workouts, largest text")
-        app.scrollViews.firstMatch.swipeUp()
-        snap("Workouts, largest text, scrolled")
-    }
-
-    @MainActor
-    func testWorkoutPage() throws {
-        // Kilograms, as the sample workouts.
-        let app = launch(language: "en", locale: "en_GB")
-
-        app.openPushA()
+        app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Push A")).firstMatch.tap()
+        XCTAssertTrue(app.navigationBars["Push A"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.element(containing: "Auto warm-up: 20 × 10").waitForExistence(timeout: 30))
         XCTAssertTrue(app.element(containing: "4 × 8 · 80 kg · rest 2:30").exists)
         XCTAssertTrue(app.element(containing: "Superset · no rest in between").exists)
@@ -75,8 +50,13 @@ final class WorkoutsTests: XCTestCase {
     }
 
     @MainActor
-    func testWorkoutPageInFrench() throws {
+    func testWorkoutsInFrench() throws {
         let app = launch(language: "fr", locale: "fr_FR")
+
+        XCTAssertTrue(app.navigationBars["Séances"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.element(containing: "Push A · en cours").waitForExistence(timeout: 5))
+        XCTAssertTrue(app.element(containing: "Abdos, principal").waitForExistence(timeout: 30))
+        snap("Séances")
 
         app.openPushA()
         XCTAssertTrue(app.element(containing: "Échauffement auto : 20 × 10").waitForExistence(timeout: 30))
@@ -85,9 +65,19 @@ final class WorkoutsTests: XCTestCase {
     }
 
     @MainActor
-    func testWorkoutPageWithLargestText() throws {
+    func testWorkoutsWithLargestText() throws {
         let app = launch(language: "en", locale: "en_GB", textSize: "UICTContentSizeCategoryAccessibilityXXXL")
 
+        // The first card in no folder: the cards further down are not made until scrolled to.
+        XCTAssertTrue(app.element(containing: "Quads, primary").waitForExistence(timeout: 30))
+        try app.auditScreen()
+        snap("Workouts, largest text")
+        app.scrollViews.firstMatch.swipeUp()
+        snap("Workouts, largest text, scrolled")
+
+        // Back up to the folder, made again once in view.
+        app.scrollViews.firstMatch.swipeDown()
+        app.scrollViews.firstMatch.swipeDown()
         app.openPushA()
         XCTAssertTrue(app.element(containing: "Auto warm-up").waitForExistence(timeout: 30))
         try app.auditScreen()
