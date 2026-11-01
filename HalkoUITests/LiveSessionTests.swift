@@ -18,9 +18,10 @@ final class LiveSessionTests: XCTestCase {
         // A set more for this session, like the last one: its button, under the sets, brought above the bottom block
         // first (XCUI would touch the block over it).
         let addSet = app.buttons["Add a set"].firstMatch
-        let panel = app.descendants(matching: .any)["bottom-panel"]
-        for _ in 0..<4 where addSet.frame.maxY > panel.frame.minY - 8 {
-            app.scrollViews.firstMatch.swipeUp(velocity: .slow)
+        let panelTitle = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Set 2 of 4")).firstMatch
+        let middle = app.scrollViews.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.4))
+        for _ in 0..<8 where addSet.frame.maxY > panelTitle.frame.minY - 24 {
+            middle.press(forDuration: 0.1, thenDragTo: middle.withOffset(CGVector(dx: 0, dy: -120)))
         }
         addSet.tap()
         XCTAssertTrue(app.element(containing: "Set 2 of 5").waitForExistence(timeout: 5))
