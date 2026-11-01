@@ -1,6 +1,7 @@
 # On every push to master and pull request: HalkoCore's tests, then the Xcode project generated from project.yml,
-# the iPhone app (with the watch app inside) built and its interface tested on a simulator. The screenshots of the
-# interface tests are kept with the run. A change to the documentation only skips them.
+# the iPhone app (with the watch app inside) built and its interface tested on a simulator. The interface tests are
+# shared out between four runners at once (five macOS jobs at most run together on the free plan, HalkoCore's
+# included); the screenshots of each part are kept with the run. A change to the documentation only skips them.
 # "CI passed" sums it up: it is the check a pull request needs to be merged into master.
 name: CI
 
@@ -41,9 +42,27 @@ jobs:
       - run: swift test --package-path Packages/HalkoCore -Xswiftc -warnings-as-errors
 
   apps:
+    name: apps (${{ matrix.part }})
     needs: changes
     if: needs.changes.outputs.code == 'true'
     runs-on: macos-26
+    strategy:
+      # Every part to the end: the failures of all of them at once.
+      fail-fast: false
+      matrix:
+        # Test classes of about the same length. The last part runs all the others, new ones included: a class
+        # given its own part must also be added to its `skip`.
+        include:
+          - part: add-to-workout
+            only: AddToWorkoutTests
+          - part: workout-editor
+            only: WorkoutEditorTests
+          - part: exercise-editor
+            only: ExerciseEditorTests RootTests
+            # The shortest part also builds the watch app and checks what the iPhone app holds.
+            checks: true
+          - part: others
+            skip: AddToWorkoutTests WorkoutEditorTests ExerciseEditorTests RootTests
     steps:
       - uses: actions/checkout@v7
       - run: brew install xcodegen
@@ -58,13 +77,21 @@ jobs:
           xcrun simctl list devices | grep "$id"
           echo "id=$id" >> "$GITHUB_OUTPUT"
       - name: Build the watch app
+        if: matrix.checks
         run: xcodebuild build -project Halko.xcodeproj -scheme HalkoWatch -destination 'generic/platform=watchOS Simulator' -derivedDataPath build CODE_SIGNING_ALLOWED=NO
       - name: Test the iPhone app
         # A test failing on a slow runner (an audit or a query out of time) is run again, alone, up to twice: only a
         # failure that comes back three times fails the job.
+        env:
+          ONLY: ${{ matrix.only }}
+          SKIP: ${{ matrix.skip }}
         run: |
-          xcodebuild test -project Halko.xcodeproj -scheme Halko -destination "id=${{ steps.simulator.outputs.id }}" -derivedDataPath build -resultBundlePath Halko.xcresult -retry-tests-on-failure -test-iterations 3
+          tests=()
+          for class in $ONLY; do tests+=("-only-testing:HalkoUITests/$class"); done
+          for class in $SKIP; do tests+=("-skip-testing:HalkoUITests/$class"); done
+          xcodebuild test -project Halko.xcodeproj -scheme Halko -destination "id=${{ steps.simulator.outputs.id }}" -derivedDataPath build -resultBundlePath Halko.xcresult -retry-tests-on-failure -test-iterations 3 "${tests[@]}"
       - name: Check the watch app is inside the iPhone app, and both have their icon
+        if: matrix.checks
         run: |
           app=build/Build/Products/Debug-iphonesimulator/Halko.app
           test -d "$app/Watch/HalkoWatch.app"
@@ -73,6 +100,7 @@ jobs:
             test "$(plutil -extract CFBundleIcons.CFBundlePrimaryIcon.CFBundleIconName raw "$plist" 2>/dev/null || plutil -extract CFBundleIconName raw "$plist")" = AppIcon
           done
       - name: Check the iPhone app holds every picture of the exercise library, and no other
+        if: matrix.checks
         run: |
           app=build/Build/Products/Debug-iphonesimulator/Halko.app
           diff <(jq -r '.[].mediaIds[] + ".webp"' Packages/HalkoCore/Sources/HalkoCore/Resources/exercises.json | sort -u) <(ls "$app/ExerciseImages" | sort)
@@ -82,14 +110,14 @@ jobs:
       - uses: actions/upload-artifact@v7
         if: always() && hashFiles('Halko.xcresult/**') != ''
         with:
-          name: screenshots
+          name: screenshots-${{ matrix.part }}
           path: screenshots
           if-no-files-found: ignore
       # The whole test report (the app's output, its crash and hang logs) when a test fails.
       - uses: actions/upload-artifact@v7
         if: failure() && hashFiles('Halko.xcresult/**') != ''
         with:
-          name: xcresult
+          name: xcresult-${{ matrix.part }}
           path: Halko.xcresult
 
   passed:
