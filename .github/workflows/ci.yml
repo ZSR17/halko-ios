@@ -56,7 +56,7 @@ jobs:
         # given its own part must also be added to its `skip`.
         include:
           - part: add-to-workout
-            only: AddToWorkoutTests
+            only: AddToWorkoutTests WorkoutsTests
           - part: workout-editor
             only: WorkoutEditorTests
           - part: exercise-editor
@@ -64,7 +64,7 @@ jobs:
             # The shortest part also builds the watch app and checks what the iPhone app holds.
             checks: true
           - part: others
-            skip: AddToWorkoutTests WorkoutEditorTests ExerciseEditorTests RootTests
+            skip: AddToWorkoutTests WorkoutsTests WorkoutEditorTests ExerciseEditorTests RootTests
     steps:
       - uses: actions/checkout@v7
       - run: brew install xcodegen
