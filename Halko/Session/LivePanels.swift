@@ -16,6 +16,9 @@ private struct Panel<Content: View>: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         // Fixed over the sets: with the largest text sizes, it would hide them all.
         .dynamicTypeSize(...DynamicTypeSize.accessibility1)
+        // For the interface tests: the sets hidden under it are not measured.
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("bottom-panel")
         .background {
             ZStack {
                 Color(.secondarySystemGroupedBackground)

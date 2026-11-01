@@ -15,9 +15,11 @@ final class LiveSessionTests: XCTestCase {
         try app.auditScreen()
         snap("Session")
 
-        // A set more for this session, like the last one.
+        // A set more for this session, like the last one: its button, under the sets, shown first.
+        app.scrollViews.firstMatch.swipeUp()
         app.buttons["Add a set"].firstMatch.tap()
         XCTAssertTrue(app.element(containing: "Set 2 of 5").waitForExistence(timeout: 5))
+        app.scrollViews.firstMatch.swipeDown()
 
         // Validated: the rest, with what comes next.
         app.buttons["Validate the set"].tap()
