@@ -1,6 +1,7 @@
 # On every push to master and pull request: HalkoCore's tests, then the Xcode project generated from project.yml,
 # the iPhone app (with the watch app inside) built and its interface tested on a simulator. The screenshots of the
-# interface tests are kept with the run. A change to the documentation only skips them.
+# interface tests are kept with the run. A change to the documentation only skips them. A pull request runs only the
+# interface tests of the screens it changes (.github/ui-tests.sh); master, after the merge, runs them all.
 # "CI passed" sums it up: it is the check a pull request needs to be merged into master.
 name: CI
 
@@ -9,11 +10,18 @@ on:
     branches: [master]
   pull_request:
 
+# A new push to a pull request stops the run of the one before: only the last is checked. Every merge into master is
+# checked to the end.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   changes:
     runs-on: ubuntu-24.04
     outputs:
       code: ${{ steps.diff.outputs.code }}
+      ui-tests: ${{ steps.diff.outputs.ui-tests }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -30,6 +38,14 @@ jobs:
           fi
           code=$(echo "$files" | grep -Ev '\.md$|^docs/|^LICENSE$|^NOTICE$' | head -1)
           echo "code=$([ -n "$code" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          # The interface tests: those of the screens changed on a pull request, all on master.
+          if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
+            ui=$(echo "$files" | bash .github/ui-tests.sh | xargs)
+          else
+            ui=all
+          fi
+          echo "Interface tests: ${ui:-none}"
+          echo "ui-tests=$ui" >> "$GITHUB_OUTPUT"
 
   core:
     needs: changes
@@ -61,9 +77,22 @@ jobs:
         run: xcodebuild build -project Halko.xcodeproj -scheme HalkoWatch -destination 'generic/platform=watchOS Simulator' -derivedDataPath build CODE_SIGNING_ALLOWED=NO
       - name: Test the iPhone app
         # A test failing on a slow runner (an audit or a query out of time) is run again, alone, up to twice: only a
-        # failure that comes back three times fails the job.
+        # failure that comes back three times fails the job. Without a screen changed, the app is only built.
+        env:
+          TESTS: ${{ needs.changes.outputs.ui-tests }}
+          SIMULATOR: ${{ steps.simulator.outputs.id }}
         run: |
-          xcodebuild test -project Halko.xcodeproj -scheme Halko -destination "id=${{ steps.simulator.outputs.id }}" -derivedDataPath build -resultBundlePath Halko.xcresult -retry-tests-on-failure -test-iterations 3
+          if [ -z "$TESTS" ]; then
+            xcodebuild build -project Halko.xcodeproj -scheme Halko -destination "id=$SIMULATOR" -derivedDataPath build
+            exit
+          fi
+          only=()
+          if [ "$TESTS" != all ]; then
+            for test in $TESTS; do
+              only+=("-only-testing:HalkoUITests/$test")
+            done
+          fi
+          xcodebuild test -project Halko.xcodeproj -scheme Halko -destination "id=$SIMULATOR" -derivedDataPath build -resultBundlePath Halko.xcresult -retry-tests-on-failure -test-iterations 3 ${only[@]+"${only[@]}"}
       - name: Check the watch app is inside the iPhone app, and both have their icon
         run: |
           app=build/Build/Products/Debug-iphonesimulator/Halko.app

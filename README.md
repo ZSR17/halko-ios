@@ -32,7 +32,7 @@ Requirements: Xcode 26 or later; the apps run on iOS 26 and watchOS 26.
 - `Halko/`: the iPhone app.
 - `HalkoWatch/`: the Apple Watch app, installed with the iPhone app.
 - `Packages/HalkoCore/`: the code both apps share (data, sync, workout logic), tested with `swift test`.
-- `HalkoUITests/`: the interface tests; each screen tested is kept as a screenshot in the CI run.
+- `HalkoUITests/`: the interface tests; each screen tested is kept as a screenshot in the CI run. A pull request runs those of the screens it changes (`.github/ui-tests.sh`), master all of them after the merge.
 - `ExerciseImages/` and `Packages/HalkoCore/Sources/HalkoCore/Resources/exercises.json`: the exercise library,
   embedded so that the apps work without a server, with the same ids as on every Halko server. Both are made by
   the server: `npm run export:library -- --out <folder>` in the [Halko](https://github.com/ZSR17/halko)
