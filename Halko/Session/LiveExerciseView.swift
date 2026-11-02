@@ -418,6 +418,8 @@ struct SetCell: View {
                     .strokeBorder(Color(.secondaryText), lineWidth: 1.5)
             }
         }
+        // Its name, not the "–" shown when it is empty.
+        .accessibilityLabel(Text(verbatim: label))
         .accessibilityHint(Text("Double tap to change it."))
         .onChange(of: isFocused) { _, focused in
             guard !focused else {

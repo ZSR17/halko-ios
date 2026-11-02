@@ -20,7 +20,7 @@ final class LiveSessionTests: XCTestCase {
         XCTAssertTrue(app.descendants(matching: .any).matching(NSPredicate(format: "value == %@", "80.5")).firstMatch.waitForExistence(timeout: 5))
 
         // A set to come changed in its box, before its turn; the button above the panel puts the keyboard away.
-        let later = app.textFields.matching(NSPredicate(format: "label BEGINSWITH %@", "Set 4,")).firstMatch
+        let later = app.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH %@", "Set 4,")).firstMatch
         XCTAssertTrue(later.waitForExistence(timeout: 5))
         later.tap()
         later.typeText("90")
