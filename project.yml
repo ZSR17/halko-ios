@@ -45,6 +45,8 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.zsr.halko
+        # Health, and the end of a rest notified even in a Focus.
+        CODE_SIGN_ENTITLEMENTS: Halko/Halko.entitlements
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         # Color(.musclePrimary)…: the colors of Assets.xcassets, checked by the compiler.
@@ -52,6 +54,9 @@ targets:
         TARGETED_DEVICE_FAMILY: "1"
         INFOPLIST_KEY_CFBundleDisplayName: Halko
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.healthcare-fitness
+        # Translated in InfoPlist.xcstrings.
+        INFOPLIST_KEY_NSHealthShareUsageDescription: Halko reads your heart rate and active calories during a workout to show them, and today's Activity rings in the workout summary.
+        INFOPLIST_KEY_NSHealthUpdateUsageDescription: Halko saves your strength workouts in Health, with their active calories and heart rate, so that they count towards your Move and Exercise rings.
         # Only standard encryption (HTTPS): no export compliance question on each TestFlight build.
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES

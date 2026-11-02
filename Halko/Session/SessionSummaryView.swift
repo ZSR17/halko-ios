@@ -1,19 +1,24 @@
 import HalkoCore
+import HealthKit
 import os
 import SwiftData
 import SwiftUI
 
-// The end of a session once saved: its duration, working sets and load moved, and the records beaten. Worked out on
-// the device; the sending to the server, when there is one, shows nothing.
+// The end of a session once saved: its duration, working sets and load moved, and the records beaten, worked out on
+// the device; then what Health measured, once its workout is saved there. The sending to the server, when there is
+// one, shows nothing.
 struct SessionSummaryView: View {
     private static let logger = Logger(subsystem: "com.zsr.halko", category: "session")
 
     let session: Session
     @Environment(LiveSessionStore.self) private var store
+    @Environment(WorkoutRecorder.self) private var recorder
     @Environment(\.modelContext) private var context
     @Environment(\.locale) private var locale
     @State private var summary: SessionSummary?
     @State private var names: [String: String] = [:]
+    @State private var rings: HKActivitySummary?
+    @ScaledMetric(relativeTo: .body) private var ringsSide = 96.0
 
     var body: some View {
         let text = SetsText(locale: locale)
@@ -25,6 +30,9 @@ struct SessionSummaryView: View {
                     if !summary.records.isEmpty {
                         records(summary, text: text)
                     }
+                }
+                if let health = recorder.saved, health.sessionID == session.id {
+                    healthCard(health)
                 }
             }
             .padding()
@@ -47,6 +55,11 @@ struct SessionSummaryView: View {
         }
         .task(id: session.id) {
             load()
+        }
+        // The rings once the workout is in Health.
+        .task(id: recorder.saved?.sessionID == session.id) {
+            guard recorder.saved?.sessionID == session.id else { return }
+            rings = await recorder.todayActivity()
         }
     }
 
@@ -129,6 +142,42 @@ struct SessionSummaryView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 18))
         }
+    }
+
+    private func healthCard(_ health: HealthResult) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Health")
+                .font(.title3.bold())
+                .accessibilityAddTraits(.isHeader)
+            HStack(spacing: 14) {
+                ActivityRings(summary: rings)
+                    .frame(width: ringsSide, height: ringsSide)
+                VStack(alignment: .leading, spacing: 6) {
+                    if let kilocalories = health.activeKilocalories {
+                        measure(Text("Active calories"), Text(verbatim: Measurement(value: kilocalories, unit: UnitEnergy.kilocalories)
+                            .formatted(.measurement(width: .abbreviated, usage: .workout, numberFormatStyle: .number.precision(.fractionLength(0))))))
+                    }
+                    if let average = health.averageHeartRate, let maximum = health.maximumHeartRate {
+                        measure(Text("Heart rate"), Text("\(Int(average.rounded())) avg · \(Int(maximum.rounded())) max"))
+                    }
+                }
+                .font(.subheadline)
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 18))
+        }
+    }
+
+    private func measure(_ label: Text, _ value: Text) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            label
+                .foregroundStyle(Color(.secondaryText))
+            value
+                .bold()
+                .monospacedDigit()
+        }
+        .accessibilityElement(children: .combine)
     }
 
     // "Estimated 1RM 101.3 kg (before 98.5 kg)".

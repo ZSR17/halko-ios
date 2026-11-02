@@ -16,6 +16,7 @@ struct LiveSessionView: View {
     let state: LiveState
     let finished: (Session) -> Void
     @Environment(LiveSessionStore.self) private var store
+    @Environment(WorkoutRecorder.self) private var recorder
     @Environment(\.modelContext) private var context
     @Environment(\.locale) private var locale
     @Query private var sessions: [Session]
@@ -46,6 +47,9 @@ struct LiveSessionView: View {
             ScrollViewReader { proxy in
                 ScrollView {
                     VStack(alignment: .leading, spacing: 24) {
+                        if let heartRate = recorder.heartRate {
+                            HeartRateChip(bpm: heartRate)
+                        }
                         ForEach(Array(state.plan.enumerated()), id: \.element.itemID) { index, item in
                             LiveExerciseView(
                                 index: index,
@@ -120,6 +124,8 @@ struct LiveSessionView: View {
             // Finished here, the summary follows: only a session still held is let go.
             guard let session = sessions.first, session.removed || session.endedAt != nil,
                   store.state?.sessionID == session.id else { return }
+            // That device's workout is the one in Health.
+            recorder.discard()
             store.set(nil)
             store.isPresented = false
         }
@@ -257,10 +263,12 @@ struct LiveSessionView: View {
     private func finish() {
         do {
             guard let session = try context.finishSession(state) else {
+                recorder.discard()
                 store.set(nil)
                 store.isPresented = false
                 return
             }
+            recorder.finish(at: session.endedAt ?? .now)
             finished(session)
             store.set(nil)
         } catch {
@@ -271,6 +279,7 @@ struct LiveSessionView: View {
     private func discard() {
         do {
             try context.discardSession(state)
+            recorder.discard()
             store.set(nil)
             store.isPresented = false
         } catch {
@@ -420,5 +429,28 @@ struct LiveTable {
 
     func columnTitle(_ field: SetField, item: Int, long: Bool) -> String {
         fields.columnTitle(field, type: plan.items[item].exerciseType, perSide: plan.items[item].unilateral, long: long)
+    }
+}
+
+// The heart rate measured by a watch or a sensor: absent without one.
+private struct HeartRateChip: View {
+    let bpm: Double
+
+    var body: some View {
+        let value = Int(bpm.rounded())
+        Label {
+            Text("\(value) bpm")
+                .monospacedDigit()
+        } icon: {
+            Image(systemName: "heart.fill")
+                .foregroundStyle(.red)
+        }
+        .font(.subheadline)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 5)
+        .background(Color(.secondarySystemGroupedBackground), in: .capsule)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text("Heart rate"))
+        .accessibilityValue(Text("\(value) beats per minute"))
     }
 }
