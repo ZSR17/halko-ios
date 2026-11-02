@@ -14,6 +14,7 @@ struct ItemEditor<Grip: View>: View {
     // The sets as they were when a box got the keyboard: a value typed is applied to them.
     @State private var editStart: EditStart?
     @State private var openSet: UUID?
+    @State private var confirmingRemove = false
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     private struct EditStart {
@@ -100,17 +101,22 @@ struct ItemEditor<Grip: View>: View {
         .accessibilityElement(children: .combine)
     }
 
-    // Hidden while the exercises are put in order.
+    // Hidden while the exercises are put in order. Asked first, where the button is.
     @ViewBuilder
     private var removeButton: some View {
         if !collapsed {
-            Button(action: remove) {
+            Button {
+                confirmingRemove = true
+            } label: {
                 Label("Remove \(name)", systemImage: "trash")
                     .labelStyle(.iconOnly)
                     .frame(minWidth: 44, minHeight: 44)
                     .contentShape(.rect)
             }
             .foregroundStyle(Color(.secondaryText))
+            .confirmationDialog("Delete “\(name)” from this workout?", isPresented: $confirmingRemove, titleVisibility: .visible) {
+                Button("Delete this exercise", role: .destructive, action: remove)
+            }
         }
     }
 
@@ -294,6 +300,7 @@ struct ItemEditor<Grip: View>: View {
                 Text("Note for \(name)")
             }
             .focused(focus, equals: .note(item.id))
+            .id(EditorField.note(item.id))
             .font(.subheadline)
         }
         .padding(.horizontal, 10)

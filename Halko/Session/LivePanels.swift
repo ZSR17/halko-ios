@@ -1,9 +1,11 @@
 import HalkoCore
 import SwiftUI
 
-// The block fixed at the bottom of the session: the set to do, the rest, or the end.
+// The block fixed at the bottom of the session: the set to do, the rest, or the end. `bottomPadding` may be negative,
+// to go down into the area of the home indicator.
 private struct Panel<Content: View>: View {
     var tint: Color?
+    let bottomPadding: CGFloat
     @ViewBuilder let content: Content
 
     var body: some View {
@@ -12,24 +14,25 @@ private struct Panel<Content: View>: View {
         }
         .padding(.horizontal)
         .padding(.top, 14)
-        .padding(.bottom, 8)
+        .padding(.bottom, bottomPadding)
         .frame(maxWidth: .infinity, alignment: .leading)
         // Fixed over the sets: with the largest text sizes, it would hide them all.
         .dynamicTypeSize(...DynamicTypeSize.accessibility1)
         // For the interface tests: the sets hidden under it are not measured.
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("bottom-panel")
-        .background {
-            ZStack {
-                Color(.secondarySystemGroupedBackground)
-                if let tint {
-                    tint.opacity(0.12)
+        .background(alignment: .top) {
+            let shape = UnevenRoundedRectangle(topLeadingRadius: 24, topTrailingRadius: 24)
+            shape
+                .fill(Color(.secondarySystemGroupedBackground))
+                .overlay {
+                    if let tint {
+                        shape.fill(tint.opacity(0.12))
+                    }
                 }
-            }
-            .clipShape(UnevenRoundedRectangle(topLeadingRadius: 24, topTrailingRadius: 24))
-            .shadow(color: .black.opacity(0.2), radius: 12, y: -4)
-            // Down to the bottom edge of the screen.
-            .ignoresSafeArea(edges: .bottom)
+                // Down past the bottom edge of the screen, so that nothing shows under it.
+                .padding(.bottom, -400)
+                .shadow(color: .black.opacity(0.2), radius: 12, y: -4)
         }
     }
 }
@@ -38,12 +41,13 @@ private struct Panel<Content: View>: View {
 struct SetPanel: View {
     let table: LiveTable
     let step: LiveStep
+    let bottomPadding: CGFloat
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
         let draft = table.draft(step)
         let fields = table.metrics(step.item)
-        Panel {
+        Panel(bottomPadding: bottomPadding) {
             Text(verbatim: title)
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(.tint)
@@ -180,6 +184,7 @@ struct RestPanel: View {
     let end: Date
     let totalS: Int
     let next: String?
+    let bottomPadding: CGFloat
     let shorten: () -> Void
     let skip: () -> Void
     let lengthen: () -> Void
@@ -187,7 +192,7 @@ struct RestPanel: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
-        Panel(tint: Color(.rest)) {
+        Panel(tint: Color(.rest), bottomPadding: bottomPadding) {
             let layout = dynamicTypeSize.isAccessibilitySize
                 ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8))
                 : AnyLayout(HStackLayout(alignment: .bottom, spacing: 12))
@@ -241,6 +246,7 @@ struct RestPanel: View {
     private var buttons: some View {
         Button(action: shorten) {
             Text(verbatim: "−15 s")
+                .foregroundStyle(Color(.label))
                 .frame(maxWidth: .infinity, minHeight: 44)
         }
         .accessibilityLabel(Text("Remove 15 seconds"))
@@ -254,6 +260,7 @@ struct RestPanel: View {
         .tint(Color(.rest))
         Button(action: lengthen) {
             Text(verbatim: "+15 s")
+                .foregroundStyle(Color(.label))
                 .frame(maxWidth: .infinity, minHeight: 44)
         }
         .accessibilityLabel(Text("Add 15 seconds"))
@@ -263,10 +270,11 @@ struct RestPanel: View {
 
 // Every set is done: the session can be finished.
 struct AllDonePanel: View {
+    let bottomPadding: CGFloat
     let finish: () -> Void
 
     var body: some View {
-        Panel {
+        Panel(bottomPadding: bottomPadding) {
             Text("All sets done")
                 .font(.headline)
             Button(action: finish) {

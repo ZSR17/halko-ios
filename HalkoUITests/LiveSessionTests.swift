@@ -50,6 +50,15 @@ final class LiveSessionTests: XCTestCase {
         app.openSessionInProgress()
         XCTAssertTrue(app.element(containing: "Set 3 of 5").waitForExistence(timeout: 5))
 
+        // Deleting an exercise is asked first, where its menu was; a tap elsewhere keeps it.
+        app.scrollViews.firstMatch.swipeDown()
+        app.buttons["More actions for Barbell Bench Press - Medium Grip"].tap()
+        app.buttons["Delete this exercise"].tap()
+        XCTAssertTrue(app.element(containing: "from this session?").waitForExistence(timeout: 5))
+        snap("Session › Delete an exercise")
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.08)).tap()
+        XCTAssertTrue(app.element(containing: "Exercise 1 of 5").waitForExistence(timeout: 5))
+
         // Saved: the summary, with the estimated 1RM beaten (80 × 8 today, 85 × 3 before).
         app.buttons["Finish"].tap()
         snap("Session › Finish")

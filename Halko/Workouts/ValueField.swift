@@ -2,7 +2,7 @@ import HalkoCore
 import SwiftUI
 
 // A box of the workout editor that has the keyboard.
-enum EditorField: Hashable {
+nonisolated enum EditorField: Hashable, Sendable {
     case name
     case note(ItemDraft.ID)
     case setCount(ItemDraft.ID)
@@ -28,6 +28,7 @@ struct ValueField: View {
     let begin: () -> Void
     let commit: (Double?) -> Void
     @State private var text: String
+    @State private var selection: TextSelection?
     @ScaledMetric(relativeTo: .body) private var height: CGFloat = 44
 
     init(
@@ -64,10 +65,12 @@ struct ValueField: View {
     var body: some View {
         let dimmed = workedOut && !isFocused
         // Without a value, a dash rather than the label.
-        TextField(text: $text, prompt: Text(verbatim: "–").foregroundStyle(Color(.secondaryText))) {
+        TextField(text: $text, selection: $selection, prompt: Text(verbatim: "–").foregroundStyle(Color(.secondaryText)), axis: nil) {
             label
         }
         .focused(focus, equals: field)
+        // Where the editor scrolls to, above the keyboard.
+        .id(field)
         .keyboardType(keyboard)
         .multilineTextAlignment(.center)
         .font(dimmed ? .body.italic() : .body.weight(.semibold))
@@ -80,6 +83,8 @@ struct ValueField: View {
         .onChange(of: isFocused) { _, focused in
             if focused {
                 begin()
+                // Typing replaces the value at once.
+                selectAllText(text, in: $selection)
             } else {
                 text = format(value)
             }
@@ -97,6 +102,33 @@ struct ValueField: View {
                 commit(nil)
             }
         }
+    }
+}
+
+extension View {
+    // Once the keyboard is up, brings the box that has it to the middle of what is left of the scroll view: SwiftUI
+    // alone stops with it under the keyboard's bar or the panel above it. Each box carries its focus value as `id`.
+    func scrollingToFocus<Field: Hashable & Sendable>(_ focus: Field?, in proxy: ScrollViewProxy) -> some View {
+        task(id: focus) {
+            guard let focus else { return }
+            do {
+                try await Task.sleep(for: .milliseconds(350))
+            } catch {
+                return
+            }
+            withAnimation {
+                proxy.scrollTo(focus, anchor: .center)
+            }
+        }
+    }
+}
+
+// Selects the whole text of a box that just got the keyboard, once the box has put its cursor.
+@MainActor
+func selectAllText(_ text: String, in selection: Binding<TextSelection?>) {
+    Task {
+        await Task.yield()
+        selection.wrappedValue = TextSelection(range: text.startIndex..<text.endIndex)
     }
 }
 

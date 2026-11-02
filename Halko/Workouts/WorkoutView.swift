@@ -48,7 +48,6 @@ struct WorkoutView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .buttonBorderShape(.capsule)
-                .controlSize(.large)
                 .padding(.horizontal)
                 .padding(.bottom, 8)
             }
@@ -74,6 +73,8 @@ struct WorkoutView: View {
         }
         .navigationTitle(workout.name)
         .navigationSubtitle("\(items.count) exercises")
+        // Large on arrival, in the bar once scrolled.
+        .navigationBarTitleDisplayMode(.large)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Menu("More actions", systemImage: "ellipsis") {
