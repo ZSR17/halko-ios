@@ -4,7 +4,7 @@ import SwiftData
 import SwiftUI
 
 // A box of the session that has the keyboard: a value of a set, by step key.
-enum LiveField: Hashable {
+nonisolated enum LiveField: Hashable, Sendable {
     case value(String, SetField)
 }
 
@@ -28,8 +28,12 @@ struct LiveSessionView: View {
     @State private var previous: [String: [Int: SetValues]] = [:]
     // Exercises done, opened again to correct a set, until the set to do changes.
     @State private var unfolded: Set<String> = []
+    // Asked from Finish at the top, or from the panel once every set is done.
     @State private var finishing = false
+    @State private var finishingAllDone = false
     @State private var discarding = false
+    // The bottom of the screen not to draw in: the home indicator's, or the keyboard's.
+    @State private var bottomInset: CGFloat = 0
     @FocusState private var focus: LiveField?
 
     init(state: LiveState, finished: @escaping (Session) -> Void) {
@@ -63,6 +67,7 @@ struct LiveSessionView: View {
                     }
                     .padding()
                 }
+                .scrollingToFocus(focus, in: proxy)
                 .onChange(of: state.cursor) {
                     unfolded = []
                 }
@@ -77,23 +82,13 @@ struct LiveSessionView: View {
             .safeAreaInset(edge: .bottom) {
                 panel(table)
             }
+            .onGeometryChange(for: CGFloat.self) { $0.safeAreaInsets.bottom } action: { inset in
+                bottomInset = inset
+            }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 toolbar(table)
             }
-        }
-        .confirmationDialog("Finish the session?", isPresented: $finishing, titleVisibility: .visible) {
-            if !sets.isEmpty {
-                Button("Save the session") {
-                    finish()
-                }
-            }
-            Button("Discard the session", role: .destructive) {
-                discarding = true
-            }
-            Button("Continue the session", role: .cancel) {}
-        } message: {
-            Text("\(sets.count) of \(table.plan.steps.count) sets done.")
         }
         .alert("Discard the session?", isPresented: $discarding) {
             Button("Discard", role: .destructive) {
@@ -186,6 +181,9 @@ struct LiveSessionView: View {
                 finishing = true
             }
             .foregroundStyle(.red)
+            .finishDialog(isPresented: $finishing, setsDone: sets.count, of: table.plan.steps.count, save: finish) {
+                discarding = true
+            }
         }
         ToolbarItemGroup(placement: .keyboard) {
             Spacer()
@@ -198,11 +196,14 @@ struct LiveSessionView: View {
     @ViewBuilder
     private func panel(_ table: LiveTable) -> some View {
         if table.allDone {
-            AllDonePanel {
-                finishing = true
+            AllDonePanel(bottomPadding: panelBottomPadding) {
+                finishingAllDone = true
+            }
+            .finishDialog(isPresented: $finishingAllDone, setsDone: sets.count, of: table.plan.steps.count, save: finish) {
+                discarding = true
             }
         } else if let end = state.restEndsAt {
-            RestPanel(end: end, totalS: state.restTotalS, next: table.nextText) {
+            RestPanel(end: end, totalS: state.restTotalS, next: table.nextText, bottomPadding: panelBottomPadding) {
                 store.change { $0.shortenRest() }
             } skip: {
                 store.change { $0.endRest() }
@@ -210,8 +211,14 @@ struct LiveSessionView: View {
                 store.change { $0.lengthenRest() }
             }
         } else if let step = table.step {
-            SetPanel(table: table, step: step)
+            SetPanel(table: table, step: step, bottomPadding: panelBottomPadding)
         }
+    }
+
+    // Above the home indicator, the panel goes down into its area, a small margin above the edge of the screen; above
+    // the keyboard, or on a screen without a home indicator, it keeps a margin of its own.
+    private var panelBottomPadding: CGFloat {
+        (1...50).contains(bottomInset) ? 20 - bottomInset : 12
     }
 
     // MARK: Actions
@@ -304,6 +311,21 @@ struct LiveSessionView: View {
             try store.change(body)
         } catch {
             Self.logger.error("Cannot change the session: \(String(describing: error))")
+        }
+    }
+}
+
+private extension View {
+    // « Finish the session? »: save it (once a set is done), discard it, or go on; shown where it was asked from.
+    func finishDialog(isPresented: Binding<Bool>, setsDone: Int, of total: Int, save: @escaping () -> Void, discard: @escaping () -> Void) -> some View {
+        confirmationDialog("Finish the session?", isPresented: isPresented, titleVisibility: .visible) {
+            if setsDone > 0 {
+                Button("Save the session", action: save)
+            }
+            Button("Discard the session", role: .destructive, action: discard)
+            Button("Continue the session", role: .cancel) {}
+        } message: {
+            Text("\(setsDone) of \(total) sets done.")
         }
     }
 }

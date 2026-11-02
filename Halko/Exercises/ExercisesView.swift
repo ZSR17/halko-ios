@@ -62,10 +62,46 @@ struct ExerciseBrowser<Row: View>: View {
         }
         // Always open: folded under the large title, it is crushed to a line with the largest text sizes.
         .searchable(text: $catalog.filter.query, placement: .navigationBarDrawer(displayMode: .always), prompt: Text("Search \(catalog.pool) exercises"))
+        // The ✕ inside the field clears the search; scrolling hides the keyboard.
+        .background {
+            SearchCancelButtonHidden()
+                .accessibilityHidden(true)
+                .allowsHitTesting(false)
+        }
+        .scrollDismissesKeyboard(.immediately)
         .onChange(of: exercises, initial: true) { _, exercises in
             catalog.show(exercises)
         }
     }
+}
+
+// Takes the ✕ button away from beside the search field of the page it is in: the one inside the field is enough. SwiftUI
+// has no setting for it, so it is set on the search controller of the page.
+private struct SearchCancelButtonHidden: UIViewControllerRepresentable {
+    final class Controller: UIViewController {
+        override func viewWillAppear(_ animated: Bool) {
+            super.viewWillAppear(animated)
+            hideCancelButton()
+        }
+
+        override func viewDidAppear(_ animated: Bool) {
+            super.viewDidAppear(animated)
+            hideCancelButton()
+        }
+
+        private func hideCancelButton() {
+            let searchController = sequence(first: self as UIViewController, next: \.parent)
+                .lazy.compactMap(\.navigationItem.searchController).first
+            searchController?.automaticallyShowsCancelButton = false
+            searchController?.searchBar.showsCancelButton = false
+        }
+    }
+
+    func makeUIViewController(context: Context) -> Controller {
+        Controller()
+    }
+
+    func updateUIViewController(_ controller: Controller, context: Context) {}
 }
 
 // The exercises of the list in the alphabetical order of the app's language, and those the filter keeps, worked

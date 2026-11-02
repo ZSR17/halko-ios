@@ -3,7 +3,7 @@ import SwiftUI
 
 // An exercise of the session: its picture, name and plan, then a row for each set (warm-up or number, last time's
 // values, the values, a check) and « Add a set ». As in the workout editor, a set swiped left shows Delete; « … » deletes
-// the exercise. Folded to its name once every set is done; a tap opens it again, until the next set is validated.
+// the exercise, once confirmed. Folded to its name once every set is done; a tap opens it again, until the next set is validated.
 struct LiveExerciseView: View {
     let index: Int
     let table: LiveTable
@@ -43,17 +43,6 @@ struct LiveExerciseView: View {
                     }
                 }
                 addSet
-            }
-            .confirmationDialog(
-                "Delete “\(table.name(index))” from this session?",
-                isPresented: $confirmingDelete,
-                titleVisibility: .visible
-            ) {
-                Button("Delete the exercise", role: .destructive) {
-                    table.actions.deleteExercise(index)
-                }
-            } message: {
-                Text("The sets done of it are deleted too.")
             }
         }
     }
@@ -137,8 +126,8 @@ struct LiveExerciseView: View {
             .accessibilityAddTraits(.isHeader)
             if table.state.canDeleteExercise {
                 Menu {
-                    Button("Delete the exercise", systemImage: "trash", role: .destructive) {
-                        deleteExercise()
+                    Button("Delete this exercise", systemImage: "trash", role: .destructive) {
+                        confirmingDelete = true
                     }
                 } label: {
                     Image(systemName: "ellipsis")
@@ -147,18 +136,26 @@ struct LiveExerciseView: View {
                         .contentShape(.rect)
                 }
                 .accessibilityLabel(Text("More actions for \(table.name(index))"))
+                // Asked where the menu was.
+                .confirmationDialog(
+                    "Delete “\(table.name(index))” from this session?",
+                    isPresented: $confirmingDelete,
+                    titleVisibility: .visible
+                ) {
+                    Button("Delete this exercise", role: .destructive) {
+                        table.actions.deleteExercise(index)
+                    }
+                } message: {
+                    if hasSetsDone {
+                        Text("The sets done of it are deleted too.")
+                    }
+                }
             }
         }
     }
 
-    // Asked first when sets of it are done.
-    private func deleteExercise() {
-        let done = table.setNumbers(index).contains { table.logged[LivePlan.key(item.itemID, $0)] != nil }
-        if done {
-            confirmingDelete = true
-        } else {
-            table.actions.deleteExercise(index)
-        }
+    private var hasSetsDone: Bool {
+        table.setNumbers(index).contains { table.logged[LivePlan.key(item.itemID, $0)] != nil }
     }
 
     private var columnTitles: some View {
@@ -347,6 +344,7 @@ struct SetCell: View {
     let id: LiveField
     let commit: (Double?) -> Void
     @State private var text: String
+    @State private var selection: TextSelection?
     @ScaledMetric(relativeTo: .body) private var height: CGFloat = 44
 
     init(
@@ -375,10 +373,12 @@ struct SetCell: View {
     }
 
     var body: some View {
-        TextField(text: $text, prompt: Text(verbatim: "–").foregroundStyle(Color(.secondaryText))) {
+        TextField(text: $text, selection: $selection, prompt: Text(verbatim: "–").foregroundStyle(Color(.secondaryText)), axis: nil) {
             Text(verbatim: label)
         }
         .focused(focus, equals: id)
+        // Where the session scrolls to, above the keyboard.
+        .id(id)
         .keyboardType(field == .weight || field == .distance ? .decimalPad : .numberPad)
         .multilineTextAlignment(.center)
         .font(.body.weight(boxed ? .bold : .regular))
@@ -393,7 +393,11 @@ struct SetCell: View {
         }
         .accessibilityHint(Text("Double tap to change it."))
         .onChange(of: isFocused) { _, focused in
-            guard !focused else { return }
+            guard !focused else {
+                // Typing replaces the value at once.
+                selectAllText(text, in: $selection)
+                return
+            }
             if let typed = fields.value(text, of: field), typed != value {
                 commit(typed)
             }

@@ -851,6 +851,16 @@
         }
       }
     },
+    "Delete this exercise" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer cet exercice"
+          }
+        }
+      }
+    },
     "Delete this exercise?" : {
       "localizations" : {
         "fr" : {
@@ -862,6 +872,16 @@
       }
     },
     "Delete “%@” from this session?" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer « %@ » de cette séance ?"
+          }
+        }
+      }
+    },
+    "Delete “%@” from this workout?" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {

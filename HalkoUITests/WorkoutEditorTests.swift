@@ -42,6 +42,10 @@ final class WorkoutEditorTests: XCTestCase {
         let remove = app.buttons["Remove Side Bridge"]
         XCTAssertTrue(remove.waitForExistence(timeout: 5))
         remove.tap()
+        let confirm = app.buttons["Delete this exercise"]
+        XCTAssertTrue(confirm.waitForExistence(timeout: 5))
+        snap("Edit workout › Delete an exercise")
+        confirm.tap()
         XCTAssertTrue(app.element(containing: "4 exercises · 2 supersets").waitForExistence(timeout: 5))
         app.buttons["Save"].tap()
         XCTAssertTrue(app.navigationBars["Push A"].waitForExistence(timeout: 5))

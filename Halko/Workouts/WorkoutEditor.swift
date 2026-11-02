@@ -44,57 +44,61 @@ struct WorkoutEditor: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 12) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Workout name")
-                            .font(.caption)
-                            .foregroundStyle(Color(.secondaryText))
-                            .accessibilityHidden(true)
-                        TextField("Workout name", text: $draft.name)
-                            .font(.title2.weight(.bold))
-                            .focused($focus, equals: .name)
-                            .padding(.horizontal, 12)
-                            .frame(minHeight: 48)
-                            .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 12))
-                    }
-                    HStack {
-                        summary
-                            .font(.subheadline)
-                            .foregroundStyle(Color(.secondaryText))
-                        Spacer()
-                        Button {
-                            showsHelp = true
-                        } label: {
-                            Label("How editing works", systemImage: "info.circle")
-                                .labelStyle(.iconOnly)
-                                .frame(minWidth: 44, minHeight: 44)
-                                .contentShape(.rect)
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 12) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Workout name")
+                                .font(.caption)
+                                .foregroundStyle(Color(.secondaryText))
+                                .accessibilityHidden(true)
+                            TextField("Workout name", text: $draft.name)
+                                .font(.title2.weight(.bold))
+                                .focused($focus, equals: .name)
+                                .id(EditorField.name)
+                                .padding(.horizontal, 12)
+                                .frame(minHeight: 48)
+                                .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 12))
                         }
-                        .foregroundStyle(Color(.secondaryText))
-                        .popover(isPresented: $showsHelp) {
-                            EditorHelp()
-                                .presentationCompactAdaptation(.popover)
-                        }
-                    }
-                    EditorItems(draft: $draft, fields: fields, focus: $focus)
-                    Button {
-                        picking = true
-                    } label: {
-                        Label("Add an exercise", systemImage: "plus")
-                            .font(.body.weight(.semibold))
-                            .frame(maxWidth: .infinity, minHeight: 56)
-                            .overlay {
-                                RoundedRectangle(cornerRadius: 16)
-                                    .strokeBorder(Color(.separator), style: StrokeStyle(lineWidth: 2, dash: [6, 4]))
+                        HStack {
+                            summary
+                                .font(.subheadline)
+                                .foregroundStyle(Color(.secondaryText))
+                            Spacer()
+                            Button {
+                                showsHelp = true
+                            } label: {
+                                Label("How editing works", systemImage: "info.circle")
+                                    .labelStyle(.iconOnly)
+                                    .frame(minWidth: 44, minHeight: 44)
+                                    .contentShape(.rect)
                             }
+                            .foregroundStyle(Color(.secondaryText))
+                            .popover(isPresented: $showsHelp) {
+                                EditorHelp()
+                                    .presentationCompactAdaptation(.popover)
+                            }
+                        }
+                        EditorItems(draft: $draft, fields: fields, focus: $focus)
+                        Button {
+                            picking = true
+                        } label: {
+                            Label("Add an exercise", systemImage: "plus")
+                                .font(.body.weight(.semibold))
+                                .frame(maxWidth: .infinity, minHeight: 56)
+                                .overlay {
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .strokeBorder(Color(.separator), style: StrokeStyle(lineWidth: 2, dash: [6, 4]))
+                                }
+                        }
+                        .buttonStyle(.plain)
+                        .foregroundStyle(.tint)
                     }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(.tint)
+                    .padding([.horizontal, .bottom])
                 }
-                .padding([.horizontal, .bottom])
+                .scrollDismissesKeyboard(.interactively)
+                .scrollingToFocus(focus, in: proxy)
             }
-            .scrollDismissesKeyboard(.interactively)
             .background(Color(.systemGroupedBackground))
             .navigationTitle(workout == nil ? Text("New workout") : Text("Edit workout"))
             .navigationBarTitleDisplayMode(.inline)
