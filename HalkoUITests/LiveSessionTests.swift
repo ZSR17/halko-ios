@@ -110,6 +110,13 @@ final class LiveSessionTests: XCTestCase {
         app.alerts.buttons["Discard"].tap()
         XCTAssertTrue(app.buttons["Start the workout"].waitForExistence(timeout: 5))
         app.buttons["Start the workout"].tap()
+
+        // The first session started: what Halko asks of the system, once, before it begins (the sample data asks
+        // nothing of the system).
+        XCTAssertTrue(app.staticTexts["Before your first workout"].waitForExistence(timeout: 5))
+        try app.auditScreen()
+        snap("Start › Before your first workout")
+        app.buttons["Continue"].tap()
         XCTAssertTrue(app.element(containing: "Exercise 1 of 5").waitForExistence(timeout: 5))
         XCTAssertTrue(app.element(containing: "Set 1 of 4 · Pullups").waitForExistence(timeout: 30))
         snap("Start › Pull A")

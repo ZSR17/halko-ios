@@ -151,6 +151,36 @@
         }
       }
     },
+    "%lld avg · %lld max" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld moy · %2$lld max"
+          }
+        }
+      }
+    },
+    "%lld beats per minute" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld battements par minute"
+          }
+        }
+      }
+    },
+    "%lld bpm" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld bpm"
+          }
+        }
+      }
+    },
     "%lld exercises" : {
       "localizations" : {
         "en" : {
@@ -401,6 +431,16 @@
         }
       }
     },
+    "Active calories" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Calories actives"
+          }
+        }
+      }
+    },
     "Add %@" : {
       "localizations" : {
         "fr" : {
@@ -591,6 +631,16 @@
         }
       }
     },
+    "Before your first workout" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avant ta première séance"
+          }
+        }
+      }
+    },
     "Beginning" : {
       "localizations" : {
         "fr" : {
@@ -687,6 +737,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Effacer"
+          }
+        }
+      }
+    },
+    "Continue" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continuer"
           }
         }
       }
@@ -1011,6 +1071,16 @@
         }
       }
     },
+    "Even with your iPhone locked or in another app. Sound, vibration and the signal before the end are set in Settings." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Même téléphone verrouillé ou dans une autre app. Son, vibration et signal avant la fin se règlent dans Réglages."
+          }
+        }
+      }
+    },
     "Exercise" : {
       "localizations" : {
         "fr" : {
@@ -1057,6 +1127,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Exercices"
+          }
+        }
+      }
+    },
+    "Fill your rings" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remplis tes anneaux"
           }
         }
       }
@@ -1131,6 +1211,16 @@
         }
       }
     },
+    "Get notified when your rest ends" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sois prévenu à la fin du repos"
+          }
+        }
+      }
+    },
     "Glutes" : {
       "localizations" : {
         "fr" : {
@@ -1161,12 +1251,42 @@
         }
       }
     },
+    "Halko saves your workouts in the Health app: they count towards your Move and Exercise rings. With your watch, Halko also shows your heart rate during the workout." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Halko enregistre tes séances dans l’app Santé : elles comptent pour tes anneaux Bouger et Exercice. Avec ta montre, Halko affiche aussi ta fréquence cardiaque pendant la séance."
+          }
+        }
+      }
+    },
     "Hamstrings" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ischios"
+          }
+        }
+      }
+    },
+    "Health" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Santé"
+          }
+        }
+      }
+    },
+    "Heart rate" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fréquence cardiaque"
           }
         }
       }
@@ -1841,6 +1961,16 @@
         }
       }
     },
+    "Rest over" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fin du repos"
+          }
+        }
+      }
+    },
     "Resume it" : {
       "localizations" : {
         "fr" : {
@@ -2287,6 +2417,16 @@
         }
       }
     },
+    "Time for the next set." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "C’est l’heure de la série suivante."
+          }
+        }
+      }
+    },
     "Tools" : {
       "localizations" : {
         "fr" : {
@@ -2313,6 +2453,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Triceps"
+          }
+        }
+      }
+    },
+    "Two things that make Halko more useful. Your iPhone will ask for your consent to each, and you can change your mind in Settings." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deux choses qui rendent Halko plus utile. L’iPhone va te demander ton accord pour chacune, et tu pourras changer d’avis dans Réglages."
           }
         }
       }

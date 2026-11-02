@@ -15,10 +15,15 @@ struct WorkoutView: View {
     @Query(filter: #Predicate<Session> { !$0.removed && $0.endedAt == nil }, sort: \Session.startedAt, order: .reverse)
     private var sessionsInProgress: [Session]
     @Environment(LiveSessionStore.self) private var liveSession
+    @Environment(Permissions.self) private var permissions
+    @Environment(WorkoutRecorder.self) private var recorder
     @State private var confirmingDelete = false
     @State private var editing = false
     // Another workout's session is in progress: one at a time.
     @State private var otherSession: Session?
+    // « Before your first workout », then the session once it is closed.
+    @State private var preparing = false
+    @State private var prepared = false
 
     init(workout: Workout) {
         self.workout = workout
@@ -46,6 +51,13 @@ struct WorkoutView: View {
                 .controlSize(.large)
                 .padding(.horizontal)
                 .padding(.bottom, 8)
+            }
+        }
+        .sheet(isPresented: $preparing, onDismiss: startPrepared) {
+            FirstWorkoutView {
+                await permissions.request()
+                prepared = true
+                preparing = false
             }
         }
         .alert(
@@ -119,9 +131,26 @@ struct WorkoutView: View {
             }
             return
         }
+        if permissions.asked {
+            begin()
+        } else {
+            preparing = true
+        }
+    }
+
+    private func startPrepared() {
+        guard prepared else { return }
+        prepared = false
+        begin()
+    }
+
+    private func begin() {
+        let now = Date.now
         change {
-            liveSession.set(try context.startSession(of: workout))
+            let state = try context.startSession(of: workout, now: now)
+            liveSession.set(state)
             liveSession.isPresented = true
+            recorder.start(sessionID: state.sessionID, at: now)
         }
     }
 
