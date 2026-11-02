@@ -37,17 +37,55 @@ private struct Panel<Content: View>: View {
     }
 }
 
+// The set to do, or the rest after a set. The panel keeps the height of the taller of the two, so that it does not
+// change size from one to the other: the one not shown is laid out hidden under the other.
+struct SetOrRestPanel: View {
+    let table: LiveTable
+    // The set to do, or the one after the rest.
+    let step: LiveStep?
+    // The end of the rest, while resting.
+    let restEnd: Date?
+    let restTotalS: Int
+    let bottomPadding: CGFloat
+    let shorten: () -> Void
+    let skip: () -> Void
+    let lengthen: () -> Void
+
+    var body: some View {
+        Panel(tint: restEnd == nil ? nil : Color(.rest), bottomPadding: bottomPadding) {
+            ZStack(alignment: .topLeading) {
+                if let restEnd {
+                    rest(end: restEnd)
+                    if let step {
+                        SetContent(table: table, step: step)
+                            .hidden()
+                            .accessibilityHidden(true)
+                    }
+                } else if let step {
+                    SetContent(table: table, step: step)
+                    rest(end: .now + Double(restTotalS))
+                        .hidden()
+                        .accessibilityHidden(true)
+                }
+            }
+        }
+    }
+
+    private func rest(end: Date) -> some View {
+        RestContent(end: end, totalS: restTotalS, next: table.nextText, shorten: shorten, skip: skip, lengthen: lengthen)
+    }
+}
+
 // The set to do: which one, its values with − and + buttons, and Validate.
-struct SetPanel: View {
+private struct SetContent: View {
     let table: LiveTable
     let step: LiveStep
-    let bottomPadding: CGFloat
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
         let draft = table.draft(step)
         let fields = table.metrics(step.item)
-        Panel(bottomPadding: bottomPadding) {
+        VStack(alignment: .leading, spacing: 12) {
             Text(verbatim: title)
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(.tint)
@@ -137,7 +175,7 @@ private struct ValueStepper: View {
         .background(Color(.tertiarySystemFill), in: .rect(cornerRadius: 16))
     }
 
-    // What a button adds or removes: "2.5 kg", "5 s".
+    // What a button adds or removes: "0.5 kg", "5 s".
     private var amount: String {
         switch field {
         case .weight: "\(fields.text(increment, of: .weight)) \((fields.weightUnit == .kg ? UnitMass.kilograms : UnitMass.pounds).symbol)"
@@ -151,10 +189,10 @@ private struct ValueStepper: View {
         value.map { fields.text($0, of: field) } ?? "–"
     }
 
-    // 2.5 kg or 5 lb, a rep, 5 s, a hundredth of a km or mile.
+    // The smallest plate sold, 0.5 kg or 1 lb; a rep, 5 s, a hundredth of a km or mile.
     private var increment: Double {
         switch field {
-        case .weight: fields.weightUnit == .kg ? 2500 : 5 * fields.weightUnit.grams
+        case .weight: fields.weightUnit == .kg ? 500 : fields.weightUnit.grams
         case .reps: 1
         case .duration, .rest: 5
         case .distance: fields.distanceUnit == .km ? 10 : 16.09344
@@ -180,11 +218,10 @@ private struct ValueStepper: View {
 }
 
 // The rest after a set: the time left (an absolute end, the same everywhere), what comes next, −15 s, Skip, +15 s.
-struct RestPanel: View {
+private struct RestContent: View {
     let end: Date
     let totalS: Int
     let next: String?
-    let bottomPadding: CGFloat
     let shorten: () -> Void
     let skip: () -> Void
     let lengthen: () -> Void
@@ -192,7 +229,7 @@ struct RestPanel: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
-        Panel(tint: Color(.rest), bottomPadding: bottomPadding) {
+        VStack(alignment: .leading, spacing: 12) {
             let layout = dynamicTypeSize.isAccessibilitySize
                 ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8))
                 : AnyLayout(HStackLayout(alignment: .bottom, spacing: 12))

@@ -15,6 +15,20 @@ final class LiveSessionTests: XCTestCase {
         try app.auditScreen()
         snap("Session")
 
+        // Half a kilogram more for the set to do.
+        app.buttons["Add 0.5 kg"].tap()
+        XCTAssertTrue(app.descendants(matching: .any).matching(NSPredicate(format: "value == %@", "80.5")).firstMatch.waitForExistence(timeout: 5))
+
+        // A set to come changed in its box, before its turn; the button above the panel puts the keyboard away.
+        let later = app.textFields.matching(NSPredicate(format: "label BEGINSWITH %@", "Set 4,")).firstMatch
+        XCTAssertTrue(later.waitForExistence(timeout: 5))
+        later.tap()
+        later.typeText("90")
+        snap("Session › Typing")
+        app.buttons["Hide the keyboard"].tap()
+        XCTAssertTrue(app.buttons["Hide the keyboard"].waitForNonExistence(timeout: 5))
+        XCTAssertEqual(later.value as? String, "90")
+
         // A set more for this session, like the last one: its button, under the sets, brought above the bottom block
         // first (XCUI would touch the block over it).
         let addSet = app.buttons["Add a set"].firstMatch

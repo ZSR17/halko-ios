@@ -1311,6 +1311,16 @@
         }
       }
     },
+    "Hide the keyboard" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Masquer le clavier"
+          }
+        }
+      }
+    },
     "History" : {
       "localizations" : {
         "fr" : {
@@ -2413,6 +2423,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "La séance n’a pas pu être enregistrée."
+          }
+        }
+      }
+    },
+    "This is its last set: the exercise is deleted with it." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "C’est sa dernière série : l’exercice est supprimé avec elle."
           }
         }
       }

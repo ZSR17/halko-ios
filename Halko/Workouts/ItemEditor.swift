@@ -15,6 +15,8 @@ struct ItemEditor<Grip: View>: View {
     @State private var editStart: EditStart?
     @State private var openSet: UUID?
     @State private var confirmingRemove = false
+    // The only set, asked to be deleted: the exercise goes with it, once confirmed.
+    @State private var confirmingLastSet: UUID?
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     private struct EditStart {
@@ -169,10 +171,20 @@ struct ItemEditor<Grip: View>: View {
             }
             ForEach(item.setIDs, id: \.self) { id in
                 let index = item.setIDs.firstIndex(of: id) ?? 0
-                SwipeToDelete(enabled: item.targets.count > 1, isOpen: Binding { openSet == id } set: { openSet = $0 ? id : nil }) {
-                    item.removeSet(id)
+                SwipeToDelete(enabled: true, isOpen: Binding { openSet == id } set: { openSet = $0 ? id : nil }) {
+                    removeSet(id)
                 } content: {
                     setRow(index, id: id, shown: shown)
+                }
+                // Asked where the set was.
+                .confirmationDialog(
+                    "Delete “\(name)” from this workout?",
+                    isPresented: Binding { confirmingLastSet == id } set: { if !$0 { confirmingLastSet = nil } },
+                    titleVisibility: .visible
+                ) {
+                    Button("Delete this exercise", role: .destructive, action: remove)
+                } message: {
+                    Text("This is its last set: the exercise is deleted with it.")
                 }
             }
             Button {
@@ -256,11 +268,18 @@ struct ItemEditor<Grip: View>: View {
         .accessibilityValue(warmup ? Text("Warm-up") : Text("Working set \(working)"))
         .accessibilityHint(Text("Switches between warm-up and working set."))
         .accessibilityActions {
-            if item.targets.count > 1 {
-                Button("Delete set") {
-                    item.removeSet(id)
-                }
+            Button("Delete set") {
+                removeSet(id)
             }
+        }
+    }
+
+    // The only set goes with the exercise, once confirmed.
+    private func removeSet(_ id: UUID) {
+        if item.targets.count > 1 {
+            item.removeSet(id)
+        } else {
+            confirmingLastSet = id
         }
     }
 
