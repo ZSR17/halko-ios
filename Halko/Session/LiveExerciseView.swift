@@ -2,8 +2,8 @@ import HalkoCore
 import SwiftUI
 
 // An exercise of the session: its picture, name and plan, then a row for each set (warm-up or number, last time's
-// values, the values, a check) and « Add a set ». As in the workout editor, a set swiped left shows Delete; « … » deletes
-// the exercise, once confirmed. Folded to its name once every set is done; a tap opens it again, until the next set is validated.
+// values, the values, a check) and « Add a set ». As in the workout editor, a set swiped left shows Delete (its only set
+// deletes the exercise); « … » deletes the exercise, once confirmed. Folded to its name once every set is done; a tap opens it again, until the next set is validated.
 struct LiveExerciseView: View {
     let index: Int
     let table: LiveTable
@@ -14,6 +14,8 @@ struct LiveExerciseView: View {
     // The set whose Delete button shows.
     @State private var openSet: Int?
     @State private var confirmingDelete = false
+    // The only set, asked to be deleted: the exercise goes with it, once confirmed.
+    @State private var confirmingLastSet: Int?
 
     var body: some View {
         if folded {
@@ -27,23 +29,48 @@ struct LiveExerciseView: View {
                 // A set is known by its index in the exercise.
                 ForEach(table.setNumbers(index), id: \.self) { set in
                     SwipeToDelete(
-                        enabled: table.state.canDeleteSet(of: index),
+                        enabled: canDeleteSet,
                         isOpen: Binding { openSet == set } set: { openSet = $0 ? set : nil }
                     ) {
-                        table.actions.deleteSet(index, set)
+                        deleteSet(set)
                     } content: {
                         LiveSetRow(item: index, set: set, table: table, focus: focus)
                     }
                     .accessibilityActions {
-                        if table.state.canDeleteSet(of: index) {
+                        if canDeleteSet {
                             Button("Delete set") {
-                                table.actions.deleteSet(index, set)
+                                deleteSet(set)
                             }
                         }
+                    }
+                    // Asked where the set was.
+                    .confirmationDialog(
+                        "Delete “\(table.name(index))” from this session?",
+                        isPresented: Binding { confirmingLastSet == set } set: { if !$0 { confirmingLastSet = nil } },
+                        titleVisibility: .visible
+                    ) {
+                        Button("Delete this exercise", role: .destructive) {
+                            table.actions.deleteSet(index, set)
+                        }
+                    } message: {
+                        Text("This is its last set: the exercise is deleted with it.")
                     }
                 }
                 addSet
             }
+        }
+    }
+
+    // The only set of an exercise goes with the exercise, unless it is the last one of the session.
+    private var canDeleteSet: Bool {
+        table.state.canDeleteSet(of: index) || table.state.canDeleteExercise
+    }
+
+    private func deleteSet(_ set: Int) {
+        if table.state.canDeleteSet(of: index) {
+            table.actions.deleteSet(index, set)
+        } else {
+            confirmingLastSet = set
         }
     }
 
@@ -179,8 +206,8 @@ struct LiveExerciseView: View {
     }
 }
 
-// A set of an exercise of the session. The current one stands out; during the rest its values are in boxes to change
-// them. A set done shows its values in boxes too, to correct them.
+// A set of an exercise of the session. Every value can be changed at any time with a tap: those of the current set are
+// in boxes, those of a set done are corrected at once, those of a set to come are kept for when it is done.
 private struct LiveSetRow: View {
     let item: Int
     let set: Int
@@ -269,28 +296,23 @@ private struct LiveSetRow: View {
     @ViewBuilder
     private func cell(_ field: SetField, values: SetValues) -> some View {
         let spoken = String(localized: "\(table.spokenNumber(item, set: set)), \(table.columnTitle(field, item: item, long: true))")
-        if isDone {
-            SetCell(label: spoken, value: values[field], field: field, fields: table.fields, boxed: false, focus: focus, id: .value(key, field)) { value in
-                var corrected = values
-                corrected[field] = value
-                table.actions.correct(item, set, corrected)
+        SetCell(
+            label: spoken,
+            value: values[field],
+            field: field,
+            fields: table.fields,
+            boxed: isCurrent,
+            dimmed: !isDone && !isCurrent,
+            focus: focus,
+            id: .value(key, field)
+        ) { value in
+            var changed = values
+            changed[field] = value
+            if isDone {
+                table.actions.correct(item, set, changed)
+            } else {
+                table.actions.edit(key, changed)
             }
-        } else if isCurrent && table.state.restEndsAt != nil {
-            SetCell(label: spoken, value: values[field], field: field, fields: table.fields, boxed: true, focus: focus, id: .value(key, field)) { value in
-                var edited = values
-                edited[field] = value
-                table.actions.edit(key, edited)
-            }
-        } else {
-            Text(verbatim: values[field].map { table.fields.text($0, of: field) } ?? "–")
-                .font(isCurrent ? .body.weight(.bold) : .body)
-                .foregroundStyle(isCurrent ? .primary : Color(.secondaryText))
-                .monospacedDigit()
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
-                .frame(minWidth: 44, minHeight: 44)
-                .accessibilityLabel(Text(verbatim: spoken))
-                .accessibilityValue(Text(verbatim: values[field].map { table.fields.text($0, of: field) } ?? String(localized: "none")))
         }
     }
 
@@ -333,13 +355,15 @@ private struct LiveSetRow: View {
     }
 }
 
-// A value of a set in a box: kept when the box loses the keyboard. `boxed` false: shown as plain text until tapped.
+// A value of a set in a box: kept when the box loses the keyboard. `boxed` false: shown as plain text until tapped;
+// `dimmed`: in grey, for a set to come.
 struct SetCell: View {
     let label: String
     let value: Double?
     let field: SetField
     let fields: FieldText
     let boxed: Bool
+    let dimmed: Bool
     let focus: FocusState<LiveField?>.Binding
     let id: LiveField
     let commit: (Double?) -> Void
@@ -353,6 +377,7 @@ struct SetCell: View {
         field: SetField,
         fields: FieldText,
         boxed: Bool,
+        dimmed: Bool,
         focus: FocusState<LiveField?>.Binding,
         id: LiveField,
         commit: @escaping (Double?) -> Void
@@ -362,6 +387,7 @@ struct SetCell: View {
         self.field = field
         self.fields = fields
         self.boxed = boxed
+        self.dimmed = dimmed
         self.focus = focus
         self.id = id
         self.commit = commit
@@ -382,6 +408,7 @@ struct SetCell: View {
         .keyboardType(field == .weight || field == .distance ? .decimalPad : .numberPad)
         .multilineTextAlignment(.center)
         .font(.body.weight(boxed ? .bold : .regular))
+        .foregroundStyle(dimmed && !isFocused ? Color(.secondaryText) : Color(.label))
         .monospacedDigit()
         .padding(.horizontal, 4)
         .frame(minWidth: 44, minHeight: max(44, height))
@@ -391,6 +418,8 @@ struct SetCell: View {
                     .strokeBorder(Color(.secondaryText), lineWidth: 1.5)
             }
         }
+        // Its name, not the "–" shown when it is empty.
+        .accessibilityLabel(Text(verbatim: label))
         .accessibilityHint(Text("Double tap to change it."))
         .onChange(of: isFocused) { _, focused in
             guard !focused else {

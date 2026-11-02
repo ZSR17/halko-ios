@@ -68,6 +68,8 @@ struct LiveSessionView: View {
                     .padding()
                 }
                 .scrollingToFocus(focus, in: proxy)
+                // Pulled down, the sets put the keyboard away too.
+                .scrollDismissesKeyboard(.interactively)
                 .onChange(of: state.cursor) {
                     unfolded = []
                 }
@@ -80,7 +82,23 @@ struct LiveSessionView: View {
             }
             .background(Color(.systemGroupedBackground))
             .safeAreaInset(edge: .bottom) {
-                panel(table)
+                VStack(alignment: .trailing, spacing: 8) {
+                    // While a value is typed: a button above the panel puts the keyboard away.
+                    if focus != nil {
+                        Button {
+                            focus = nil
+                        } label: {
+                            Label("Hide the keyboard", systemImage: "keyboard.chevron.compact.down")
+                                .labelStyle(.iconOnly)
+                                .font(.title3)
+                                .frame(width: 44, height: 44)
+                        }
+                        .buttonStyle(.glass)
+                        .buttonBorderShape(.circle)
+                        .padding(.trailing)
+                    }
+                    panel(table)
+                }
             }
             .onGeometryChange(for: CGFloat.self) { $0.safeAreaInsets.bottom } action: { inset in
                 bottomInset = inset
@@ -185,12 +203,6 @@ struct LiveSessionView: View {
                 discarding = true
             }
         }
-        ToolbarItemGroup(placement: .keyboard) {
-            Spacer()
-            Button("Done") {
-                focus = nil
-            }
-        }
     }
 
     @ViewBuilder
@@ -202,16 +214,20 @@ struct LiveSessionView: View {
             .finishDialog(isPresented: $finishingAllDone, setsDone: sets.count, of: table.plan.steps.count, save: finish) {
                 discarding = true
             }
-        } else if let end = state.restEndsAt {
-            RestPanel(end: end, totalS: state.restTotalS, next: table.nextText, bottomPadding: panelBottomPadding) {
+        } else if state.restEndsAt != nil || table.step != nil {
+            SetOrRestPanel(
+                table: table,
+                step: table.step,
+                restEnd: state.restEndsAt,
+                restTotalS: state.restTotalS,
+                bottomPadding: panelBottomPadding
+            ) {
                 store.change { $0.shortenRest() }
             } skip: {
                 store.change { $0.endRest() }
             } lengthen: {
                 store.change { $0.lengthenRest() }
             }
-        } else if let step = table.step {
-            SetPanel(table: table, step: step, bottomPadding: panelBottomPadding)
         }
     }
 
@@ -250,9 +266,12 @@ struct LiveSessionView: View {
         change { try context.logSet(&$0, step: index, values: values) }
     }
 
-    // The values typed for the sets after it move up with them.
+    // The values typed for the sets after it move up with them. The only set of an exercise: the exercise goes.
     private func deleteSet(_ item: Int, _ set: Int) {
-        guard state.canDeleteSet(of: item) else { return }
+        guard state.canDeleteSet(of: item) else {
+            change { try context.deleteExercise(&$0, item: item) }
+            return
+        }
         let itemID = state.plan[item].itemID
         let count = state.plan[item].targets.count
         change { try context.deleteSet(&$0, item: item, set: set) }
