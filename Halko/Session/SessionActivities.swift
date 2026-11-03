@@ -1,4 +1,5 @@
-import ActivityKit
+// Activity is not marked Sendable: updated from the main actor, it only goes to ActivityKit itself.
+@preconcurrency import ActivityKit
 import Foundation
 import HalkoCore
 import os
