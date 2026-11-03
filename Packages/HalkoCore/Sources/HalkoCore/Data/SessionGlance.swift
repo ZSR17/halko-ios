@@ -26,10 +26,10 @@ extension ModelContext {
         guard plan.steps.indices.contains(state.cursor), !plan.steps.allSatisfy({ logged[plan.key($0)] != nil }) else { return nil }
         let step = plan.steps[state.cursor]
         let item = plan.items[step.item]
-        let values = logged[plan.key(step)].map(SetValues.init) ?? plan.proposed(
+        let values = try logged[plan.key(step)].map(SetValues.init) ?? plan.proposed(
             step.item,
             set: step.set,
-            previous: try previousPerformance(of: item.exerciseID, excluding: state.sessionID),
+            previous: previousPerformance(of: item.exerciseID, excluding: state.sessionID),
             bumps: state.bumps,
             unit: unit
         )
