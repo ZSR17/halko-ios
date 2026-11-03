@@ -137,6 +137,7 @@ private struct LockScreenView: View {
                     }
                     SessionLine(state: state)
                 }
+                .multilineTextAlignment(.trailing)
             }
             if let rest = state.rest {
                 RestProgress(rest: rest)
@@ -167,18 +168,10 @@ private struct Headline: View {
                     .font(.headline)
             } else {
                 if let set = state.content.set {
-                    // Its rest just ended: told with words, not by the colour alone.
-                    Group {
-                        if state.content.restOver {
-                            Text("Rest over · \(set)")
-                                .foregroundStyle(Color(.rest))
-                        } else {
-                            Text(verbatim: set)
-                                .foregroundStyle(Color(.accent))
-                        }
-                    }
-                    .font(.caption.weight(.semibold))
-                    .textCase(.uppercase)
+                    Text(verbatim: set)
+                        .font(.caption.weight(.semibold))
+                        .textCase(.uppercase)
+                        .foregroundStyle(Color(.accent))
                 }
                 if let values = state.content.values {
                     Text(verbatim: values)
@@ -251,6 +244,7 @@ private struct ExpandedTrailing: View {
                 SessionLine(state: state)
             }
         }
+        .multilineTextAlignment(.trailing)
         .padding(.trailing, 4)
         .frame(maxWidth: .infinity, alignment: .trailing)
         .accessibilityElement(children: .combine)
@@ -282,8 +276,7 @@ private struct SessionLine: View {
     }
 }
 
-// Time left, never counting from a date already past. Marked as waiting from a tap on −15 s or +15 s until the app
-// has shown the new end.
+// Time left, never counting from a date already past.
 private struct Countdown: View {
     let end: Date
 
@@ -291,7 +284,6 @@ private struct Countdown: View {
         Text(timerInterval: min(Date.now, end)...end, countsDown: true)
             .monospacedDigit()
             .lineLimit(1)
-            .invalidatableContent()
             .multilineTextAlignment(.trailing)
     }
 }

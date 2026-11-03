@@ -101,6 +101,9 @@ jobs:
           app=build/Build/Products/Debug-iphonesimulator/Halko.app
           test -d "$app/Watch/HalkoWatch.app"
           test "$(plutil -extract NSExtension.NSExtensionPointIdentifier raw "$app/PlugIns/HalkoWidgets.appex/Info.plist")" = com.apple.widgetkit-extension
+          # The end of a rest: heard in the background, with the activity's alert silent.
+          test "$(plutil -extract UIBackgroundModes.0 raw "$app/Info.plist")" = audio
+          test -f "$app/RestOver.wav" && test -f "$app/Silence.wav"
           # A missing or unreadable icon does not fail the build: the icon name is then absent from Info.plist.
           for plist in "$app/Info.plist" "$app/Watch/HalkoWatch.app/Info.plist"; do
             test "$(plutil -extract CFBundleIcons.CFBundlePrimaryIcon.CFBundleIconName raw "$plist" 2>/dev/null || plutil -extract CFBundleIconName raw "$plist")" = AppIcon

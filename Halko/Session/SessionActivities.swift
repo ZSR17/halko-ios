@@ -11,8 +11,9 @@ import UIKit
 // the end of the rest. Kept up to date from the session's state, whether the session is on screen or not.
 //
 // The end of a rest is told by the app itself while a workout of Health keeps it running: the activity alerts (the
-// screen lights up, with the system's sound, which keeps to silent mode) and the iPhone vibrates; no notification,
-// which Siri would read in headphones. Without that workout the app is not running then: a notification tells it.
+// screen lights up, with a silent sound), Halko's sound plays over the music, even in silent mode, and outside the
+// app the iPhone vibrates; no notification, which Siri would read in headphones. Without that workout the app is not
+// running then: a notification tells it.
 @MainActor
 final class SessionActivities {
     private static let logger = Logger(subsystem: "com.zsr.halko", category: "session")
@@ -27,8 +28,7 @@ final class SessionActivities {
     private var lastAlert: RestAlert.Request?
     // Waits for the end of the rest going on.
     private var restWatch: (end: Date, task: Task<Void, Never>)?
-    // The set whose rest ended on its own, until it is done.
-    private var restOver: (sessionID: String, cursor: Int)?
+    private let sound = RestSound()
 
     init(container: ModelContainer, store: LiveSessionStore, recorder: WorkoutRecorder, showsActivity: Bool) {
         self.container = container
@@ -86,7 +86,7 @@ final class SessionActivities {
             let content = ActivityContent(state: found.content, staleDate: found.content.restEndsAt)
             if let activity = running.first(where: { $0.attributes.sessionID == sessionID }) {
                 let configuration = alerting
-                    ? AlertConfiguration(title: "Rest over", body: LocalizedStringResource(stringLiteral: Self.alertBody(found.content)), sound: .default)
+                    ? AlertConfiguration(title: "Rest over", body: LocalizedStringResource(stringLiteral: Self.alertBody(found.content)), sound: .named("Silence.wav"))
                     : nil
                 await activity.update(content, alertConfiguration: configuration)
             } else if ActivityAuthorizationInfo().areActivitiesEnabled {
@@ -125,8 +125,8 @@ final class SessionActivities {
         restWatch = nil
         guard let state = store.state, state.restEndsAt == end else { return }
         store.change { $0.endRest() }
-        restOver = (state.sessionID, state.cursor)
-        // In the app, the session gives its own feedback.
+        sound.play()
+        // In the app, the session gives its own haptic feedback.
         if UIApplication.shared.applicationState != .active {
             AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
         }
@@ -135,14 +135,12 @@ final class SessionActivities {
 
     private func content(of state: LiveState) -> (content: SessionActivityAttributes.ContentState, startedAt: Date)? {
         let heartRate = recorder.heartRate.map { Int($0.rounded()) }
-        let isRestOver = state.restEndsAt == nil && restOver.map { $0.sessionID == state.sessionID && $0.cursor == state.cursor } == true
         // Only its rest changed (−15 s, +15 s, Skip): the set shown stays, without reading the session again.
         if let last, Self.sameSet(last.state, state) {
             var content = last.content
             content.restEndsAt = state.restEndsAt
             content.restTotalS = state.restTotalS
             content.heartRate = heartRate
-            content.restOver = isRestOver
             return (content, last.startedAt)
         }
         let context = container.mainContext
@@ -154,7 +152,6 @@ final class SessionActivities {
             var content = SessionActivityAttributes.ContentState(
                 restEndsAt: state.restEndsAt,
                 restTotalS: state.restTotalS,
-                restOver: isRestOver,
                 heartRate: heartRate
             )
             if let glance = try context.glance(of: state, unit: .preferred(for: locale)) {
