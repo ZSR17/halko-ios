@@ -96,10 +96,11 @@ jobs:
             done
           fi
           xcodebuild test -project Halko.xcodeproj -scheme Halko -destination "id=$SIMULATOR" -derivedDataPath build -resultBundlePath Halko.xcresult -retry-tests-on-failure -test-iterations 3 ${only[@]+"${only[@]}"}
-      - name: Check the watch app is inside the iPhone app, and both have their icon
+      - name: Check the watch app and the widgets are inside the iPhone app, and both apps have their icon
         run: |
           app=build/Build/Products/Debug-iphonesimulator/Halko.app
           test -d "$app/Watch/HalkoWatch.app"
+          test "$(plutil -extract NSExtension.NSExtensionPointIdentifier raw "$app/PlugIns/HalkoWidgets.appex/Info.plist")" = com.apple.widgetkit-extension
           # A missing or unreadable icon does not fail the build: the icon name is then absent from Info.plist.
           for plist in "$app/Info.plist" "$app/Watch/HalkoWatch.app/Info.plist"; do
             test "$(plutil -extract CFBundleIcons.CFBundlePrimaryIcon.CFBundleIconName raw "$plist" 2>/dev/null || plutil -extract CFBundleIconName raw "$plist")" = AppIcon

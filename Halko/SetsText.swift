@@ -61,9 +61,10 @@ struct SetsText {
         weight(grams, digits: 0...0)
     }
 
-    // A set done, its weight without its unit as on the page of a workout: "80 × 8".
-    func set(_ set: SetTarget, type: ExerciseType) -> String {
-        values(set, type: type, unit: false)
+    // A set done, its weight without its unit as on the page of a workout: "80 × 8"; with it, alone outside the app:
+    // "80 kg × 8".
+    func set(_ set: SetTarget, type: ExerciseType, unit: Bool = false) -> String {
+        values(set, type: type, unit: unit)
     }
 
     // What each set is counted in: reps, time or distance.
