@@ -11,27 +11,48 @@ struct HalkoApp: App {
     @State private var liveSession: LiveSessionStore
     @State private var permissions: Permissions
     @State private var recorder: WorkoutRecorder
+    private let activities: SessionActivities
 
     init() {
         do {
             #if DEBUG
             if DemoData.isRequested {
-                container = try DemoData.container()
-                // The device's own session in progress, its Health and its settings are never touched either.
-                _liveSession = State(initialValue: LiveSessionStore(fileURL: nil))
-                _permissions = State(initialValue: Permissions(health: nil, defaults: nil))
-                _recorder = State(initialValue: WorkoutRecorder(health: nil))
+                // The device's own session in progress, its Health, its settings and its lock screen are never
+                // touched either.
+                self.init(
+                    container: try DemoData.container(),
+                    liveSession: LiveSessionStore(fileURL: nil),
+                    permissions: Permissions(health: nil, defaults: nil),
+                    recorder: WorkoutRecorder(health: nil),
+                    showsActivity: false
+                )
                 return
             }
             #endif
-            container = try HalkoStore.container()
-            _liveSession = State(initialValue: LiveSessionStore(fileURL: LiveSessionStore.defaultFileURL))
             let health = HKHealthStore.isHealthDataAvailable() ? HKHealthStore() : nil
-            _permissions = State(initialValue: Permissions(health: health, defaults: .standard))
-            _recorder = State(initialValue: WorkoutRecorder(health: health))
+            self.init(
+                container: try HalkoStore.container(),
+                liveSession: LiveSessionStore(fileURL: LiveSessionStore.defaultFileURL),
+                permissions: Permissions(health: health, defaults: .standard),
+                recorder: WorkoutRecorder(health: health),
+                showsActivity: true
+            )
         } catch {
             fatalError("Cannot open the local database: \(error)")
         }
+    }
+
+    private init(container: ModelContainer, liveSession: LiveSessionStore, permissions: Permissions, recorder: WorkoutRecorder, showsActivity: Bool) {
+        let activities = SessionActivities(container: container, store: liveSession, recorder: recorder, showsActivity: showsActivity)
+        // The rest's buttons of the Dynamic Island run here, even with the app in the background.
+        RestControl.handler = { action in
+            await activities.apply(action)
+        }
+        self.container = container
+        self.activities = activities
+        _liveSession = State(initialValue: liveSession)
+        _permissions = State(initialValue: permissions)
+        _recorder = State(initialValue: recorder)
     }
 
     var body: some Scene {
@@ -44,12 +65,19 @@ struct HalkoApp: App {
                     recorder.recover(sessionID: liveSession.state?.sessionID)
                     await ExerciseLibrary.install(in: container)
                 }
-                .task(id: liveSession.state?.restEndsAt) {
-                    await RestAlert.schedule(at: liveSession.state?.restEndsAt)
+                // Outside the app: the Live Activity and the end of the rest.
+                .task(id: OutsideKey(state: liveSession.state, heartRate: recorder.heartRate.map { Int($0.rounded()) })) {
+                    await activities.refresh()
                 }
         }
         .modelContainer(container)
     }
+}
+
+// What the session shows outside the app depends on.
+private struct OutsideKey: Equatable {
+    let state: LiveState?
+    let heartRate: Int?
 }
 
 // In the app, the end of the rest only rings: the session shows it already.

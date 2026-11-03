@@ -42,5 +42,11 @@ struct RootView: View {
         .fullScreenCover(isPresented: $liveSession.isPresented) {
             SessionCover()
         }
+        // A tap on the session outside the app (lock screen, Dynamic Island).
+        .onOpenURL { url in
+            if url == SessionActivityAttributes.sessionURL, liveSession.state != nil {
+                liveSession.isPresented = true
+            }
+        }
     }
 }

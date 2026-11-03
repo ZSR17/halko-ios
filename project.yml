@@ -32,6 +32,8 @@ targets:
     platform: iOS
     sources:
       - Halko
+      # Shared with the widgets: what the session's Live Activity holds, and its buttons.
+      - Shared
       - path: AppIcon.icon
         type: file
         buildPhase: resources
@@ -42,6 +44,7 @@ targets:
     dependencies:
       - package: HalkoCore
       - target: HalkoWatch
+      - target: HalkoWidgets
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.zsr.halko
@@ -54,6 +57,8 @@ targets:
         TARGETED_DEVICE_FAMILY: "1"
         INFOPLIST_KEY_CFBundleDisplayName: Halko
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.healthcare-fitness
+        # The session in progress on the lock screen and in the Dynamic Island.
+        INFOPLIST_KEY_NSSupportsLiveActivities: YES
         # Translated in InfoPlist.xcstrings.
         INFOPLIST_KEY_NSHealthShareUsageDescription: Halko reads your heart rate and active calories during a workout to show them, and today's Activity rings in the workout summary.
         INFOPLIST_KEY_NSHealthUpdateUsageDescription: Halko saves your strength workouts in Health, with their active calories and heart rate, so that they count towards your Move and Exercise rings.
@@ -63,6 +68,27 @@ targets:
         INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: YES
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight
+
+  # The session in progress outside the app (Live Activity), drawn from what the iPhone app writes; its buttons run in
+  # the app.
+  HalkoWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - HalkoWidgets
+      - Shared
+      # The app's colours.
+      - path: Halko/Assets.xcassets
+        buildPhase: resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.zsr.halko.widgets
+        INFOPLIST_FILE: HalkoWidgets/Info.plist
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: YES
+        TARGETED_DEVICE_FAMILY: "1"
+        INFOPLIST_KEY_CFBundleDisplayName: Halko
+        SKIP_INSTALL: YES
 
   # Installed with the iPhone app, which sets it up; then it works on its own.
   HalkoWatch:

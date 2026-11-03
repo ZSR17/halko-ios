@@ -2237,6 +2237,16 @@
         }
       }
     },
+    "Skip the rest" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passer le repos"
+          }
+        }
+      }
+    },
     "Start" : {
       "localizations" : {
         "fr" : {
