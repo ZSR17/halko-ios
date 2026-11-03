@@ -61,6 +61,10 @@ final class SessionActivities {
     func refresh(alerting: Bool = false) async {
         watchRest()
         let found = store.state.flatMap(content(of:))
+        // The activity first: a button pressed on it waits for it.
+        if showsActivity {
+            await show(found, alerting: alerting)
+        }
         let alert = recorder.isRecording ? nil : found.flatMap { found in
             found.content.restEndsAt.map { RestAlert.Request(end: $0, body: Self.alertBody(found.content)) }
         }
@@ -72,7 +76,9 @@ final class SessionActivities {
                 await RestAlert.schedule(alert)
             }
         }
-        guard showsActivity else { return }
+    }
+
+    private func show(_ found: (content: SessionActivityAttributes.ContentState, startedAt: Date)?, alerting: Bool) async {
         let running = Activity<SessionActivityAttributes>.activities
         let sessionID = store.state?.sessionID
         let others = running.filter { $0.attributes.sessionID != sessionID }
@@ -130,8 +136,11 @@ final class SessionActivities {
     private func content(of state: LiveState) -> (content: SessionActivityAttributes.ContentState, startedAt: Date)? {
         let heartRate = recorder.heartRate.map { Int($0.rounded()) }
         let isRestOver = state.restEndsAt == nil && restOver.map { $0.sessionID == state.sessionID && $0.cursor == state.cursor } == true
-        if let last, last.state == state {
+        // Only its rest changed (−15 s, +15 s, Skip): the set shown stays, without reading the session again.
+        if let last, Self.sameSet(last.state, state) {
             var content = last.content
+            content.restEndsAt = state.restEndsAt
+            content.restTotalS = state.restTotalS
             content.heartRate = heartRate
             content.restOver = isRestOver
             return (content, last.startedAt)
@@ -162,6 +171,13 @@ final class SessionActivities {
             Self.logger.error("Cannot read the session in progress: \(String(describing: error))")
             return nil
         }
+    }
+
+    private static func sameSet(_ a: LiveState, _ b: LiveState) -> Bool {
+        var a = a
+        a.restEndsAt = b.restEndsAt
+        a.restTotalS = b.restTotalS
+        return a == b
     }
 
     // "Set 3 · Bench press · 80 kg × 8".

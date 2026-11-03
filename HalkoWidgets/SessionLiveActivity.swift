@@ -44,7 +44,7 @@ struct SessionLiveActivity: Widget {
                 } else if let set = state.content.set {
                     Text(verbatim: set)
                         .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(Color.accentColor)
+                        .foregroundStyle(Color(.accent))
                         .lineLimit(1)
                 }
             } minimal: {
@@ -58,7 +58,7 @@ struct SessionLiveActivity: Widget {
                         .frame(width: 16, height: 16)
                 }
             }
-            .keylineTint(Color.accentColor)
+            .keylineTint(Color(.accent))
             .widgetURL(SessionActivityAttributes.sessionURL)
         }
         // The watch's Smart Stack, and CarPlay.
@@ -174,7 +174,7 @@ private struct Headline: View {
                                 .foregroundStyle(Color(.rest))
                         } else {
                             Text(verbatim: set)
-                                .foregroundStyle(Color.accentColor)
+                                .foregroundStyle(Color(.accent))
                         }
                     }
                     .font(.caption.weight(.semibold))
@@ -282,7 +282,8 @@ private struct SessionLine: View {
     }
 }
 
-// Time left, never counting from a date already past.
+// Time left, never counting from a date already past. Marked as waiting from a tap on −15 s or +15 s until the app
+// has shown the new end.
 private struct Countdown: View {
     let end: Date
 
@@ -290,6 +291,7 @@ private struct Countdown: View {
         Text(timerInterval: min(Date.now, end)...end, countsDown: true)
             .monospacedDigit()
             .lineLimit(1)
+            .invalidatableContent()
             .multilineTextAlignment(.trailing)
     }
 }
@@ -348,7 +350,7 @@ private struct ValidateButton: View {
         }
         .buttonStyle(.borderedProminent)
         .buttonBorderShape(.capsule)
-        .tint(Color.accentColor)
+        .tint(Color(.accent))
         .font(.subheadline.weight(.semibold))
     }
 }
@@ -357,7 +359,7 @@ private struct ValidateButton: View {
 struct HalkoMark: View {
     var body: some View {
         HalkoMarkShape()
-            .fill(Color.accentColor)
+            .fill(Color(.accent))
             .accessibilityElement()
             .accessibilityLabel(Text(verbatim: "Halko"))
     }
