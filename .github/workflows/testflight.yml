@@ -59,6 +59,8 @@ jobs:
           </dict>
           </plist>
           PLIST
+      - name: Development certificates already in the keychain
+        run: security find-certificate -a -c "Apple Development" -p > "$RUNNER_TEMP/certificates-before.pem" 2>/dev/null || true
       - name: Archive
         run: |
           # The version comes from the tag; the build number, which must grow with each upload, from the run number.
@@ -73,6 +75,13 @@ jobs:
             -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" -exportPath "$RUNNER_TEMP/export" \
             -allowProvisioningUpdates -authenticationKeyPath "$RUNNER_TEMP/AuthKey.p8" \
             -authenticationKeyID "$KEY_ID" -authenticationKeyIssuerID "$ISSUER_ID"
+      # Without it, each upload adds a development certificate to the account, until its limit.
+      - name: Revoke the development certificate made by this run
+        if: always()
+        continue-on-error: true
+        env:
+          KEY_PATH: ${{ runner.temp }}/AuthKey.p8
+        run: ruby .github/revoke-certificates.rb "$RUNNER_TEMP/certificates-before.pem"
       - name: Remove the key
         if: always()
         run: rm -f "$RUNNER_TEMP/AuthKey.p8"
