@@ -27,6 +27,12 @@ final class WorkoutRecorder {
         self.health = health
     }
 
+    // A workout of Health in progress keeps the app running in the background, where it can tell the end of a rest
+    // itself.
+    var isRecording: Bool {
+        session != nil
+    }
+
     func start(sessionID: String, at date: Date) {
         guard let health, session == nil,
               health.authorizationStatus(for: HKObjectType.workoutType()) == .sharingAuthorized else { return }

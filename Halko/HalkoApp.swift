@@ -44,8 +44,8 @@ struct HalkoApp: App {
 
     private init(container: ModelContainer, liveSession: LiveSessionStore, permissions: Permissions, recorder: WorkoutRecorder, showsActivity: Bool) {
         let activities = SessionActivities(container: container, store: liveSession, recorder: recorder, showsActivity: showsActivity)
-        // The rest's buttons of the Dynamic Island run here, even with the app in the background.
-        RestControl.handler = { action in
+        // The buttons of the session outside the app run here, even with the app in the background.
+        SessionControl.handler = { action in
             await activities.apply(action)
         }
         self.container = container

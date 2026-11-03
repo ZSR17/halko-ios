@@ -119,16 +119,7 @@ struct LiveSessionView: View {
         .task(id: state.sessionID) {
             loadPrevious()
         }
-        // The end of the rest: the set panel comes back.
-        .task(id: state.restEndsAt) {
-            guard let end = state.restEndsAt else { return }
-            do {
-                try await Task.sleep(for: .seconds(max(0, end.timeIntervalSinceNow)))
-            } catch {
-                return
-            }
-            store.change { $0.endRest() }
-        }
+        // The end of the rest (ended by SessionActivities, on screen or not): the set panel comes back.
         .sensoryFeedback(.success, trigger: state.restEndsAt) { old, new in
             old != nil && new == nil
         }
