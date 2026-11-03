@@ -14,8 +14,6 @@ nonisolated struct SessionActivityAttributes: ActivityAttributes {
         // While resting: its end, an absolute time like everywhere else, and its length.
         var restEndsAt: Date?
         var restTotalS: Int
-        // The rest ended on its own, and its set is not done yet.
-        var restOver = false
         // Beats per minute, only while Health measures them.
         var heartRate: Int?
     }
