@@ -24,9 +24,6 @@ struct WorkoutView: View {
     // « Before your first workout », then the session once it is closed.
     @State private var preparing = false
     @State private var prepared = false
-    // The title at the top of the page has gone under the bar: the bar shows it.
-    @State private var titleInBar = false
-    @State private var titleHeight: CGFloat = 0
 
     init(workout: Workout) {
         self.workout = workout
@@ -36,16 +33,8 @@ struct WorkoutView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 8) {
-                title
-                WorkoutContent(items: items)
-            }
-            .padding([.horizontal, .bottom])
-        }
-        .onScrollGeometryChange(for: Bool.self) { geometry in
-            titleHeight > 0 && geometry.contentOffset.y + geometry.contentInsets.top > titleHeight
-        } action: { _, under in
-            titleInBar = under
+            WorkoutContent(items: items)
+                .padding([.horizontal, .bottom])
         }
         .background(Color(.systemGroupedBackground))
         .safeAreaInset(edge: .bottom) {
@@ -84,16 +73,8 @@ struct WorkoutView: View {
             Text("Finish “\(session.name)” before starting another one.")
         }
         .navigationTitle(workout.name)
-        .navigationBarTitleDisplayMode(.inline)
+        .navigationSubtitle("\(items.count) exercises")
         .toolbar {
-            ToolbarItem(placement: .principal) {
-                Text(verbatim: workout.name)
-                    .font(.headline)
-                    .lineLimit(1)
-                    .opacity(titleInBar ? 1 : 0)
-                    .animation(.easeInOut(duration: 0.2), value: titleInBar)
-                    .accessibilityHidden(!titleInBar)
-            }
             ToolbarItem(placement: .primaryAction) {
                 Menu("More actions", systemImage: "ellipsis") {
                     Button("Edit", systemImage: "pencil") {
@@ -130,24 +111,6 @@ struct WorkoutView: View {
         }
         .sheet(isPresented: $editing) {
             WorkoutEditor(workout: workout, items: items)
-        }
-    }
-
-    // Large at the top of the page, as the system's large title, on arrival on any iPhone; once scrolled under the bar,
-    // the bar shows it.
-    private var title: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(verbatim: workout.name)
-                .font(.largeTitle.bold())
-                .accessibilityAddTraits(.isHeader)
-            Text("\(items.count) exercises")
-                .font(.subheadline)
-                .foregroundStyle(Color(.secondaryText))
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.bottom, 8)
-        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height in
-            titleHeight = height
         }
     }
 

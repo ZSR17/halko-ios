@@ -247,14 +247,11 @@ private struct Moving: Equatable {
     let entries: [String]
     let items: [ItemDraft.ID]
     let isBlock: Bool
-    // On the screen: where the finger is, and where it was when it took the handle.
     var fingerY: CGFloat
-    var startY: CGFloat
 }
 
 // The exercises being edited, between the links of the supersets. Holding a handle folds them all into compact rows:
-// the one held comes under the finger and follows it, its place shows dashed, and they unfold where it is let go. Its
-// place changes only as far as the finger moves: the rows folding under a finger that has not moved do not move it.
+// the one held follows the finger, its place shows dashed, and they unfold where it is let go.
 private struct EditorItems: View {
     @Binding var draft: WorkoutDraft
     let fields: FieldText
@@ -263,8 +260,6 @@ private struct EditorItems: View {
     @State private var moving: Moving?
     // Where each row is laid out, before it is moved aside.
     @State private var frames: [String: CGRect] = [:]
-    // Where the rows start on the screen.
-    @State private var originY: CGFloat = 0
 
     // Read by the measures of the rows, off the main actor.
     nonisolated private static let space = "workout-editor-items"
@@ -300,9 +295,6 @@ private struct EditorItems: View {
             }
         }
         .coordinateSpace(.named(Self.space))
-        .onGeometryChange(for: CGFloat.self) { $0.frame(in: .global).minY } action: { minY in
-            originY = minY
-        }
         .sensoryFeedback(.selection, trigger: plan?.slot)
     }
 
@@ -314,7 +306,7 @@ private struct EditorItems: View {
             HStack {
                 Tag(Text("Superset · no rest in between"), color: Color(.superset))
                 Spacer()
-                grip(Moving(grabbed: entry.id, entries: [entry.id] + items, items: items, isBlock: true, fingerY: 0, startY: 0), label: Text("Move the superset"))
+                grip(Moving(grabbed: entry.id, entries: [entry.id] + items, items: items, isBlock: true, fingerY: 0), label: Text("Move the superset"))
             }
             .padding(.leading, 12)
             .padding(.bottom, collapsed ? 0 : 4)
@@ -334,7 +326,7 @@ private struct EditorItems: View {
                         focus: focus,
                         remove: { draft.remove(id) }
                     ) {
-                        grip(Moving(grabbed: id, entries: [id], items: [id], isBlock: false, fingerY: 0, startY: 0), label: Text("Move \(name)"))
+                        grip(Moving(grabbed: id, entries: [id], items: [id], isBlock: false, fingerY: 0), label: Text("Move \(name)"))
                     }
                     .padding(.leading, item.supersetGroup == nil ? 0 : 12)
                     .padding(.bottom, collapsed ? 8 : 0)
@@ -388,14 +380,11 @@ private struct EditorItems: View {
             .foregroundStyle(moving?.grabbed == what.grabbed ? Color.accentColor : Color(.secondaryText))
             .frame(minWidth: 44, minHeight: 44)
             .contentShape(.rect)
-            // On the screen, which does not move when the rows fold.
-            .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .global).onChanged { value in
+            .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .named(Self.space)).onChanged { value in
                 if moving == nil {
                     focus.wrappedValue = nil
-                    var held = what
-                    held.startY = value.startLocation.y
                     withAnimation(.snappy) {
-                        moving = held
+                        moving = what
                     }
                 }
                 moving?.fingerY = value.location.y
@@ -422,8 +411,7 @@ private struct EditorItems: View {
             frames: frames,
             moved: what.entries,
             grabbed: what.grabbed,
-            fingerY: what.fingerY - originY,
-            travel: what.fingerY - what.startY
+            fingerY: what.fingerY
         ) { slot in
             if what.isBlock {
                 // Between blocks only.
@@ -488,8 +476,8 @@ extension EditorItems {
     }
 }
 
-// Where the rows of the list go while some are held: those held are drawn under the finger; the others make room for
-// them at the allowed place nearest to where they were, moved by as much as the finger (`travel`).
+// Where the rows of the list go while some are held: those held follow the finger; the others make room for them at
+// the allowed place nearest to them.
 private struct ReorderPlan {
     // The place among the rows not held, and the one they were taken from.
     let slot: Int
@@ -498,7 +486,7 @@ private struct ReorderPlan {
     // Where they would go, dashed.
     let gap: CGRect
 
-    init?(order: [String], frames: [String: CGRect], moved: [String], grabbed: String, fingerY: CGFloat, travel: CGFloat, allowed: (Int) -> Bool) {
+    init?(order: [String], frames: [String: CGRect], moved: [String], grabbed: String, fingerY: CGFloat, allowed: (Int) -> Bool) {
         guard let first = order.first, let top = frames[first]?.minY, let held = frames[grabbed],
               let movedTop = moved.first.flatMap({ frames[$0]?.minY }), let start = order.firstIndex(of: moved[0]) else {
             return nil
@@ -507,7 +495,7 @@ private struct ReorderPlan {
         let others = order.filter { !moved.contains($0) }
         let movedHeight = moved.map(height).reduce(0, +)
         let lift = fingerY - held.midY
-        let center = movedTop + travel + movedHeight / 2
+        let center = movedTop + lift + movedHeight / 2
         // The top of each place among the others.
         var tops = [top]
         for id in others {
