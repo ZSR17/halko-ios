@@ -10,10 +10,10 @@ import UIKit
 // The session in progress outside the app: its Live Activity, started with it and ended with it, its buttons, and
 // the end of the rest. Kept up to date from the session's state, whether the session is on screen or not.
 //
-// The end of a rest is told by the app itself while a workout of Health keeps it running: the activity alerts (the
-// screen lights up, with a silent sound), Halko's sound plays over the music, even in silent mode, and outside the
-// app the iPhone vibrates; no notification, which Siri would read in headphones. Without that workout the app is not
-// running then: a notification tells it.
+// The end of a rest is told by the app itself while a workout of Health keeps it running: Halko's sound plays over
+// the music, even in silent mode, and outside the app the iPhone vibrates; no notification, which Siri would read in
+// headphones (and no alert of the activity: it did not light the screen up, only played the system's sound). Without
+// that workout the app is not running then: a notification tells it.
 @MainActor
 final class SessionActivities {
     private static let logger = Logger(subsystem: "com.zsr.halko", category: "session")
@@ -57,13 +57,14 @@ final class SessionActivities {
         await refresh()
     }
 
-    // Shows the session as it is now; once it is over, nothing. `alerting`: its rest just ended.
-    func refresh(alerting: Bool = false) async {
+    // Shows the session as it is now; once it is over, nothing.
+    func refresh() async {
+        sound.hold(store.state != nil)
         watchRest()
         let found = store.state.flatMap(content(of:))
         // The activity first: a button pressed on it waits for it.
         if showsActivity {
-            await show(found, alerting: alerting)
+            await show(found)
         }
         let alert = recorder.isRecording ? nil : found.flatMap { found in
             found.content.restEndsAt.map { RestAlert.Request(end: $0, body: Self.alertBody(found.content)) }
@@ -78,17 +79,14 @@ final class SessionActivities {
         }
     }
 
-    private func show(_ found: (content: SessionActivityAttributes.ContentState, startedAt: Date)?, alerting: Bool) async {
+    private func show(_ found: (content: SessionActivityAttributes.ContentState, startedAt: Date)?) async {
         let running = Activity<SessionActivityAttributes>.activities
         let sessionID = store.state?.sessionID
         let others = running.filter { $0.attributes.sessionID != sessionID }
         if let found, let sessionID {
             let content = ActivityContent(state: found.content, staleDate: found.content.restEndsAt)
             if let activity = running.first(where: { $0.attributes.sessionID == sessionID }) {
-                let configuration = alerting
-                    ? AlertConfiguration(title: "Rest over", body: LocalizedStringResource(stringLiteral: Self.alertBody(found.content)), sound: .named("Silence.wav"))
-                    : nil
-                await activity.update(content, alertConfiguration: configuration)
+                await activity.update(content)
             } else if ActivityAuthorizationInfo().areActivitiesEnabled {
                 do {
                     _ = try Activity.request(attributes: SessionActivityAttributes(sessionID: sessionID, startedAt: found.startedAt), content: content)
@@ -130,7 +128,7 @@ final class SessionActivities {
         if UIApplication.shared.applicationState != .active {
             AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
         }
-        await refresh(alerting: true)
+        await refresh()
     }
 
     private func content(of state: LiveState) -> (content: SessionActivityAttributes.ContentState, startedAt: Date)? {
