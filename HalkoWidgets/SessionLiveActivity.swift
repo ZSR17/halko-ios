@@ -2,9 +2,10 @@ import ActivityKit
 import SwiftUI
 import WidgetKit
 
-// The session in progress outside the app. During a rest: its countdown (an absolute end: the same as in the app and
-// on the watch), what comes next, and in the Dynamic Island −15 s, Skip, +15 s. Else the set to do. The rest is shown
-// until its end only (the content is stale from then), even if the app could not say so in time.
+// The session in progress outside the app, on the lock screen of every iPhone and in the Dynamic Island. During a
+// rest: its countdown (an absolute end: the same as in the app and on the watch), what comes next, −15 s, Skip,
+// +15 s. Else the set to do and Validate the set, with the values shown (to change them, a tap opens the session).
+// The rest is shown until its end only (the content is stale from then), even if the app could not say so in time.
 struct SessionLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: SessionActivityAttributes.self) { context in
@@ -22,6 +23,9 @@ struct SessionLiveActivity: Widget {
                 DynamicIslandExpandedRegion(.bottom) {
                     if state.rest != nil {
                         RestButtons()
+                            .padding(.top, 8)
+                    } else if !state.allDone {
+                        ValidateButton()
                             .padding(.top, 8)
                     } else {
                         SessionLine(state: state)
@@ -104,7 +108,7 @@ private struct SessionActivityView: View {
                 .padding(8)
         default:
             LockScreenView(state: state)
-                .padding(16)
+                .padding(14)
         }
     }
 }
@@ -113,7 +117,8 @@ private struct LockScreenView: View {
     let state: SessionGlimpse
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        // At most 160 pt high, buttons included.
+        VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .top, spacing: 12) {
                 Headline(state: state, size: .largeTitle)
                 Spacer(minLength: 0)
@@ -135,6 +140,9 @@ private struct LockScreenView: View {
             }
             if let rest = state.rest {
                 RestProgress(rest: rest)
+                RestButtons()
+            } else if !state.allDone {
+                ValidateButton()
             }
         }
     }
@@ -159,10 +167,18 @@ private struct Headline: View {
                     .font(.headline)
             } else {
                 if let set = state.content.set {
-                    Text(verbatim: set)
-                        .font(.caption.weight(.semibold))
-                        .textCase(.uppercase)
-                        .foregroundStyle(Color.accentColor)
+                    // Its rest just ended: told with words, not by the colour alone.
+                    Group {
+                        if state.content.restOver {
+                            Text("Rest over · \(set)")
+                                .foregroundStyle(Color(.rest))
+                        } else {
+                            Text(verbatim: set)
+                                .foregroundStyle(Color.accentColor)
+                        }
+                    }
+                    .font(.caption.weight(.semibold))
+                    .textCase(.uppercase)
                 }
                 if let values = state.content.values {
                     Text(verbatim: values)
@@ -232,6 +248,7 @@ private struct ExpandedTrailing: View {
                     .font(.subheadline.weight(.semibold))
                     .lineLimit(2)
                     .multilineTextAlignment(.trailing)
+                SessionLine(state: state)
             }
         }
         .padding(.trailing, 4)
@@ -318,6 +335,21 @@ private struct RestButtons: View {
         }
         .font(.subheadline.weight(.semibold))
         .buttonBorderShape(.capsule)
+    }
+}
+
+// The set to do, done with the values shown; the rest follows.
+private struct ValidateButton: View {
+    var body: some View {
+        Button(intent: ValidateSetIntent()) {
+            Text("Validate the set")
+                .foregroundStyle(Color(.onAccent))
+                .frame(maxWidth: .infinity, minHeight: 44)
+        }
+        .buttonStyle(.borderedProminent)
+        .buttonBorderShape(.capsule)
+        .tint(Color.accentColor)
+        .font(.subheadline.weight(.semibold))
     }
 }
 
