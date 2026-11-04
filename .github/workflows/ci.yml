@@ -83,8 +83,13 @@ jobs:
           echo "id=$id" >> "$GITHUB_OUTPUT"
           echo "watch=$watch" >> "$GITHUB_OUTPUT"
       - name: Test the watch app
-        # Each of its screens: a short run, every time.
-        run: xcodebuild test -project Halko.xcodeproj -scheme HalkoWatch -destination "id=${{ steps.simulator.outputs.watch }}" -derivedDataPath build -resultBundlePath HalkoWatch.xcresult -retry-tests-on-failure -test-iterations 3
+        # Each of its screens: a short run, every time. A watch simulator launched cold stays stuck on the app's first
+        # launch: booted first, and the step stopped if it hangs all the same.
+        timeout-minutes: 15
+        run: |
+          xcrun simctl boot "${{ steps.simulator.outputs.watch }}"
+          xcrun simctl bootstatus "${{ steps.simulator.outputs.watch }}"
+          xcodebuild test -project Halko.xcodeproj -scheme HalkoWatch -destination "id=${{ steps.simulator.outputs.watch }}" -derivedDataPath build -resultBundlePath HalkoWatch.xcresult -retry-tests-on-failure -test-iterations 3
       - name: Test the iPhone app
         # A test failing on a slow runner (an audit or a query out of time) is run again, alone, up to twice: only a
         # failure that comes back three times fails the job. Without a screen changed, the app is only built.
@@ -148,6 +153,15 @@ jobs:
         with:
           name: xcresult-watch
           path: HalkoWatch.xcresult
+      # What the watch showed when its tests failed or hung.
+      - name: Take a screenshot of the watch simulator
+        if: failure() && steps.simulator.outputs.watch != ''
+        run: xcrun simctl io "${{ steps.simulator.outputs.watch }}" screenshot watch-failure.png
+      - uses: actions/upload-artifact@v7
+        if: failure() && hashFiles('watch-failure.png') != ''
+        with:
+          name: watch-failure
+          path: watch-failure.png
 
   passed:
     name: CI passed
