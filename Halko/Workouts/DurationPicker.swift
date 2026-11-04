@@ -55,6 +55,7 @@ private struct DurationPicker: View {
     let seconds: Int
     let change: (Int) -> Void
     @State private var contentHeight: CGFloat = 320
+    @State private var bottomInset: CGFloat = 0
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -90,12 +91,21 @@ private struct DurationPicker: View {
             contentHeight = height
         }
         .frame(maxHeight: .infinity, alignment: .top)
-        // Validate goes down into the area of the home indicator, 20 points above the edge of the screen, as the
-        // session's Validate the set.
+        .onGeometryChange(for: CGFloat.self) { $0.safeAreaInsets.bottom } action: { inset in
+            bottomInset = inset
+        }
+        // Validate goes down into the area of the home indicator, about 20 points above the edge of the screen, as
+        // the session's Validate the set.
         .ignoresSafeArea(.container, edges: .bottom)
-        .presentationDetents([.height(contentHeight + 20)])
+        .presentationDetents([.height(contentHeight + bottomMargin)])
         .presentationDragIndicator(.visible)
         .presentationBackground(Color(.secondarySystemGroupedBackground))
+    }
+
+    // Under Validate, from the bottom of the sheet. The detent's height leaves out the area of the home indicator,
+    // which the sheet adds below it, and the sheet floats a few points above the edge of the screen.
+    private var bottomMargin: CGFloat {
+        bottomInset > 0 ? 11 - bottomInset : 20
     }
 }
 
@@ -126,7 +136,7 @@ struct DurationWheels: UIViewRepresentable {
 
         // Each wheel holds its values that many times over and is brought back to the middle once it stops: it seems
         // to go round without an end.
-        private static let rounds = 200
+        private static let rounds = 10
         private static let counts = [61, 60]
         private static let units: [UnitDuration] = [.minutes, .seconds]
 
@@ -186,7 +196,7 @@ struct DurationWheels: UIViewRepresentable {
                 }
                 let frame = row.convert(row.bounds, to: self)
                 let size = label.intrinsicContentSize
-                label.frame = CGRect(x: frame.maxX - unitWidth, y: picker.frame.midY - size.height / 2, width: unitWidth, height: size.height)
+                label.frame = CGRect(x: frame.maxX - unitWidth + Self.unitGap, y: picker.frame.midY - size.height / 2, width: unitWidth, height: size.height)
             }
         }
 
@@ -202,8 +212,10 @@ struct DurationWheels: UIViewRepresentable {
             ceil(("00" as NSString).size(withAttributes: [.font: numberFont]).width) + 4
         }
 
+        private static let unitGap: CGFloat = 6
+
         private var unitWidth: CGFloat {
-            ceil(unitLabels.map(\.intrinsicContentSize.width).max() ?? 0) + 10
+            ceil(unitLabels.map(\.intrinsicContentSize.width).max() ?? 0) + Self.unitGap + 4
         }
 
         // MARK: UIPickerViewDataSource, UIPickerViewDelegate
