@@ -74,7 +74,7 @@ private struct DurationPicker: View {
                 .accessibilityElement(children: .combine)
                 .accessibilityAddTraits(.isHeader)
                 DurationWheels(seconds: seconds, change: change)
-                    .frame(height: 216)
+                    .frame(height: 190)
             }
             // Below the grabber.
             .padding(.top, 22)
@@ -111,8 +111,9 @@ private struct DurationPicker: View {
                     bottomInset = inset
                 }
         }
-        // The detent's height leaves out the area of the home indicator, which the sheet adds below it.
-        .presentationDetents([.height(topHeight + Self.spacing + buttonHeight - bottomInset)])
+        // The detent's height leaves out the area of the home indicator, which the sheet adds below it, and takes in
+        // the top of the sheet, where the grabber is.
+        .presentationDetents([.height(topHeight + Self.spacing + buttonHeight - bottomInset + 10)])
         .presentationDragIndicator(.visible)
         .presentationBackground(Color(.secondarySystemGroupedBackground))
     }
