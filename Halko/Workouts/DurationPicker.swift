@@ -91,12 +91,16 @@ private struct DurationPicker: View {
             contentHeight = height
         }
         .frame(maxHeight: .infinity, alignment: .top)
-        .onGeometryChange(for: CGFloat.self) { $0.safeAreaInsets.bottom } action: { inset in
-            bottomInset = inset
-        }
         // Validate goes down into the area of the home indicator, about 20 points above the edge of the screen, as
         // the session's Validate the set.
         .ignoresSafeArea(.container, edges: .bottom)
+        // How far the sheet goes into that area, read on the whole sheet: the content no longer sees it.
+        .background {
+            Color.clear
+                .onGeometryChange(for: CGFloat.self) { $0.safeAreaInsets.bottom } action: { inset in
+                    bottomInset = inset
+                }
+        }
         .presentationDetents([.height(contentHeight + bottomMargin)])
         .presentationDragIndicator(.visible)
         .presentationBackground(Color(.secondarySystemGroupedBackground))

@@ -117,6 +117,7 @@ extension XCUIApplication {
         // Xcode does not let one give it more. Each is tried twice more if it still does. With the largest text sizes,
         // no contrast: measured on every pixel of the huge text it runs out of time every time, and the colors are the
         // same as at the usual sizes, where it is checked.
+        let wheels = pickerWheels.allElementsBoundByIndex.map(\.frame)
         let largestText = launchArguments.contains("-UIPreferredContentSizeCategoryName")
         let kinds: [XCUIAccessibilityAuditType] = (largestText ? [] : [.contrast])
             + [.hitRegion, .sufficientElementDescription, .elementDetection, .trait]
@@ -132,6 +133,12 @@ extension XCUIApplication {
                         }
                         if issue.auditType == .hitRegion {
                             return issue.element?.elementType == .staticText
+                        }
+                        // The values of a wheel above and below the one chosen, and its units: the system's wheel
+                        // gives VoiceOver only the value chosen, which it reads with its unit.
+                        if issue.auditType == .elementDetection && !wheels.isEmpty
+                            && (issue.element.map { element in wheels.contains { $0.intersects(element.frame) } } ?? true) {
+                            return true
                         }
                         return issue.auditType == .contrast
                             && (issue.element?.identifier.hasPrefix("muscle-") == true || bars.contains { $0.intersects(frame) })
