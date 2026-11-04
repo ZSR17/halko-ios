@@ -1,7 +1,7 @@
 import Foundation
 import HalkoCore
 
-// How the pages of a workout and of an exercise write sets: "4 × 8 · 80 kg · rest 2:30".
+// How the pages of a workout and of an exercise write sets: "4 × 8 · 80 kg · rest 2:30". The watch app's too.
 struct SetsText {
     let weightUnit: WeightUnit
     let distanceUnit: DistanceUnit
@@ -11,8 +11,9 @@ struct SetsText {
         distanceUnit = .preferred(for: locale)
     }
 
-    // The working sets: their number and values when alike, else the values of each.
-    func working(_ sets: PlannedSets, type: ExerciseType, perSide: Bool, sidesPauseS: Int?) -> String {
+    // The working sets: their number and values when alike, else the values of each; then, with `pauses`, the
+    // pause to change sides and the rest.
+    func working(_ sets: PlannedSets, type: ExerciseType, perSide: Bool, sidesPauseS: Int?, pauses: Bool = true) -> String {
         var parts: [String] = []
         if sets.alike, let set = sets.working.first {
             parts.append("\(sets.working.count) × \(sided(measure(set, type: type), perSide))")
@@ -25,6 +26,7 @@ struct SetsText {
         } else {
             parts.append(sets.working.map { sided(values($0, type: type, unit: true), perSide) }.joined(separator: ", "))
         }
+        guard pauses else { return parts.joined(separator: " · ") }
         if let sidesPauseS {
             parts.append(String(localized: "\(duration(Double(sidesPauseS))) pause to change sides"))
         }

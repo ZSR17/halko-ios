@@ -12,6 +12,8 @@ struct HalkoApp: App {
     @State private var permissions: Permissions
     @State private var recorder: WorkoutRecorder
     private let activities: SessionActivities
+    // Hands the watch app its workouts, for as long as the app runs.
+    private let watch: WatchLink?
 
     init() {
         do {
@@ -24,25 +26,28 @@ struct HalkoApp: App {
                     liveSession: LiveSessionStore(fileURL: nil),
                     permissions: Permissions(health: nil, defaults: nil),
                     recorder: WorkoutRecorder(health: nil),
-                    showsActivity: false
+                    showsActivity: false,
+                    watch: nil
                 )
                 return
             }
             #endif
             let health = HKHealthStore.isHealthDataAvailable() ? HKHealthStore() : nil
+            let container = try HalkoStore.container()
             self.init(
-                container: try HalkoStore.container(),
+                container: container,
                 liveSession: LiveSessionStore(fileURL: LiveSessionStore.defaultFileURL),
                 permissions: Permissions(health: health, defaults: .standard),
                 recorder: WorkoutRecorder(health: health),
-                showsActivity: true
+                showsActivity: true,
+                watch: WatchLink(container: container)
             )
         } catch {
             fatalError("Cannot open the local database: \(error)")
         }
     }
 
-    private init(container: ModelContainer, liveSession: LiveSessionStore, permissions: Permissions, recorder: WorkoutRecorder, showsActivity: Bool) {
+    private init(container: ModelContainer, liveSession: LiveSessionStore, permissions: Permissions, recorder: WorkoutRecorder, showsActivity: Bool, watch: WatchLink?) {
         let activities = SessionActivities(container: container, store: liveSession, recorder: recorder, showsActivity: showsActivity)
         // The buttons of the session outside the app run here, even with the app in the background.
         SessionControl.handler = { action in
@@ -50,6 +55,7 @@ struct HalkoApp: App {
         }
         self.container = container
         self.activities = activities
+        self.watch = watch
         _liveSession = State(initialValue: liveSession)
         _permissions = State(initialValue: permissions)
         _recorder = State(initialValue: recorder)

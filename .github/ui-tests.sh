@@ -7,8 +7,10 @@ set -eu
 tests=()
 while IFS= read -r file; do
   case "$file" in
-    # No screen: their own checks run anyway (HalkoCore's tests, the watch app's build, the icons).
-    *.md | docs/* | LICENSE | NOTICE | .gitignore | .gitattributes | AppIcon.icon/* | HalkoWatch/* | Packages/HalkoCore/*) ;;
+    # No screen of the iPhone: their own checks run anyway (HalkoCore's tests, the watch app's tests, the icons).
+    *.md | docs/* | LICENSE | NOTICE | .gitignore | .gitattributes | AppIcon.icon/* | HalkoWatch/* | HalkoWatchUITests/* | Packages/HalkoCore/*) ;;
+    # The link with the watch.
+    Halko/Watch/*) ;;
     # The texts: the screens showing a new one are changed with it.
     Halko/Localizable.xcstrings) ;;
     HalkoUITests/TestSupport.swift)
