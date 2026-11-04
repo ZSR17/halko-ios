@@ -109,7 +109,7 @@ private struct DurationPicker: View {
     // Under Validate, from the bottom of the sheet. The detent's height leaves out the area of the home indicator,
     // which the sheet adds below it, and the sheet floats a few points above the edge of the screen.
     private var bottomMargin: CGFloat {
-        bottomInset > 0 ? 11 - bottomInset : 20
+        bottomInset > 0 ? -3 - bottomInset : 20
     }
 }
 
