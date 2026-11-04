@@ -119,10 +119,6 @@ struct LiveSessionView: View {
         .task(id: state.sessionID) {
             loadPrevious()
         }
-        // The end of the rest (ended by SessionActivities, on screen or not): the set panel comes back.
-        .sensoryFeedback(.success, trigger: state.restEndsAt) { old, new in
-            old != nil && new == nil
-        }
         // Finished or deleted on another device: nothing left to do here.
         .task(id: sessions.first.map { $0.removed || $0.endedAt != nil } ?? false) {
             // Finished here, the summary follows: only a session still held is let go.

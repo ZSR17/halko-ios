@@ -5,13 +5,12 @@ import Foundation
 import HalkoCore
 import os
 import SwiftData
-import UIKit
 
 // The session in progress outside the app: its Live Activity, started with it and ended with it, its buttons, and
 // the end of the rest. Kept up to date from the session's state, whether the session is on screen or not.
 //
 // The end of a rest is told by the app itself while a workout of Health keeps it running: Halko's sound plays over
-// the music, even in silent mode, and outside the app the iPhone vibrates; no notification, which Siri would read in
+// the music, even in silent mode, and the iPhone vibrates; no notification, which Siri would read in
 // headphones (and no alert of the activity: it did not light the screen up, only played the system's sound). Without
 // that workout the app is not running then: a notification tells it.
 @MainActor
@@ -103,6 +102,7 @@ final class SessionActivities {
     // The rest ends here, on screen or not: at its end, or at once when it ended while the app was stopped.
     private func watchRest() {
         let end = store.state?.restEndsAt
+        sound.schedule(at: end)
         guard end != restWatch?.end else { return }
         restWatch?.task.cancel()
         restWatch = nil
@@ -123,11 +123,8 @@ final class SessionActivities {
         restWatch = nil
         guard let state = store.state, state.restEndsAt == end else { return }
         store.change { $0.endRest() }
-        sound.play()
-        // In the app, the session gives its own haptic feedback.
-        if UIApplication.shared.applicationState != .active {
-            AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
-        }
+        // Its sound was handed to the audio output when the rest started; the vibration, on screen or not.
+        AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
         await refresh()
     }
 
