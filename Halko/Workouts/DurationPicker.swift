@@ -54,24 +54,34 @@ private struct DurationPicker: View {
     let subtitle: String
     let seconds: Int
     let change: (Int) -> Void
-    @State private var contentHeight: CGFloat = 320
+    // What is above Validate, and Validate with its margin: the sheet is made as tall as both.
+    @State private var topHeight: CGFloat = 260
+    @State private var buttonHeight: CGFloat = 62
     @State private var bottomInset: CGFloat = 0
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        VStack(spacing: 8) {
-            VStack(spacing: 2) {
-                Text(verbatim: title)
-                    .font(.headline)
-                Text(verbatim: subtitle)
-                    .font(.subheadline)
-                    .foregroundStyle(Color(.secondaryText))
-                    .multilineTextAlignment(.center)
+        VStack(spacing: 0) {
+            VStack(spacing: 8) {
+                VStack(spacing: 2) {
+                    Text(verbatim: title)
+                        .font(.headline)
+                    Text(verbatim: subtitle)
+                        .font(.subheadline)
+                        .foregroundStyle(Color(.secondaryText))
+                        .multilineTextAlignment(.center)
+                }
+                .accessibilityElement(children: .combine)
+                .accessibilityAddTraits(.isHeader)
+                DurationWheels(seconds: seconds, change: change)
+                    .frame(height: 216)
             }
-            .accessibilityElement(children: .combine)
-            .accessibilityAddTraits(.isHeader)
-            DurationWheels(seconds: seconds, change: change)
-                .frame(height: 216)
+            // Below the grabber.
+            .padding(.top, 22)
+            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height in
+                topHeight = height
+            }
+            Spacer(minLength: Self.spacing)
             Button {
                 dismiss()
             } label: {
@@ -83,16 +93,16 @@ private struct DurationPicker: View {
             .buttonStyle(.borderedProminent)
             .buttonBorderShape(.capsule)
             .controlSize(.large)
+            // From the bottom of the sheet, which floats a few points above the edge of the screen: about 20 points
+            // above that edge, as the session's Validate the set.
+            .padding(.bottom, 12)
+            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height in
+                buttonHeight = height
+            }
         }
-        // Below the grabber.
-        .padding(.top, 22)
         .padding(.horizontal)
-        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height in
-            contentHeight = height
-        }
-        .frame(maxHeight: .infinity, alignment: .top)
-        // Validate goes down into the area of the home indicator, about 20 points above the edge of the screen, as
-        // the session's Validate the set.
+        .frame(maxHeight: .infinity)
+        // Validate goes down into the area of the home indicator.
         .ignoresSafeArea(.container, edges: .bottom)
         // How far the sheet goes into that area, read on the whole sheet: the content no longer sees it.
         .background {
@@ -101,16 +111,13 @@ private struct DurationPicker: View {
                     bottomInset = inset
                 }
         }
-        .presentationDetents([.height(contentHeight + bottomMargin)])
+        // The detent's height leaves out the area of the home indicator, which the sheet adds below it.
+        .presentationDetents([.height(topHeight + Self.spacing + buttonHeight - bottomInset)])
         .presentationDragIndicator(.visible)
         .presentationBackground(Color(.secondarySystemGroupedBackground))
     }
 
-    // Under Validate, from the bottom of the sheet. The detent's height leaves out the area of the home indicator,
-    // which the sheet adds below it, and the sheet floats a few points above the edge of the screen.
-    private var bottomMargin: CGFloat {
-        bottomInset > 0 ? -3 - bottomInset : 20
-    }
+    private static let spacing: CGFloat = 16
 }
 
 // Minutes from 0 to 60 and seconds from 0 to 59, each wheel going round: after the last value comes the first. Their
