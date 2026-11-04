@@ -54,6 +54,31 @@ final class WorkoutEditorTests: XCTestCase {
     }
 
     @MainActor
+    func testDurationWheels() throws {
+        let app = launch(language: "en", locale: "en_GB")
+        app.openWorkoutEditor()
+        // Wheels instead of the keyboard.
+        let rest = app.buttons["Set 1, Rest"]
+        XCTAssertTrue(rest.waitForExistence(timeout: 5))
+        let before = rest.value as? String
+        rest.tap()
+        let validate = app.buttons["Validate"]
+        XCTAssertTrue(validate.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.element(containing: "Warm-up · Barbell Bench Press - Medium Grip").exists)
+        XCTAssertEqual(app.pickerWheels.count, 2)
+        XCTAssertFalse(app.keyboards.firstMatch.exists)
+        try app.auditScreen()
+        snap("Edit workout › Rest")
+
+        // The seconds turned: the box shows them at once, kept once validated.
+        app.pickerWheels.element(boundBy: 1).swipeUp()
+        validate.tap()
+        XCTAssertTrue(validate.waitForNonExistence(timeout: 5))
+        XCTAssertNotEqual(rest.value as? String, before)
+        XCTAssertTrue(app.buttons["Save"].isEnabled)
+    }
+
+    @MainActor
     func testDiscardChanges() throws {
         let app = launch(language: "en", locale: "en_GB")
         app.openWorkoutEditor()

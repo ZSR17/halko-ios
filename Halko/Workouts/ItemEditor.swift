@@ -215,6 +215,7 @@ struct ItemEditor<Grip: View>: View {
                 value: shown[index][field],
                 workedOut: workedOut,
                 canWorkOut: PlannedSetEdits.canWorkOut(target, field, type: type),
+                set: index,
                 editing: .value(item.id, set: index, field)
             ) { value in
                 let start = editStart ?? EditStart(targets: item.targets, shown: shown)
@@ -293,13 +294,14 @@ struct ItemEditor<Grip: View>: View {
             HStack {
                 Text("Pause duration")
                 Spacer()
-                ValueField(
-                    Text("Pause duration"),
+                DurationField(
+                    label: Text("Pause duration"),
                     value: Double(item.switchS ?? defaultSwitchSidesS),
+                    title: String(localized: "Pause duration"),
+                    subtitle: name,
                     format: { fields.text($0, of: .rest) },
-                    parse: { FieldText.seconds($0).flatMap { $0 <= 600 ? Double($0) : nil } },
                     focus: focus,
-                    field: .sidesPause(item.id)
+                    begin: {}
                 ) { seconds in
                     item.switchS = seconds.map { Int($0) }
                 }
@@ -335,34 +337,60 @@ struct ItemEditor<Grip: View>: View {
         type.metrics.map(SetField.init) + [.rest]
     }
 
+    // Durations open wheels, the other values the keyboard. `set`: the one the box is for, none in simple mode.
+    @ViewBuilder
     private func box(
         _ field: SetField,
         label: String,
         value: Double?,
         workedOut: Bool = false,
         canWorkOut: Bool = false,
+        set: Int? = nil,
         editing: EditorField,
         commit: @escaping (Double?) -> Void
     ) -> some View {
         let targets = item.targets
-        return ValueField(
-            Text(verbatim: label),
-            value: value,
-            format: { fields.text($0, of: field) },
-            parse: { fields.value($0, of: field) },
-            keyboard: field == .weight || field == .distance ? .decimalPad : .numberPad,
-            workedOut: workedOut,
-            canWorkOut: canWorkOut,
-            focus: focus,
-            field: editing,
-            begin: {
-                editStart = EditStart(
-                    targets: targets,
-                    shown: Warmups.filledIn(targets, type: type, equipment: exercise?.equipment ?? [], unit: fields.weightUnit)
-                )
-            },
-            commit: commit
-        )
+        let begin = {
+            editStart = EditStart(
+                targets: targets,
+                shown: Warmups.filledIn(targets, type: type, equipment: exercise?.equipment ?? [], unit: fields.weightUnit)
+            )
+        }
+        if field == .rest || field == .duration {
+            DurationField(
+                label: Text(verbatim: label),
+                value: value,
+                title: field == .rest ? String(localized: "Rest") : self.label(field, long: true),
+                subtitle: wheelsSubtitle(set),
+                format: { fields.text($0, of: field) },
+                focus: focus,
+                begin: begin,
+                commit: commit
+            )
+        } else {
+            ValueField(
+                Text(verbatim: label),
+                value: value,
+                format: { fields.text($0, of: field) },
+                parse: { fields.value($0, of: field) },
+                keyboard: field == .weight || field == .distance ? .decimalPad : .numberPad,
+                workedOut: workedOut,
+                canWorkOut: canWorkOut,
+                focus: focus,
+                field: editing,
+                begin: begin,
+                commit: commit
+            )
+        }
+    }
+
+    // What the wheels of a duration are for: "Set 1 · Bench press", "Warm-up · Bench press", or the exercise alone.
+    private func wheelsSubtitle(_ set: Int?) -> String {
+        guard let set, item.targets.indices.contains(set) else { return name }
+        let which = item.targets[set].kind == .warmup
+            ? String(localized: "Warm-up")
+            : String(localized: "Set \(item.targets[...set].count(where: { $0.kind != .warmup }))")
+        return "\(which) · \(name)"
     }
 
     // A box under its label, or beside it with the largest text sizes.
