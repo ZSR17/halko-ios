@@ -121,7 +121,7 @@ private struct DurationPicker: View {
     private static let spacing: CGFloat = 4
 }
 
-// Minutes from 0 to 60 and seconds from 0 to 59, each wheel going round: after the last value comes the first. Their
+// Minutes from 0 to 10 and seconds from 0 to 59, each wheel going round: after the last value comes the first. Their
 // units stay beside the values chosen.
 struct DurationWheels: UIViewRepresentable {
     let seconds: Int
@@ -149,7 +149,7 @@ struct DurationWheels: UIViewRepresentable {
         // Each wheel holds its values that many times over and is brought back to the middle once it stops: it seems
         // to go round without an end.
         private static let rounds = 10
-        private static let counts = [61, 60]
+        private static let counts = [11, 60]
         private static let units: [UnitDuration] = [.minutes, .seconds]
 
         private let picker = UIPickerView()
@@ -187,7 +187,7 @@ struct DurationWheels: UIViewRepresentable {
         }
 
         func show(_ seconds: Int) {
-            let values = [min(seconds / 60, 60), seconds % 60]
+            let values = [min(seconds / 60, 10), seconds % 60]
             for component in values.indices {
                 picker.selectRow(Self.middle(component) + values[component], inComponent: component, animated: false)
             }
