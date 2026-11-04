@@ -2527,6 +2527,16 @@
         }
       }
     },
+    "Validate" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valider"
+          }
+        }
+      }
+    },
     "Validate %@" : {
       "localizations" : {
         "fr" : {

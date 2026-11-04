@@ -6,7 +6,6 @@ nonisolated enum EditorField: Hashable, Sendable {
     case name
     case note(ItemDraft.ID)
     case setCount(ItemDraft.ID)
-    case sidesPause(ItemDraft.ID)
     // `set` nil: the value of every set, in simple mode.
     case value(ItemDraft.ID, set: Int?, SetField)
 }

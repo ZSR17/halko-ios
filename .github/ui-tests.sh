@@ -29,7 +29,7 @@ while IFS= read -r file; do
     # The list and the page of an exercise, which the editor and « Add to a workout » open from.
     Halko/Exercises/*) tests+=(ExercisesTests ExerciseEditorTests AddToWorkoutTests) ;;
     # The workout editor, which « Add to a workout » opens too.
-    Halko/Workouts/WorkoutEditor.swift | Halko/Workouts/ItemEditor.swift)
+    Halko/Workouts/WorkoutEditor.swift | Halko/Workouts/ItemEditor.swift | Halko/Workouts/DurationPicker.swift)
       tests+=(WorkoutEditorTests AddToWorkoutTests)
       ;;
     # Its boxes and the swipe to delete a set, which the session uses too.
