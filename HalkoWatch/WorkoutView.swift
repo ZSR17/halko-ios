@@ -46,6 +46,8 @@ private struct WorkoutContent: View {
                 }
             } header: {
                 Text(verbatim: "\(String(localized: "\(items.count) exercises")) · \(String(localized: "\(setCount) sets"))")
+                    // As far from the first exercise as the exercises are from each other.
+                    .padding(.bottom, 6)
             }
         }
     }
