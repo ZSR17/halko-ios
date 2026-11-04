@@ -32,6 +32,8 @@ struct WorkoutsView: View {
                         } header: {
                             if let name = group.name {
                                 Text(verbatim: name)
+                                    // As far from the first workout as the workouts are from each other.
+                                    .padding(.bottom, 6)
                             }
                         }
                     }
