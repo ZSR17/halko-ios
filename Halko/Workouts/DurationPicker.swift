@@ -77,7 +77,7 @@ private struct DurationPicker: View {
                     .frame(height: 190)
             }
             // Below the grabber.
-            .padding(.top, 22)
+            .padding(.top, 34)
             .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height in
                 topHeight = height
             }
@@ -111,14 +111,14 @@ private struct DurationPicker: View {
                     bottomInset = inset
                 }
         }
-        // The detent's height leaves out the area of the home indicator, which the sheet adds below it, and takes in
-        // the top of the sheet, where the grabber is.
-        .presentationDetents([.height(topHeight + Self.spacing + buttonHeight - bottomInset + 10)])
+        // The detent's height leaves out the area of the home indicator, which the sheet adds below it.
+        .presentationDetents([.height(topHeight + Self.spacing + buttonHeight - bottomInset)])
         .presentationDragIndicator(.visible)
         .presentationBackground(Color(.secondarySystemGroupedBackground))
     }
 
-    private static let spacing: CGFloat = 16
+    // The wheels leave some room of their own above and below their rows.
+    private static let spacing: CGFloat = 4
 }
 
 // Minutes from 0 to 60 and seconds from 0 to 59, each wheel going round: after the last value comes the first. Their
