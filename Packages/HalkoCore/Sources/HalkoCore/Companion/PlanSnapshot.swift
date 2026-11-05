@@ -63,9 +63,11 @@ extension ModelContext {
 
 // What the iPhone and the watch tell each other besides rows (WatchConnectivity).
 public enum CompanionMessage {
-    // In the metadata of a file: what it holds, a plan (`PlanSnapshot`) or the picture of a media id.
+    // In the metadata of a file: what it holds, a plan (`PlanSnapshot`), sessions (`SessionChanges`) or the picture of a
+    // media id.
     public static let kindKey = "kind"
     public static let planKind = "plan"
+    public static let sessionsKind = "sessions"
     public static let thumbnailKind = "thumbnail"
     public static let mediaIDKey = "mediaID"
     // From the watch: send the plan (a first launch, or the app installed again), and the pictures of these media

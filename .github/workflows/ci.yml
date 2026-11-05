@@ -115,6 +115,8 @@ jobs:
           test "$(plutil -extract NSExtension.NSExtensionPointIdentifier raw "$app/PlugIns/HalkoWidgets.appex/Info.plist")" = com.apple.widgetkit-extension
           # The end of a rest, heard in the background.
           test "$(plutil -extract UIBackgroundModes.0 raw "$app/Info.plist")" = audio
+          # The workout of Health of the watch, running with the wrist down.
+          test "$(plutil -extract WKBackgroundModes.0 raw "$app/Watch/HalkoWatch.app/Info.plist")" = workout-processing
           test -f "$app/RestOver.wav"
           # A missing or unreadable icon does not fail the build: the icon name is then absent from Info.plist.
           for plist in "$app/Info.plist" "$app/Watch/HalkoWatch.app/Info.plist"; do

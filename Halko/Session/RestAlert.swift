@@ -2,7 +2,7 @@ import Foundation
 import os
 import UserNotifications
 
-// The end of the rest, notified at its absolute time even with the iPhone locked or in another app, with the set that
+// The end of the rest, notified at its absolute time even with the device locked or in another app, with the set that
 // follows: moved when the rest is shortened or lengthened, removed when it is skipped or the session ends. Only when
 // notifications are allowed; in the app, the session shows the end itself.
 enum RestAlert {

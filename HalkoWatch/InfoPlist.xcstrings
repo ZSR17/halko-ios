@@ -1,0 +1,40 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "NSHealthShareUsageDescription" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Halko reads your heart rate and active calories during a workout to show them."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Halko lit ta fréquence cardiaque et tes calories actives pendant la séance pour les afficher."
+          }
+        }
+      }
+    },
+    "NSHealthUpdateUsageDescription" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Halko saves your strength workouts in Health, with their active calories and heart rate, so that they count towards your Move and Exercise rings."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Halko enregistre tes séances de musculation dans Santé, avec leurs calories actives et ta fréquence cardiaque, pour qu'elles comptent dans tes anneaux Bouger et Exercice."
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}
