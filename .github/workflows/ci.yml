@@ -138,6 +138,7 @@ jobs:
           if-no-files-found: ignore
       - name: Test the watch app on the smallest watch
         # Only on master: to see its screens with the least room, in their own screenshots. A failure here stops nothing.
+        if: github.event_name == 'push'
         continue-on-error: true
         timeout-minutes: 15
         run: |

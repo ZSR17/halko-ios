@@ -454,7 +454,7 @@ private struct RestPage: View {
     var body: some View {
         NavigationStack {
             ViewThatFits(in: .vertical) {
-                page {
+                page(raisingRest: 4) {
                     ring
                 }
                 page {
@@ -477,14 +477,13 @@ private struct RestPage: View {
         }
     }
 
-    private func page<Time: View>(@ViewBuilder _ time: () -> Time) -> some View {
+    private func page<Time: View>(raisingRest: Double = 2, @ViewBuilder _ time: () -> Time) -> some View {
         VStack(spacing: 0) {
             Text("Rest")
                 .font(.footnote.weight(.semibold))
                 .textCase(.uppercase)
                 .foregroundStyle(Color(.rest))
-                // Clear of the ring.
-                .offset(y: -2)
+                .offset(y: -raisingRest)
             time()
             Spacer(minLength: 2)
             if let step = table.step {
