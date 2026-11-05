@@ -291,16 +291,6 @@
         }
       }
     },
-    "Continue the session" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Continuer la séance"
-          }
-        }
-      }
-    },
     "Discard" : {
       "localizations" : {
         "fr" : {

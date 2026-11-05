@@ -50,7 +50,6 @@ final class WatchSessionTests: XCTestCase {
         finish.tap()
         let save = app.buttons["Enregistrer la séance"]
         XCTAssertTrue(save.waitForExistence(timeout: 5))
-        XCTAssertTrue(app.buttons["Continuer la séance"].exists)
         snap("Watch – Terminer la séance")
         save.tap()
 

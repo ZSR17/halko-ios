@@ -34,6 +34,8 @@ struct FirstWorkoutView: View {
                 .buttonStyle(.borderedProminent)
                 .buttonBorderShape(.capsule)
                 .disabled(asking)
+                // A button of the watch stays narrower than the page.
+                .frame(maxWidth: .infinity)
                 .padding(.top, 4)
             }
             .frame(maxWidth: .infinity, alignment: .leading)

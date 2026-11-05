@@ -50,8 +50,6 @@ struct LiveSessionView: View {
             Button("Discard the session", role: .destructive) {
                 discarding = true
             }
-            // Without the cancel role: the watch would make it a mere close mark at the top.
-            Button("Continue the session") {}
         } message: {
             Text("\(sets.count) of \(table.plan.steps.count) sets done.")
         }
@@ -555,6 +553,8 @@ private struct MetricsPage: View {
                         .foregroundStyle(.secondary)
                 }
                 Button("Finish", role: .destructive, action: finish)
+                    // A button of the watch stays narrower than the page.
+                    .frame(maxWidth: .infinity)
                     .padding(.top, 6)
             }
             .frame(maxWidth: .infinity, alignment: .leading)

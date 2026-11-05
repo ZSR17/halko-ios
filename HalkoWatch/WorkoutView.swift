@@ -3,8 +3,8 @@ import os
 import SwiftData
 import SwiftUI
 
-// The page of a workout: its exercises with their picture and the sets planned, and Start, which goes through « Before
-// your first workout » the first time.
+// The page of a workout: Start, which goes through « Before your first workout » the first time, then its exercises with
+// their picture and the sets planned.
 struct WorkoutView: View {
     private static let logger = Logger(subsystem: "com.zsr.halko", category: "session")
 
@@ -29,26 +29,14 @@ struct WorkoutView: View {
                 start()
             }
         } else {
-            WorkoutContent(items: items)
-                .navigationTitle(workout.name)
-                .bottomButton {
-                    Button {
-                        if permissions.asked {
-                            start()
-                        } else {
-                            isPreparing = true
-                        }
-                    } label: {
-                        Text("Start")
-                            .font(.headline)
-                            .foregroundStyle(Color(.onAccent))
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .buttonBorderShape(.capsule)
-                    .disabled(items.isEmpty)
-                    .padding(.horizontal)
+            WorkoutContent(items: items) {
+                if permissions.asked {
+                    start()
+                } else {
+                    isPreparing = true
                 }
+            }
+            .navigationTitle(workout.name)
         }
     }
 
@@ -65,14 +53,16 @@ struct WorkoutView: View {
     }
 }
 
-// What the page shows of the exercises, once they are read.
+// What the page shows, once the exercises are read.
 private struct WorkoutContent: View {
     let items: [WorkoutItem]
+    let start: () -> Void
     @Query private var exercises: [Exercise]
     @Environment(\.locale) private var locale
 
-    init(items: [WorkoutItem]) {
+    init(items: [WorkoutItem], start: @escaping () -> Void) {
         self.items = items
+        self.start = start
         _exercises = Query(filter: Exercise.withIDs(items.map(\.exerciseID)))
     }
 
@@ -86,6 +76,21 @@ private struct WorkoutContent: View {
         }
         let setCount = rows.reduce(0) { $0 + $1.sets.working.count }
         List {
+            Section {
+                Button(action: start) {
+                    Text("Start")
+                        .font(.headline)
+                        .foregroundStyle(Color(.onAccent))
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .buttonBorderShape(.capsule)
+                .disabled(items.isEmpty)
+                // A button of the watch stays narrower than the page.
+                .frame(maxWidth: .infinity)
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets())
+            }
             Section {
                 ForEach(rows) { row in
                     PlannedExerciseRow(row: row, text: text)
