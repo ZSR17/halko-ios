@@ -137,15 +137,16 @@ jobs:
           path: screenshots
           if-no-files-found: ignore
       - name: Test the watch app on the smallest watch
-        # Only on master: to see its screens with less room, in their own screenshots. A failure here stops nothing.
+        # Only on master: to see its screens with the least room, in their own screenshots. A failure here stops nothing.
         if: github.event_name == 'push'
         continue-on-error: true
         timeout-minutes: 15
         run: |
-          small=$(xcrun simctl list devices available --json | jq -r '
-            .devices | to_entries | map(select(.key | contains("watchOS"))) | sort_by(.key | sub(".*watchOS-"; "") | split("-") | map(tonumber))
-            | last.value | map(select(.name | test("[0-9]+mm"))) | sort_by(.name | capture("(?<mm>[0-9]+)mm").mm | tonumber) | first.udid')
-          xcrun simctl list devices | grep "$small"
+          # The smallest watch the newest watchOS runs, among all those it supports: made here, the runner may not have it.
+          runtime=$(xcrun simctl list runtimes available --json | jq -c '.runtimes | map(select(.platform == "watchOS")) | sort_by(.version | split(".") | map(tonumber)) | last')
+          type=$(jq -c '.supportedDeviceTypes | map(select(.name | test("[0-9]+mm"))) | sort_by(.name | capture("(?<mm>[0-9]+)mm").mm | tonumber) | first' <<< "$runtime")
+          jq -r .name <<< "$type"
+          small=$(xcrun simctl create "Smallest watch" "$(jq -r .identifier <<< "$type")" "$(jq -r .identifier <<< "$runtime")")
           xcrun simctl boot "$small"
           xcrun simctl bootstatus "$small"
           xcodebuild test -project Halko.xcodeproj -scheme HalkoWatch -destination "id=$small" -derivedDataPath build -resultBundlePath HalkoWatchSmall.xcresult -retry-tests-on-failure -test-iterations 3
