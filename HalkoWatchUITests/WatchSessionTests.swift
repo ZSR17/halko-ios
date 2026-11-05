@@ -6,6 +6,12 @@ final class WatchSessionTests: XCTestCase {
     func testSession() throws {
         let app = openPushA()
         app.buttons["Démarrer"].tap()
+        let proceed = app.buttons["Continuer"]
+        XCTAssertTrue(proceed.waitForExistence(timeout: 5))
+        XCTAssertTrue(text(app, "Avant ta première séance").exists)
+        try app.performAccessibilityAudit()
+        snap("Watch – Avant ta première séance")
+        proceed.tap()
 
         let validate = app.buttons["Valider"]
         XCTAssertTrue(validate.waitForExistence(timeout: 10))
@@ -60,7 +66,7 @@ final class WatchSessionTests: XCTestCase {
     @MainActor
     func testDiscard() throws {
         let app = openPushA()
-        app.buttons["Démarrer"].tap()
+        start(app)
         XCTAssertTrue(text(app, "Échauffement 1 / 4").waitForExistence(timeout: 10))
 
         app.swipeLeft()
@@ -73,8 +79,32 @@ final class WatchSessionTests: XCTestCase {
         discard.tap()
         let confirm = app.buttons["Abandonner"]
         XCTAssertTrue(confirm.waitForExistence(timeout: 5))
+        snap("Watch – Abandonner la séance")
         confirm.tap()
         XCTAssertTrue(pushA(app).waitForExistence(timeout: 5))
+    }
+
+    // Every set of a workout validated: the session can only be finished.
+    @MainActor
+    func testAllDone() throws {
+        let app = openPushA()
+        start(app)
+        let allDone = text(app, "Toutes les séries faites")
+        let validate = app.buttons["Valider"]
+        let skip = app.buttons["Passer"]
+        XCTAssertTrue(validate.waitForExistence(timeout: 10))
+        // Push A: 4 warm-ups and 16 working sets.
+        for _ in 1...20 {
+            validate.tap()
+            if skip.waitForExistence(timeout: 2) {
+                skip.tap()
+                _ = validate.waitForExistence(timeout: 5)
+            }
+        }
+        XCTAssertTrue(allDone.waitForExistence(timeout: 5))
+        try app.performAccessibilityAudit()
+        snap("Watch – Toutes les séries faites")
+        XCTAssertTrue(app.buttons["Terminer la séance"].exists)
     }
 
     // The sample workouts, in a database kept in memory, on the page of Push A.
@@ -88,6 +118,15 @@ final class WatchSessionTests: XCTestCase {
         push.tap()
         XCTAssertTrue(app.buttons["Démarrer"].waitForExistence(timeout: 5))
         return app
+    }
+
+    // Start, through « Before your first workout ».
+    @MainActor
+    private func start(_ app: XCUIApplication) {
+        app.buttons["Démarrer"].tap()
+        let proceed = app.buttons["Continuer"]
+        XCTAssertTrue(proceed.waitForExistence(timeout: 5))
+        proceed.tap()
     }
 
     @MainActor

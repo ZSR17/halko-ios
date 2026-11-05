@@ -3,8 +3,8 @@ import os
 import SwiftData
 import SwiftUI
 
-// The page of a workout: its exercises with their picture and the sets planned, and Start. Health and notifications are
-// asked once, at the first Start; whatever the answers, the session starts.
+// The page of a workout: its exercises with their picture and the sets planned, and Start, which goes through « Before
+// your first workout » the first time.
 struct WorkoutView: View {
     private static let logger = Logger(subsystem: "com.zsr.halko", category: "session")
 
@@ -14,7 +14,7 @@ struct WorkoutView: View {
     @Environment(Permissions.self) private var permissions
     @Environment(WorkoutRecorder.self) private var recorder
     @Environment(\.modelContext) private var context
-    @State private var isStarting = false
+    @State private var isPreparing = false
 
     init(workout: Workout) {
         self.workout = workout
@@ -23,31 +23,36 @@ struct WorkoutView: View {
     }
 
     var body: some View {
-        WorkoutContent(items: items)
-            .navigationTitle(workout.name)
-            .safeAreaInset(edge: .bottom) {
-                Button {
-                    isStarting = true
-                    Task {
-                        await start()
-                    }
-                } label: {
-                    Text("Start")
-                        .font(.headline)
-                        .foregroundStyle(Color(.onAccent))
-                        .frame(maxWidth: .infinity, minHeight: 44)
-                }
-                .buttonStyle(.borderedProminent)
-                .buttonBorderShape(.capsule)
-                .disabled(items.isEmpty || isStarting)
-                .padding(.horizontal)
+        if isPreparing {
+            FirstWorkoutView {
+                await permissions.request()
+                start()
             }
+        } else {
+            WorkoutContent(items: items)
+                .navigationTitle(workout.name)
+                .safeAreaInset(edge: .bottom) {
+                    Button {
+                        if permissions.asked {
+                            start()
+                        } else {
+                            isPreparing = true
+                        }
+                    } label: {
+                        Text("Start")
+                            .font(.headline)
+                            .foregroundStyle(Color(.onAccent))
+                            .frame(maxWidth: .infinity, minHeight: 44)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .buttonBorderShape(.capsule)
+                    .disabled(items.isEmpty)
+                    .padding(.horizontal)
+                }
+        }
     }
 
-    private func start() async {
-        if !permissions.asked {
-            await permissions.request()
-        }
+    private func start() {
         let now = Date.now
         do {
             let state = try context.startSession(of: workout, now: now)
@@ -55,7 +60,7 @@ struct WorkoutView: View {
             store.set(state)
         } catch {
             Self.logger.error("Cannot start the session: \(String(describing: error))")
-            isStarting = false
+            isPreparing = false
         }
     }
 }

@@ -261,12 +261,32 @@
         }
       }
     },
+    "Before your first workout" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avant ta première séance"
+          }
+        }
+      }
+    },
     "Cancel" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Annuler"
+          }
+        }
+      }
+    },
+    "Continue" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continuer"
           }
         }
       }
@@ -351,6 +371,16 @@
         }
       }
     },
+    "Health" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Santé"
+          }
+        }
+      }
+    },
     "Heart rate" : {
       "localizations" : {
         "fr" : {
@@ -377,6 +407,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aucune séance"
+          }
+        }
+      }
+    },
+    "Notifications" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notifications"
           }
         }
       }
@@ -501,6 +541,16 @@
         }
       }
     },
+    "The watch will ask for your consent for:" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La montre va te demander ton accord pour :"
+          }
+        }
+      }
+    },
     "The workouts you make in Halko on your iPhone appear here." : {
       "localizations" : {
         "fr" : {
@@ -621,6 +671,16 @@
         }
       }
     },
+    "filling your rings" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "remplir tes anneaux"
+          }
+        }
+      }
+    },
     "kilograms" : {
       "localizations" : {
         "fr" : {
@@ -687,6 +747,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "séries"
+          }
+        }
+      }
+    },
+    "telling you when your rest ends" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "annoncer la fin du repos"
           }
         }
       }
