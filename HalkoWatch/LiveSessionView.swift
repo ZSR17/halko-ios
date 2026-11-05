@@ -50,7 +50,8 @@ struct LiveSessionView: View {
             Button("Discard the session", role: .destructive) {
                 discarding = true
             }
-            Button("Continue the session", role: .cancel) {}
+            // Without the cancel role: the watch would make it a mere close mark at the top.
+            Button("Continue the session") {}
         } message: {
             Text("\(sets.count) of \(table.plan.steps.count) sets done.")
         }
@@ -215,7 +216,7 @@ private struct SessionHeader: View {
     @Environment(WorkoutRecorder.self) private var recorder
 
     var body: some View {
-        HStack {
+        HStack(spacing: 6) {
             if let heartRate = recorder.heartRate {
                 let value = Int(heartRate.rounded())
                 Label {
@@ -230,15 +231,40 @@ private struct SessionHeader: View {
                 .accessibilityLabel(Text("Heart rate"))
                 .accessibilityValue(Text("\(value) beats per minute"))
             }
-            Spacer(minLength: 0)
             if let session {
-                Text(timerInterval: session.startedAt...Date.distantFuture, countsDown: false)
-                    .monospacedDigit()
-                    .foregroundStyle(.tint)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
+                // A timer text would take all the width the end of its range could need.
+                TimelineView(.periodic(from: session.startedAt, by: 1)) { context in
+                    Text(verbatim: FieldText.clock(Int(context.date.timeIntervalSince(session.startedAt))))
+                        .monospacedDigit()
+                        .foregroundStyle(.tint)
+                }
             }
         }
         .font(.footnote)
+        .lineLimit(1)
+    }
+}
+
+extension View {
+    // A button fixed at the bottom, over a black strip: what scrolls under it stays clear of it.
+    func bottomButton<Content: View>(@ViewBuilder _ button: () -> Content) -> some View {
+        safeAreaInset(edge: .bottom) {
+            button()
+                .frame(maxWidth: .infinity)
+                .padding(.top, 4)
+                .background(.black, ignoresSafeAreaEdges: .bottom)
+        }
+    }
+
+    // In the row of the clock, where the page has room for it.
+    fileprivate func sessionHeader(_ session: Session?) -> some View {
+        NavigationStack {
+            toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    SessionHeader(session: session)
+                }
+            }
+        }
     }
 }
 
@@ -258,8 +284,7 @@ private struct SetPage: View {
         let fields = table.metrics(step.item)
         let field = chosen ?? fields[0]
         ScrollView {
-            VStack(spacing: 6) {
-                SessionHeader(session: session)
+            VStack(spacing: 4) {
                 Text(verbatim: table.name(step.item))
                     .font(.headline)
                     .multilineTextAlignment(.center)
@@ -289,16 +314,17 @@ private struct SetPage: View {
             }
         }
         .scrollBounceBehavior(.basedOnSize)
-        .safeAreaInset(edge: .bottom) {
+        .bottomButton {
             Button(action: validate) {
                 Text("Validate")
                     .font(.headline)
                     .foregroundStyle(Color(.onAccent))
-                    .frame(maxWidth: .infinity, minHeight: 44)
+                    .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
             .buttonBorderShape(.capsule)
         }
+        .sessionHeader(session)
         .onChange(of: field, initial: true) {
             crown = table.draft(step)[field] ?? 0
         }
@@ -369,7 +395,7 @@ private struct ValueBox: View {
             .lineLimit(1)
             .minimumScaleFactor(0.5)
             .frame(maxWidth: .infinity, minHeight: 44)
-            .padding(.vertical, 4)
+            .padding(.vertical, 2)
             .background(.fill.tertiary, in: .rect(cornerRadius: 12))
             .overlay {
                 if isChosen {
@@ -425,14 +451,14 @@ private struct RestPage: View {
                             Text(verbatim: "−15 s")
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.7)
-                                .frame(maxWidth: .infinity, minHeight: 44)
+                                .frame(maxWidth: .infinity)
                         }
                         .accessibilityLabel(Text("Remove 15 seconds"))
                         Button(action: lengthen) {
                             Text(verbatim: "+15 s")
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.7)
-                                .frame(maxWidth: .infinity, minHeight: 44)
+                                .frame(maxWidth: .infinity)
                         }
                         .accessibilityLabel(Text("Add 15 seconds"))
                     }
@@ -482,24 +508,23 @@ private struct AllDonePage: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 10) {
-                SessionHeader(session: session)
-                Text("All sets done")
-                    .font(.headline)
-                    .multilineTextAlignment(.center)
-            }
+            Text("All sets done")
+                .font(.headline)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: .infinity)
         }
         .scrollBounceBehavior(.basedOnSize)
-        .safeAreaInset(edge: .bottom) {
+        .bottomButton {
             Button(action: finish) {
                 Text("Finish the session")
                     .font(.headline)
                     .foregroundStyle(Color(.onAccent))
-                    .frame(maxWidth: .infinity, minHeight: 44)
+                    .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
             .buttonBorderShape(.capsule)
         }
+        .sessionHeader(session)
     }
 }
 

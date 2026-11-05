@@ -44,10 +44,10 @@ struct SessionSummaryView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .safeAreaInset(edge: .bottom) {
+        .bottomButton {
             Button(action: done) {
                 Text("OK")
-                    .frame(maxWidth: .infinity, minHeight: 44)
+                    .frame(maxWidth: .infinity)
             }
             .buttonBorderShape(.capsule)
         }

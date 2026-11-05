@@ -21,7 +21,7 @@ struct FirstWorkoutView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .safeAreaInset(edge: .bottom) {
+        .bottomButton {
             Button {
                 asking = true
                 Task {
@@ -31,7 +31,7 @@ struct FirstWorkoutView: View {
                 Text("Continue")
                     .font(.headline)
                     .foregroundStyle(Color(.onAccent))
-                    .frame(maxWidth: .infinity, minHeight: 44)
+                    .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
             .buttonBorderShape(.capsule)

@@ -31,7 +31,7 @@ struct WorkoutView: View {
         } else {
             WorkoutContent(items: items)
                 .navigationTitle(workout.name)
-                .safeAreaInset(edge: .bottom) {
+                .bottomButton {
                     Button {
                         if permissions.asked {
                             start()
@@ -42,7 +42,7 @@ struct WorkoutView: View {
                         Text("Start")
                             .font(.headline)
                             .foregroundStyle(Color(.onAccent))
-                            .frame(maxWidth: .infinity, minHeight: 44)
+                            .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.borderedProminent)
                     .buttonBorderShape(.capsule)
