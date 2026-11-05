@@ -16,14 +16,8 @@ struct SessionSummaryView: View {
     @State private var recordNames: [String] = []
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 8) {
-                Image(systemName: "checkmark")
-                    .font(.title3.weight(.bold))
-                    .foregroundStyle(Color(.onAccent))
-                    .frame(width: 32, height: 32)
-                    .background(.tint, in: .circle)
-                    .accessibilityHidden(true)
+        FullPage {
+            VStack(alignment: .leading, spacing: 4) {
                 Text("Workout saved")
                     .font(.headline)
                     .accessibilityAddTraits(.isHeader)
@@ -41,15 +35,26 @@ struct SessionSummaryView: View {
                     }
                     .font(.footnote)
                 }
+                Spacer(minLength: 4)
+                Button(action: done) {
+                    Text("OK")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonBorderShape(.capsule)
+                // A button of the watch stays narrower than the page.
+                .frame(maxWidth: .infinity)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .bottomButton {
-            Button(action: done) {
-                Text("OK")
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonBorderShape(.capsule)
+        .onClockLine {
+            Image(systemName: "checkmark")
+                .font(.footnote.weight(.bold))
+                .foregroundStyle(Color(.onAccent))
+                .frame(width: 24, height: 24)
+                .background(.tint, in: .circle)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.leading, 10)
+                .accessibilityHidden(true)
         }
         .task(id: session.id) {
             load()

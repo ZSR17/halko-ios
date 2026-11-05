@@ -208,27 +208,31 @@ extension LiveTable {
     }
 }
 
-// The heart rate, when it is measured, and the time since the start.
+// On the line of the clock: the heart rate, when it is measured, and in the middle the time since the start.
 private struct SessionHeader: View {
     let session: Session?
     @Environment(WorkoutRecorder.self) private var recorder
 
     var body: some View {
-        HStack(spacing: 6) {
-            if let heartRate = recorder.heartRate {
-                let value = Int(heartRate.rounded())
-                Label {
-                    Text(verbatim: value.formatted())
-                        .monospacedDigit()
-                } icon: {
-                    Image(systemName: "heart.fill")
-                        .foregroundStyle(.red)
+        ZStack {
+            HStack {
+                if let heartRate = recorder.heartRate {
+                    let value = Int(heartRate.rounded())
+                    Label {
+                        Text(verbatim: value.formatted())
+                            .monospacedDigit()
+                    } icon: {
+                        Image(systemName: "heart.fill")
+                            .foregroundStyle(.red)
+                    }
+                    .labelStyle(.titleAndIcon)
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel(Text("Heart rate"))
+                    .accessibilityValue(Text("\(value) beats per minute"))
                 }
-                .labelStyle(.titleAndIcon)
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel(Text("Heart rate"))
-                .accessibilityValue(Text("\(value) beats per minute"))
+                Spacer(minLength: 0)
             }
+            .padding(.leading, 10)
             if let session {
                 // A timer text would take all the width the end of its range could need.
                 TimelineView(.periodic(from: session.startedAt, by: 1)) { context in
@@ -238,31 +242,43 @@ private struct SessionHeader: View {
                 }
             }
         }
-        .font(.footnote)
+        .font(.body.weight(.semibold))
         .lineLimit(1)
+        .minimumScaleFactor(0.7)
+        // The line is shared with the clock: it does not grow with the rest of the page.
+        .dynamicTypeSize(...DynamicTypeSize.xLarge)
+    }
+}
+
+// Enough for the corners of the screen and the dots of the pages.
+private let lowerMargin = 10.0
+
+// A page down to the lower edge of the screen, with what comes last at the bottom when it has spacers. It scrolls only
+// when its text is too large for the screen.
+struct FullPage<Content: View>: View {
+    @ViewBuilder let content: Content
+    @State private var height = 0.0
+
+    var body: some View {
+        ScrollView {
+            content
+                .padding(.bottom, lowerMargin)
+                .frame(maxWidth: .infinity, minHeight: height)
+        }
+        .scrollBounceBehavior(.basedOnSize)
+        .onGeometryChange(for: Double.self) { $0.size.height } action: { height = $0 }
+        .ignoresSafeArea(edges: .bottom)
     }
 }
 
 extension View {
-    // A button fixed at the bottom, over a black strip: what scrolls under it stays clear of it.
-    func bottomButton<Content: View>(@ViewBuilder _ button: () -> Content) -> some View {
-        safeAreaInset(edge: .bottom) {
-            button()
-                .frame(maxWidth: .infinity)
-                .padding(.top, 4)
-                // Lower than the system's margin, as low as the screen's corners allow: the page needs the room.
-                .padding(.bottom, -18)
-                .background(.black, ignoresSafeAreaEdges: .bottom)
-        }
-    }
-
-    // In the row of the clock, where the page has room for it.
-    fileprivate func sessionHeader(_ session: Session?) -> some View {
+    // What goes on the line of the clock, above the page: centred on it, as high as it is on every size of watch.
+    func onClockLine<Line: View>(@ViewBuilder _ line: () -> Line) -> some View {
         NavigationStack {
-            toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    SessionHeader(session: session)
-                }
+            overlay(alignment: .top) {
+                line()
+                    .frame(height: 0)
+                    .offset(y: -20)
             }
         }
     }
@@ -283,15 +299,18 @@ private struct SetPage: View {
     var body: some View {
         let fields = table.metrics(step.item)
         let field = chosen ?? fields[0]
-        ScrollView {
-            VStack(spacing: 4) {
+        FullPage {
+            VStack(spacing: 2) {
                 Text(verbatim: table.name(step.item))
                     .font(.headline)
-                    .multilineTextAlignment(.center)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
                 Text(verbatim: subtitle)
                     .font(.footnote)
                     .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                Spacer(minLength: 2)
                 HStack(spacing: 6) {
                     ForEach(fields, id: \.self) { box in
                         ValueBox(
@@ -311,20 +330,20 @@ private struct SetPage: View {
                 .focused($crownHeld)
                 .focusEffectDisabled()
                 .digitalCrownRotation($crown, from: 0, through: Self.limit(field), by: table.fields.increment(of: field))
+                Spacer(minLength: 4)
+                Button(action: validate) {
+                    Text("Validate")
+                        .font(.headline)
+                        .foregroundStyle(Color(.onAccent))
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .buttonBorderShape(.capsule)
             }
         }
-        .scrollBounceBehavior(.basedOnSize)
-        .bottomButton {
-            Button(action: validate) {
-                Text("Validate")
-                    .font(.headline)
-                    .foregroundStyle(Color(.onAccent))
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-            .buttonBorderShape(.capsule)
+        .onClockLine {
+            SessionHeader(session: session)
         }
-        .sessionHeader(session)
         .onChange(of: field, initial: true) {
             crown = table.draft(step)[field] ?? 0
         }
@@ -395,7 +414,6 @@ private struct ValueBox: View {
             .lineLimit(1)
             .minimumScaleFactor(0.5)
             .frame(maxWidth: .infinity, minHeight: 44)
-            .padding(.vertical, 2)
             .background(.fill.tertiary, in: .rect(cornerRadius: 12))
             .overlay {
                 if isChosen {
@@ -418,7 +436,8 @@ private struct ValueBox: View {
     }
 }
 
-// The rest after a set: the time left (an absolute end), the set that follows, Skip, −15 s and +15 s.
+// The rest after a set: the time left (an absolute end), the set that follows, Skip, −15 s and +15 s. The time in a ring
+// when the screen has room for it, above a bar when it has not.
 private struct RestPage: View {
     let table: LiveTable
     let end: Date
@@ -430,44 +449,21 @@ private struct RestPage: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 4) {
-                    Text("Rest")
-                        .font(.footnote.weight(.semibold))
-                        .textCase(.uppercase)
-                        .foregroundStyle(Color(.rest))
+            ViewThatFits(in: .vertical) {
+                page {
                     ring
-                    if let step = table.step {
-                        Text(verbatim: table.name(step.item))
-                            .font(.footnote.weight(.semibold))
-                            .multilineTextAlignment(.center)
-                        Text(verbatim: "\(table.position(step)) · \(table.setText(step.item, values: table.draft(step), unit: true))")
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.center)
+                }
+                page {
+                    bar
+                }
+                // Only when the text is too large for the screen.
+                ScrollView {
+                    page {
+                        bar
                     }
-                    HStack(spacing: 6) {
-                        Button(action: shorten) {
-                            Text(verbatim: "−15 s")
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.7)
-                                .frame(maxWidth: .infinity)
-                        }
-                        .accessibilityLabel(Text("Remove 15 seconds"))
-                        Button(action: lengthen) {
-                            Text(verbatim: "+15 s")
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.7)
-                                .frame(maxWidth: .infinity)
-                        }
-                        .accessibilityLabel(Text("Add 15 seconds"))
-                    }
-                    .buttonStyle(.bordered)
-                    .buttonBorderShape(.capsule)
-                    .padding(.top, 4)
                 }
             }
-            .scrollBounceBehavior(.basedOnSize)
+            .ignoresSafeArea(edges: .bottom)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Skip", action: skip)
@@ -477,27 +473,96 @@ private struct RestPage: View {
         }
     }
 
+    private func page<Time: View>(@ViewBuilder _ time: () -> Time) -> some View {
+        VStack(spacing: 2) {
+            Text("Rest")
+                .font(.footnote.weight(.semibold))
+                .textCase(.uppercase)
+                .foregroundStyle(Color(.rest))
+            time()
+            Spacer(minLength: 2)
+            if let step = table.step {
+                Text(verbatim: table.name(step.item))
+                    .font(.footnote.weight(.semibold))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                Text(verbatim: "\(table.position(step)) · \(table.setText(step.item, values: table.draft(step), unit: true))")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+            }
+            Spacer(minLength: 2)
+            HStack(spacing: 6) {
+                Button(action: shorten) {
+                    Text(verbatim: "−15 s")
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                        .frame(maxWidth: .infinity)
+                }
+                .accessibilityLabel(Text("Remove 15 seconds"))
+                Button(action: lengthen) {
+                    Text(verbatim: "+15 s")
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                        .frame(maxWidth: .infinity)
+                }
+                .accessibilityLabel(Text("Add 15 seconds"))
+            }
+            .buttonStyle(.bordered)
+            .buttonBorderShape(.capsule)
+        }
+        .padding(.bottom, lowerMargin)
+    }
+
+    private var timeLeft: some View {
+        Text(timerInterval: Date.now...max(end, .now), countsDown: true)
+            .monospacedDigit()
+            .multilineTextAlignment(.center)
+            .lineLimit(1)
+            .minimumScaleFactor(0.5)
+    }
+
+    // The part of the rest still to come.
+    private func left(at date: Date) -> Double {
+        totalS > 0 ? min(1, max(0, end.timeIntervalSince(date)) / Double(totalS)) : 0
+    }
+
     private var ring: some View {
         ZStack {
             Circle()
                 .stroke(Color(.rest).opacity(0.25), lineWidth: 5)
             TimelineView(.periodic(from: .now, by: 1)) { context in
-                let left = totalS > 0 ? max(0, end.timeIntervalSince(context.date)) / Double(totalS) : 0
+                let left = left(at: context.date)
                 Circle()
-                    .trim(from: 0, to: min(1, left))
+                    .trim(from: 0, to: left)
                     .stroke(Color(.rest), style: StrokeStyle(lineWidth: 5, lineCap: .round))
                     .rotationEffect(.degrees(-90))
                     .animation(.linear(duration: 1), value: left)
             }
-            Text(timerInterval: Date.now...max(end, .now), countsDown: true)
+            timeLeft
                 .font(.title2.weight(.bold))
-                .monospacedDigit()
-                .multilineTextAlignment(.center)
-                .lineLimit(1)
-                .minimumScaleFactor(0.5)
                 .padding(8)
         }
         .frame(width: ringSide, height: ringSide)
+    }
+
+    // Empties from right to left.
+    private var bar: some View {
+        VStack(spacing: 4) {
+            timeLeft
+                .font(.title.weight(.bold))
+            TimelineView(.periodic(from: .now, by: 1)) { context in
+                let left = left(at: context.date)
+                Capsule()
+                    .fill(Color(.rest))
+                    .scaleEffect(x: left, anchor: .leading)
+                    .animation(.linear(duration: 1), value: left)
+            }
+            .frame(height: 7)
+            .background(Color(.rest).opacity(0.25), in: .capsule)
+            .accessibilityHidden(true)
+        }
     }
 }
 
@@ -507,24 +572,26 @@ private struct AllDonePage: View {
     let finish: () -> Void
 
     var body: some View {
-        ScrollView {
-            Text("All sets done")
-                .font(.headline)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: .infinity)
-        }
-        .scrollBounceBehavior(.basedOnSize)
-        .bottomButton {
-            Button(action: finish) {
-                Text("Finish the session")
+        FullPage {
+            VStack {
+                Spacer(minLength: 0)
+                Text("All sets done")
                     .font(.headline)
-                    .foregroundStyle(Color(.onAccent))
-                    .frame(maxWidth: .infinity)
+                    .multilineTextAlignment(.center)
+                Spacer(minLength: 4)
+                Button(action: finish) {
+                    Text("Finish the session")
+                        .font(.headline)
+                        .foregroundStyle(Color(.onAccent))
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .buttonBorderShape(.capsule)
             }
-            .buttonStyle(.borderedProminent)
-            .buttonBorderShape(.capsule)
         }
-        .sessionHeader(session)
+        .onClockLine {
+            SessionHeader(session: session)
+        }
     }
 }
 

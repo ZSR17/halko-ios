@@ -3,8 +3,8 @@ import os
 import SwiftData
 import SwiftUI
 
-// The page of a workout: Start, which goes through « Before your first workout » the first time, then its exercises with
-// their picture and the sets planned.
+// The page of a workout: how much it holds, Start, which goes through « Before your first workout » the first time, then
+// its exercises with their picture and the sets planned.
 struct WorkoutView: View {
     private static let logger = Logger(subsystem: "com.zsr.halko", category: "session")
 
@@ -90,14 +90,12 @@ private struct WorkoutContent: View {
                 .frame(maxWidth: .infinity)
                 .listRowBackground(Color.clear)
                 .listRowInsets(EdgeInsets())
-            }
-            Section {
                 ForEach(rows) { row in
                     PlannedExerciseRow(row: row, text: text)
                 }
             } header: {
                 Text(verbatim: "\(String(localized: "\(items.count) exercises")) · \(String(localized: "\(setCount) sets"))")
-                    // As far from the first exercise as the exercises are from each other.
+                    // As far from Start as Start is from the first exercise.
                     .padding(.bottom, 6)
             }
         }
