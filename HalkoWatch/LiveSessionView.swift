@@ -277,8 +277,10 @@ extension View {
         NavigationStack {
             overlay(alignment: .top) {
                 line()
+                    // A line of no height would shrink its text.
+                    .fixedSize(horizontal: false, vertical: true)
                     .frame(height: 0)
-                    .offset(y: -20)
+                    .offset(y: -18)
             }
         }
     }
@@ -474,7 +476,7 @@ private struct RestPage: View {
     }
 
     private func page<Time: View>(@ViewBuilder _ time: () -> Time) -> some View {
-        VStack(spacing: 2) {
+        VStack(spacing: 0) {
             Text("Rest")
                 .font(.footnote.weight(.semibold))
                 .textCase(.uppercase)
@@ -512,7 +514,9 @@ private struct RestPage: View {
             .buttonStyle(.bordered)
             .buttonBorderShape(.capsule)
         }
-        .padding(.bottom, lowerMargin)
+        // Closer to Skip than the bar of the page, and lower than the other pages: the dots fall between the two buttons.
+        .padding(.top, -6)
+        .padding(.bottom, 6)
     }
 
     private var timeLeft: some View {
@@ -549,9 +553,9 @@ private struct RestPage: View {
 
     // Empties from right to left.
     private var bar: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: 2) {
             timeLeft
-                .font(.title.weight(.bold))
+                .font(.title2.weight(.bold))
             TimelineView(.periodic(from: .now, by: 1)) { context in
                 let left = left(at: context.date)
                 Capsule()

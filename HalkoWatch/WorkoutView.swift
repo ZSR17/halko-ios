@@ -88,6 +88,8 @@ private struct WorkoutContent: View {
                 .disabled(items.isEmpty)
                 // A button of the watch stays narrower than the page.
                 .frame(maxWidth: .infinity)
+                // As far from the first exercise as from the line above.
+                .padding(.bottom, 3)
                 .listRowBackground(Color.clear)
                 .listRowInsets(EdgeInsets())
                 ForEach(rows) { row in
@@ -95,8 +97,6 @@ private struct WorkoutContent: View {
                 }
             } header: {
                 Text(verbatim: "\(String(localized: "\(items.count) exercises")) · \(String(localized: "\(setCount) sets"))")
-                    // As far from Start as Start is from the first exercise.
-                    .padding(.bottom, 6)
             }
         }
     }
