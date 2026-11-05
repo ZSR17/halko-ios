@@ -345,6 +345,7 @@ private struct SetPage: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .buttonBorderShape(.capsule)
+                .handGestureShortcut(.primaryAction)
             }
         }
         .onClockLine {

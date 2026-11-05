@@ -41,6 +41,7 @@ struct SessionSummaryView: View {
                         .frame(maxWidth: .infinity)
                 }
                 .buttonBorderShape(.capsule)
+                .handGestureShortcut(.primaryAction)
                 // A button of the watch stays narrower than the page.
                 .frame(maxWidth: .infinity)
             }
