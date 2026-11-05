@@ -97,6 +97,7 @@ private struct WorkoutContent: View {
                 }
             } header: {
                 Text(verbatim: "\(String(localized: "\(items.count) exercises")) · \(String(localized: "\(setCount) sets"))")
+                    .padding(.bottom, 3)
             }
         }
     }

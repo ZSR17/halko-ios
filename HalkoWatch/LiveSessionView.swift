@@ -415,6 +415,8 @@ private struct ValueBox: View {
             }
             .lineLimit(1)
             .minimumScaleFactor(0.5)
+            // Clear of the border of the chosen box.
+            .padding(.bottom, 4)
             .frame(maxWidth: .infinity, minHeight: 44)
             .background(.fill.tertiary, in: .rect(cornerRadius: 12))
             .overlay {
@@ -481,6 +483,8 @@ private struct RestPage: View {
                 .font(.footnote.weight(.semibold))
                 .textCase(.uppercase)
                 .foregroundStyle(Color(.rest))
+                // Clear of the ring.
+                .offset(y: -2)
             time()
             Spacer(minLength: 2)
             if let step = table.step {
