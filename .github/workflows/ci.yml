@@ -2,7 +2,8 @@
 # the watch app's interface tested on a simulator, the iPhone app (with the watch app inside) built and its interface
 # tested on a simulator. The screenshots of the
 # interface tests are kept with the run. A change to the documentation only skips them. A pull request runs only the
-# interface tests of the screens it changes (.github/ui-tests.sh); master, after the merge, runs them all.
+# interface tests of the screens it changes (.github/ui-tests.sh); master, after the merge, runs them all, and the watch
+# app's on the smallest watch too.
 # "CI passed" sums it up: it is the check a pull request needs to be merged into master.
 name: CI
 
@@ -134,6 +135,28 @@ jobs:
         with:
           name: screenshots
           path: screenshots
+          if-no-files-found: ignore
+      - name: Test the watch app on the smallest watch
+        # Only on master: to see its screens with less room, in their own screenshots. A failure here stops nothing.
+        if: github.event_name == 'push'
+        continue-on-error: true
+        timeout-minutes: 15
+        run: |
+          small=$(xcrun simctl list devices available --json | jq -r '
+            .devices | to_entries | map(select(.key | contains("watchOS"))) | sort_by(.key | sub(".*watchOS-"; "") | split("-") | map(tonumber))
+            | last.value | map(select(.name | test("\(\d+mm\)"))) | sort_by(.name | capture("\((?<mm>\d+)mm\)").mm | tonumber) | first.udid')
+          xcrun simctl list devices | grep "$small"
+          xcrun simctl boot "$small"
+          xcrun simctl bootstatus "$small"
+          xcodebuild test -project Halko.xcodeproj -scheme HalkoWatch -destination "id=$small" -derivedDataPath build -resultBundlePath HalkoWatchSmall.xcresult -retry-tests-on-failure -test-iterations 3
+      - name: Export the screenshots of the smallest watch
+        if: always() && hashFiles('HalkoWatchSmall.xcresult/**') != ''
+        run: xcrun xcresulttool export attachments --path HalkoWatchSmall.xcresult --output-path screenshots-watch-small
+      - uses: actions/upload-artifact@v7
+        if: always() && hashFiles('HalkoWatchSmall.xcresult/**') != ''
+        with:
+          name: screenshots-watch-small
+          path: screenshots-watch-small
           if-no-files-found: ignore
       - name: Export the screenshots of the watch
         if: always() && hashFiles('HalkoWatch.xcresult/**') != ''
