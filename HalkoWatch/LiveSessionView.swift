@@ -247,6 +247,8 @@ private struct SessionHeader: View {
         .minimumScaleFactor(0.7)
         // The line is shared with the clock: it does not grow with the rest of the page.
         .dynamicTypeSize(...DynamicTypeSize.xLarge)
+        // Level with the clock on the watch.
+        .offset(y: -2)
     }
 }
 
@@ -331,7 +333,9 @@ private struct SetPage: View {
                 .focusable()
                 .focused($crownHeld)
                 .focusEffectDisabled()
-                .digitalCrownRotation($crown, from: 0, through: Self.limit(field), by: table.fields.increment(of: field))
+                // In steps of the value: the crown's sensitivity is a rotation per whole number, and grams would take
+                // hundreds of them for a single step. Continuous, it shows no scroll bar; the ends are kept below.
+                .digitalCrownRotation($crown, from: 0, through: crownSteps(field), by: 1, sensitivity: .low, isContinuous: true)
                 Spacer(minLength: 4)
                 Button(action: validate) {
                     Text("Validate")
@@ -341,19 +345,26 @@ private struct SetPage: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .buttonBorderShape(.capsule)
+                .handGestureShortcut(.primaryAction)
             }
         }
         .onClockLine {
             SessionHeader(session: session)
         }
-        .onChange(of: field, initial: true) {
-            crown = table.draft(step)[field] ?? 0
+        .onChange(of: crownStep(of: field), initial: true) { _, value in
+            // The value of another box or another set, not the one the crown is settling on.
+            if abs(crown - value) >= 0.5 {
+                crown = value
+            }
         }
-        .onChange(of: crown) { _, value in
-            let increment = table.fields.increment(of: field)
-            // The value the crown settles on; not when it was only given the value of the box.
-            guard abs(value - (table.draft(step)[field] ?? 0)) >= increment / 2 else { return }
-            change(field, to: (value / increment).rounded() * increment)
+        .onChange(of: crown) { old, value in
+            guard abs(value - crownStep(of: field)) >= 0.5 else { return }
+            // Past an end, the crown comes back at the other: the value stays where it is.
+            if abs(value - old) > crownSteps(field) / 2 {
+                crown = old
+            } else {
+                change(field, to: value.rounded() * table.fields.increment(of: field))
+            }
         }
         .onGeometryChange(for: Bool.self) { $0.size.width >= Self.wideScreen } action: { wide in
             isWide = wide
@@ -374,6 +385,14 @@ private struct SetPage: View {
         case .duration, .rest: 7200
         case .distance: 100_000
         }
+    }
+
+    private func crownSteps(_ field: SetField) -> Double {
+        Self.limit(field) / table.fields.increment(of: field)
+    }
+
+    private func crownStep(of field: SetField) -> Double {
+        (table.draft(step)[field] ?? 0) / table.fields.increment(of: field)
     }
 
     private var subtitle: String {
@@ -516,6 +535,8 @@ private struct RestPage: View {
             }
             .buttonStyle(.bordered)
             .buttonBorderShape(.capsule)
+            // Clear of the rounded corners of the screen.
+            .padding(.horizontal, 10)
         }
         // Closer to Skip than the bar of the page, and lower than the other pages: the dots fall between the two buttons.
         .padding(.top, -6)
