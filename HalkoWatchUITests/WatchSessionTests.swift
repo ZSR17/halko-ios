@@ -89,8 +89,9 @@ final class WatchSessionTests: XCTestCase {
     @MainActor
     func testAllDone() throws {
         let app = launchApp()
+        XCTAssertTrue(pushA(app).waitForExistence(timeout: 10))
+        // Made once scrolled to: the last row of the list.
         let quick = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Quick'")).firstMatch
-        XCTAssertTrue(quick.waitForExistence(timeout: 10))
         scrollTo(quick, in: app)
         quick.tap()
         XCTAssertTrue(app.buttons["Démarrer"].waitForExistence(timeout: 5))

@@ -252,6 +252,8 @@ extension View {
             button()
                 .frame(maxWidth: .infinity)
                 .padding(.top, 4)
+                // Lower than the system's margin, as low as the screen's corners allow: the page needs the room.
+                .padding(.bottom, -18)
                 .background(.black, ignoresSafeAreaEdges: .bottom)
         }
     }
