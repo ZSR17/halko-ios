@@ -92,18 +92,3 @@ extension RecordKind {
         }
     }
 }
-
-extension Exercise {
-    // The language the exercises of the library are read in: the app's, English or French.
-    static var appLanguage: String {
-        Bundle.main.preferredLocalizations.first ?? "en"
-    }
-
-    var localizedName: String {
-        name(in: Self.appLanguage)
-    }
-
-    var localizedInstructions: [String] {
-        instructions(in: Self.appLanguage)
-    }
-}

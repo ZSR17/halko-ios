@@ -190,3 +190,18 @@ extension Exercise {
         translations[language]?.instructions ?? instructions
     }
 }
+
+extension Exercise {
+    // The language the exercises of the library are read in: the app's (iPhone or watch), English or French.
+    public static var appLanguage: String {
+        Bundle.main.preferredLocalizations.first ?? "en"
+    }
+
+    public var localizedName: String {
+        name(in: Self.appLanguage)
+    }
+
+    public var localizedInstructions: [String] {
+        instructions(in: Self.appLanguage)
+    }
+}

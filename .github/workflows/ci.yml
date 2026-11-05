@@ -1,5 +1,6 @@
 # On every push to master and pull request: HalkoCore's tests, then the Xcode project generated from project.yml,
-# the iPhone app (with the watch app inside) built and its interface tested on a simulator. The screenshots of the
+# the watch app's interface tested on a simulator, the iPhone app (with the watch app inside) built and its interface
+# tested on a simulator. The screenshots of the
 # interface tests are kept with the run. A change to the documentation only skips them. A pull request runs only the
 # interface tests of the screens it changes (.github/ui-tests.sh); master, after the merge, runs them all.
 # "CI passed" sums it up: it is the check a pull request needs to be merged into master.
@@ -67,17 +68,28 @@ jobs:
       - uses: actions/checkout@v7
       - run: brew install xcodegen
       - run: xcodegen generate
-      - name: Pick an iPhone simulator
+      - name: Pick an iPhone and a watch simulator
         id: simulator
         run: |
-          # The newest iOS runtime of this Xcode, and its first iPhone.
-          id=$(xcrun simctl list devices available --json | jq -r '
-            .devices | to_entries | map(select(.key | contains("iOS"))) | sort_by(.key | sub(".*iOS-"; "") | split("-") | map(tonumber))
-            | last.value | map(select(.name | startswith("iPhone"))) | first.udid')
-          xcrun simctl list devices | grep "$id"
+          # The newest runtime of this Xcode for each, and its first device.
+          pick() {
+            xcrun simctl list devices available --json | jq -r --arg os "$1" --arg device "$2" '
+              .devices | to_entries | map(select(.key | contains($os))) | sort_by(.key | sub(".*" + $os + "-"; "") | split("-") | map(tonumber))
+              | last.value | map(select(.name | startswith($device))) | first.udid'
+          }
+          id=$(pick iOS iPhone)
+          watch=$(pick watchOS "Apple Watch")
+          xcrun simctl list devices | grep -e "$id" -e "$watch"
           echo "id=$id" >> "$GITHUB_OUTPUT"
-      - name: Build the watch app
-        run: xcodebuild build -project Halko.xcodeproj -scheme HalkoWatch -destination 'generic/platform=watchOS Simulator' -derivedDataPath build CODE_SIGNING_ALLOWED=NO
+          echo "watch=$watch" >> "$GITHUB_OUTPUT"
+      - name: Test the watch app
+        # Each of its screens: a short run, every time. A watch simulator launched cold stays stuck on the app's first
+        # launch: booted first, and the step stopped if it hangs all the same.
+        timeout-minutes: 15
+        run: |
+          xcrun simctl boot "${{ steps.simulator.outputs.watch }}"
+          xcrun simctl bootstatus "${{ steps.simulator.outputs.watch }}"
+          xcodebuild test -project Halko.xcodeproj -scheme HalkoWatch -destination "id=${{ steps.simulator.outputs.watch }}" -derivedDataPath build -resultBundlePath HalkoWatch.xcresult -retry-tests-on-failure -test-iterations 3
       - name: Test the iPhone app
         # A test failing on a slow runner (an audit or a query out of time) is run again, alone, up to twice: only a
         # failure that comes back three times fails the job. Without a screen changed, the app is only built.
@@ -121,12 +133,35 @@ jobs:
           name: screenshots
           path: screenshots
           if-no-files-found: ignore
-      # The whole test report (the app's output, its crash and hang logs) when a test fails.
+      - name: Export the screenshots of the watch
+        if: always() && hashFiles('HalkoWatch.xcresult/**') != ''
+        run: xcrun xcresulttool export attachments --path HalkoWatch.xcresult --output-path screenshots-watch
+      - uses: actions/upload-artifact@v7
+        if: always() && hashFiles('HalkoWatch.xcresult/**') != ''
+        with:
+          name: screenshots-watch
+          path: screenshots-watch
+          if-no-files-found: ignore
+      # The whole test reports (the apps' output, their crash and hang logs) when a test fails.
       - uses: actions/upload-artifact@v7
         if: failure() && hashFiles('Halko.xcresult/**') != ''
         with:
           name: xcresult
           path: Halko.xcresult
+      - uses: actions/upload-artifact@v7
+        if: failure() && hashFiles('HalkoWatch.xcresult/**') != ''
+        with:
+          name: xcresult-watch
+          path: HalkoWatch.xcresult
+      # What the watch showed when its tests failed or hung.
+      - name: Take a screenshot of the watch simulator
+        if: failure() && steps.simulator.outputs.watch != ''
+        run: xcrun simctl io "${{ steps.simulator.outputs.watch }}" screenshot watch-failure.png
+      - uses: actions/upload-artifact@v7
+        if: failure() && hashFiles('watch-failure.png') != ''
+        with:
+          name: watch-failure
+          path: watch-failure.png
 
   passed:
     name: CI passed

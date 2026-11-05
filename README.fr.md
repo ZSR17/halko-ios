@@ -30,7 +30,9 @@ open Halko.xcodeproj
 Prérequis : Xcode 26 ou plus récent ; les apps tournent sur iOS 26 et watchOS 26.
 
 - `Halko/` : l'app iPhone.
-- `HalkoWatch/` : l'app Apple Watch, installée avec l'app iPhone.
+- `HalkoWatch/` : l'app Apple Watch, installée avec l'app iPhone, qui lui donne les séances et les photos de leurs
+  exercices (WatchConnectivity) ; la montre les garde dans sa propre base. `HalkoWatchUITests/` : ses tests
+  d'interface, lancés à chaque exécution de la CI, avec une capture de chaque écran.
 - `HalkoWidgets/` : la séance en cours sur l'écran verrouillé et dans la Dynamic Island (Live Activity), dans l'app
   iPhone ; `Shared/` : ce qu'elle partage avec l'app iPhone.
 - `Packages/HalkoCore/` : le code commun aux deux apps (données, synchro, logique des séances), testé par `swift test`.
