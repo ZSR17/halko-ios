@@ -31,7 +31,8 @@ Requirements: Xcode 26 or later; the apps run on iOS 26 and watchOS 26.
 
 - `Halko/`: the iPhone app.
 - `HalkoWatch/`: the Apple Watch app, installed with the iPhone app, which hands it the workouts and the pictures of
-  their exercises (WatchConnectivity); the watch keeps them in its own database. `HalkoWatchUITests/`: its interface
+  their exercises (WatchConnectivity); the watch keeps them in its own database, does a whole session without the
+  iPhone, saves it in Health itself, and the two apps give each other the sessions done. `HalkoWatchUITests/`: its interface
   tests, run by every CI run, with a screenshot of each screen.
 - `HalkoWidgets/`: the session in progress on the lock screen and in the Dynamic Island (Live Activity), inside the
   iPhone app; `Shared/`: what it shares with the iPhone app.

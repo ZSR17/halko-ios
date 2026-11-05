@@ -41,6 +41,7 @@ private struct Panel<Content: View>: View {
 // change size from one to the other: the one not shown is laid out hidden under the other.
 struct SetOrRestPanel: View {
     let table: LiveTable
+    let actions: LiveActions
     // The set to do, or the one after the rest.
     let step: LiveStep?
     // The end of the rest, while resting.
@@ -57,12 +58,12 @@ struct SetOrRestPanel: View {
                 if let restEnd {
                     rest(end: restEnd)
                     if let step {
-                        SetContent(table: table, step: step)
+                        SetContent(table: table, actions: actions, step: step)
                             .hidden()
                             .accessibilityHidden(true)
                     }
                 } else if let step {
-                    SetContent(table: table, step: step)
+                    SetContent(table: table, actions: actions, step: step)
                     rest(end: .now + Double(restTotalS))
                         .hidden()
                         .accessibilityHidden(true)
@@ -79,6 +80,7 @@ struct SetOrRestPanel: View {
 // The set to do: which one, its values with − and + buttons, and Validate.
 private struct SetContent: View {
     let table: LiveTable
+    let actions: LiveActions
     let step: LiveStep
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
@@ -103,11 +105,11 @@ private struct SetContent: View {
                     ) { value in
                         var edited = draft
                         edited[field] = value
-                        table.actions.edit(table.plan.key(step), edited)
+                        actions.edit(table.plan.key(step), edited)
                     }
                 }
             }
-            Button(action: table.actions.validate) {
+            Button(action: actions.validate) {
                 Text(verbatim: validateTitle)
                     .font(.headline)
                     .foregroundStyle(Color(.onAccent))
@@ -189,14 +191,8 @@ private struct ValueStepper: View {
         value.map { fields.text($0, of: field) } ?? "–"
     }
 
-    // The smallest plate sold, 0.5 kg or 1 lb; a rep, 5 s, a hundredth of a km or mile.
     private var increment: Double {
-        switch field {
-        case .weight: fields.weightUnit == .kg ? 500 : fields.weightUnit.grams
-        case .reps: 1
-        case .duration, .rest: 5
-        case .distance: fields.distanceUnit == .km ? 10 : 16.09344
-        }
+        fields.increment(of: field)
     }
 
     private func step(by direction: Double) {

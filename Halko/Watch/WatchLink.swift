@@ -7,12 +7,15 @@ import UIKit
 import WatchConnectivity
 
 // The iPhone's side of the link with the watch app: hands it the workouts to do as they change, and the pictures of
-// their exercises it asks for. Nothing waits on it: WatchConnectivity delivers them when the watch is there, even
-// later, with either app closed.
+// their exercises it asks for, and the two apps give each other the sessions done. Nothing waits on it:
+// WatchConnectivity delivers them when the watch is there, even later, with either app closed.
 final class WatchLink: NSObject {
     nonisolated private static let logger = Logger(subsystem: "com.zsr.halko", category: "watch")
     // The plan last handed to the watch: only a changed one is sent.
     private static let sentPlanKey = "watchPlanDigest"
+    // The sessions changed after this date are still to hand over; without one, the whole history: the watch shows last
+    // time's values and the records from it.
+    private static let sessionsCursorKey = "watchSessionsSentUntil"
     // The files being sent, removed once delivered.
     private static let outbox = URL.cachesDirectory.appending(path: "WatchOutbox", directoryHint: .isDirectory)
     // The shorter side of a picture sent, in pixels: a thumbnail of the watch's page of a workout, sharp at 3x.
@@ -42,7 +45,39 @@ final class WatchLink: NSObject {
             try? await Task.sleep(for: .seconds(2))
             guard !Task.isCancelled else { return }
             sendPlan()
+            sendSessions()
         }
+    }
+
+    private func sendSessions() {
+        let session = WCSession.default
+        guard session.activationState == .activated, session.isPaired, session.isWatchAppInstalled else { return }
+        do {
+            let since = defaults.object(forKey: Self.sessionsCursorKey) as? Date ?? .distantPast
+            guard let changes = try container.mainContext.sessionChanges(since: since, items: false) else { return }
+            let file = try Self.write(changes.encoded(), named: "sessions-\(UUID().uuidString).json")
+            session.transferFile(file, metadata: [CompanionMessage.kindKey: CompanionMessage.sessionsKind])
+            defaults.set(changes.cursor, forKey: Self.sessionsCursorKey)
+        } catch {
+            Self.logger.error("Cannot send the sessions to the watch: \(String(describing: error))")
+        }
+    }
+
+    // What the watch has now need not go back to it, once what was waiting here is on its way.
+    private func received(_ changes: SessionChanges) async {
+        sendSessions()
+        do {
+            try await Self.keep(changes, in: container)
+            let since = defaults.object(forKey: Self.sessionsCursorKey) as? Date ?? .distantPast
+            defaults.set(max(since, changes.cursor), forKey: Self.sessionsCursorKey)
+        } catch {
+            Self.logger.error("Cannot keep the sessions of the watch: \(String(describing: error))")
+        }
+    }
+
+    @concurrent
+    nonisolated private static func keep(_ changes: SessionChanges, in container: ModelContainer) async throws {
+        try ModelContext(container).apply(changes)
     }
 
     // `again`: even when the watch had this plan, since it asks for it.
@@ -107,6 +142,7 @@ extension WatchLink: WCSessionDelegate {
         }
         Task { @MainActor in
             self.sendPlan()
+            self.sendSessions()
         }
     }
 
@@ -122,8 +158,23 @@ extension WatchLink: WCSessionDelegate {
         Task { @MainActor in
             if !WCSession.default.isWatchAppInstalled {
                 self.defaults.removeObject(forKey: Self.sentPlanKey)
+                self.defaults.removeObject(forKey: Self.sessionsCursorKey)
             }
             self.sendPlan()
+            self.sendSessions()
+        }
+    }
+
+    // The file is deleted once this returns: read before.
+    nonisolated func session(_ session: WCSession, didReceive file: WCSessionFile) {
+        guard file.metadata?[CompanionMessage.kindKey] as? String == CompanionMessage.sessionsKind else { return }
+        do {
+            let changes = try SessionChanges(decoding: Data(contentsOf: file.fileURL))
+            Task { @MainActor in
+                await self.received(changes)
+            }
+        } catch {
+            Self.logger.error("Cannot read a file from the watch: \(String(describing: error))")
         }
     }
 
@@ -143,9 +194,12 @@ extension WatchLink: WCSessionDelegate {
         guard let error else { return }
         Self.logger.error("A file did not reach the watch: \(String(describing: error))")
         // Sent again at the next change, or when the watch asks for it.
-        if fileTransfer.file.metadata?[CompanionMessage.kindKey] as? String == CompanionMessage.planKind {
-            Task { @MainActor in
-                self.defaults.removeObject(forKey: Self.sentPlanKey)
+        let kind = fileTransfer.file.metadata?[CompanionMessage.kindKey] as? String
+        Task { @MainActor in
+            switch kind {
+            case CompanionMessage.planKind: self.defaults.removeObject(forKey: Self.sentPlanKey)
+            case CompanionMessage.sessionsKind: self.defaults.removeObject(forKey: Self.sessionsCursorKey)
+            default: break
             }
         }
     }

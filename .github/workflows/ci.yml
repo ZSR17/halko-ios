@@ -2,7 +2,8 @@
 # the watch app's interface tested on a simulator, the iPhone app (with the watch app inside) built and its interface
 # tested on a simulator. The screenshots of the
 # interface tests are kept with the run. A change to the documentation only skips them. A pull request runs only the
-# interface tests of the screens it changes (.github/ui-tests.sh); master, after the merge, runs them all.
+# interface tests of the screens it changes (.github/ui-tests.sh); master, after the merge, runs them all, and the watch
+# app's on the smallest watch too.
 # "CI passed" sums it up: it is the check a pull request needs to be merged into master.
 name: CI
 
@@ -115,6 +116,8 @@ jobs:
           test "$(plutil -extract NSExtension.NSExtensionPointIdentifier raw "$app/PlugIns/HalkoWidgets.appex/Info.plist")" = com.apple.widgetkit-extension
           # The end of a rest, heard in the background.
           test "$(plutil -extract UIBackgroundModes.0 raw "$app/Info.plist")" = audio
+          # The workout of Health of the watch, running with the wrist down.
+          test "$(plutil -extract WKBackgroundModes.0 raw "$app/Watch/HalkoWatch.app/Info.plist")" = workout-processing
           test -f "$app/RestOver.wav"
           # A missing or unreadable icon does not fail the build: the icon name is then absent from Info.plist.
           for plist in "$app/Info.plist" "$app/Watch/HalkoWatch.app/Info.plist"; do
@@ -132,6 +135,29 @@ jobs:
         with:
           name: screenshots
           path: screenshots
+          if-no-files-found: ignore
+      - name: Test the watch app on the smallest watch
+        # Only on master: to see its screens with the least room, in their own screenshots. A failure here stops nothing.
+        if: github.event_name == 'push'
+        continue-on-error: true
+        timeout-minutes: 15
+        run: |
+          # The smallest watch the newest watchOS runs, among all those it supports: made here, the runner may not have it.
+          runtime=$(xcrun simctl list runtimes available --json | jq -c '.runtimes | map(select(.platform == "watchOS")) | sort_by(.version | split(".") | map(tonumber)) | last')
+          type=$(jq -c '.supportedDeviceTypes | map(select(.name | test("[0-9]+mm"))) | sort_by(.name | capture("(?<mm>[0-9]+)mm").mm | tonumber) | first' <<< "$runtime")
+          jq -r .name <<< "$type"
+          small=$(xcrun simctl create "Smallest watch" "$(jq -r .identifier <<< "$type")" "$(jq -r .identifier <<< "$runtime")")
+          xcrun simctl boot "$small"
+          xcrun simctl bootstatus "$small"
+          xcodebuild test -project Halko.xcodeproj -scheme HalkoWatch -destination "id=$small" -derivedDataPath build -resultBundlePath HalkoWatchSmall.xcresult -retry-tests-on-failure -test-iterations 3
+      - name: Export the screenshots of the smallest watch
+        if: always() && hashFiles('HalkoWatchSmall.xcresult/**') != ''
+        run: xcrun xcresulttool export attachments --path HalkoWatchSmall.xcresult --output-path screenshots-watch-small
+      - uses: actions/upload-artifact@v7
+        if: always() && hashFiles('HalkoWatchSmall.xcresult/**') != ''
+        with:
+          name: screenshots-watch-small
+          path: screenshots-watch-small
           if-no-files-found: ignore
       - name: Export the screenshots of the watch
         if: always() && hashFiles('HalkoWatch.xcresult/**') != ''

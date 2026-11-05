@@ -98,9 +98,16 @@ targets:
     platform: watchOS
     sources:
       - HalkoWatch
-      # Written as on the iPhone: the sets, and the sample data of the interface tests.
+      # As on the iPhone: how sets are written, the sample data of the interface tests, what a session reads, the
+      # workout of Health, the access to Health and notifications, the notification of the end of a rest.
       - Halko/SetsText.swift
+      - Halko/ColumnTitle.swift
       - Halko/DemoData.swift
+      - Halko/Session/LiveTable.swift
+      - Halko/Session/RestAlert.swift
+      - Halko/Health/WorkoutRecorder.swift
+      - Halko/Health/HealthTypes.swift
+      - Halko/Health/Permissions.swift
       # The app's colours.
       - path: Halko/Assets.xcassets
         buildPhase: resources
@@ -112,12 +119,20 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.zsr.halko.watchkitapp
+        # Merged with the generated keys: the workout of Health runs with the wrist down (WKBackgroundModes).
+        INFOPLIST_FILE: HalkoWatch/Info.plist
+        # Health, and the end of a rest notified even in a Focus.
+        CODE_SIGN_ENTITLEMENTS: HalkoWatch/HalkoWatch.entitlements
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: YES
         TARGETED_DEVICE_FAMILY: "4"
         INFOPLIST_KEY_CFBundleDisplayName: Halko
         INFOPLIST_KEY_WKCompanionAppBundleIdentifier: com.zsr.halko
         INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp: NO
+        # Translated in InfoPlist.xcstrings.
+        INFOPLIST_KEY_NSHealthShareUsageDescription: Halko reads your heart rate and active calories during a workout to show them.
+        INFOPLIST_KEY_NSHealthUpdateUsageDescription: Halko saves your strength workouts in Health, with their active calories and heart rate, so that they count towards your Move and Exercise rings.
 
   HalkoWatchUITests:
     type: bundle.ui-testing

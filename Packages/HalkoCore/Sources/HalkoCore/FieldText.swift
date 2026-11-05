@@ -42,6 +42,17 @@ public struct FieldText: Sendable {
         }
     }
 
+    // What one step changes a value by, in stored units: the smallest plate sold, 0.5 kg or 1 lb; a rep, 5 s, a
+    // hundredth of a km or mile.
+    public func increment(of field: SetField) -> Double {
+        switch field {
+        case .weight: weightUnit == .kg ? 500 : weightUnit.grams
+        case .reps: 1
+        case .duration, .rest: 5
+        case .distance: distanceUnit == .km ? 10 : 16.09344
+        }
+    }
+
     // 75 -> "1:15", 3725 -> "1:02:05".
     public static func clock(_ seconds: Int) -> String {
         let s = max(0, seconds)

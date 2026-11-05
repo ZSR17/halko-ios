@@ -7,6 +7,7 @@ import SwiftUI
 struct LiveExerciseView: View {
     let index: Int
     let table: LiveTable
+    let actions: LiveActions
     let folded: Bool
     let unfold: () -> Void
     let focus: FocusState<LiveField?>.Binding
@@ -34,7 +35,7 @@ struct LiveExerciseView: View {
                     ) {
                         deleteSet(set)
                     } content: {
-                        LiveSetRow(item: index, set: set, table: table, focus: focus)
+                        LiveSetRow(item: index, set: set, table: table, actions: actions, focus: focus)
                     }
                     .accessibilityActions {
                         if canDeleteSet {
@@ -50,7 +51,7 @@ struct LiveExerciseView: View {
                         titleVisibility: .visible
                     ) {
                         Button("Delete this exercise", role: .destructive) {
-                            table.actions.deleteSet(index, set)
+                            actions.deleteSet(index, set)
                         }
                     } message: {
                         Text("This is its last set: the exercise is deleted with it.")
@@ -68,7 +69,7 @@ struct LiveExerciseView: View {
 
     private func deleteSet(_ set: Int) {
         if table.state.canDeleteSet(of: index) {
-            table.actions.deleteSet(index, set)
+            actions.deleteSet(index, set)
         } else {
             confirmingLastSet = set
         }
@@ -77,7 +78,7 @@ struct LiveExerciseView: View {
     // Like the workout editor's: a set like the last one.
     private var addSet: some View {
         Button {
-            table.actions.addSet(index)
+            actions.addSet(index)
         } label: {
             Label("Add a set", systemImage: "plus")
                 .font(.subheadline.weight(.semibold))
@@ -170,7 +171,7 @@ struct LiveExerciseView: View {
                     titleVisibility: .visible
                 ) {
                     Button("Delete this exercise", role: .destructive) {
-                        table.actions.deleteExercise(index)
+                        actions.deleteExercise(index)
                     }
                 } message: {
                     if hasSetsDone {
@@ -212,6 +213,7 @@ private struct LiveSetRow: View {
     let item: Int
     let set: Int
     let table: LiveTable
+    let actions: LiveActions
     let focus: FocusState<LiveField?>.Binding
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
@@ -309,9 +311,9 @@ private struct LiveSetRow: View {
             var changed = values
             changed[field] = value
             if isDone {
-                table.actions.correct(item, set, changed)
+                actions.correct(item, set, changed)
             } else {
-                table.actions.edit(key, changed)
+                actions.edit(key, changed)
             }
         }
     }
@@ -321,7 +323,7 @@ private struct LiveSetRow: View {
     private var check: some View {
         if isDone {
             Button {
-                table.actions.undo(item, set)
+                actions.undo(item, set)
             } label: {
                 Image(systemName: "checkmark")
                     .font(.footnote.weight(.bold))
@@ -335,7 +337,7 @@ private struct LiveSetRow: View {
             .accessibilityLabel(Text("Undo \(table.spokenNumber(item, set: set))"))
         } else if isCurrent {
             Button {
-                table.actions.validate()
+                actions.validate()
             } label: {
                 Circle()
                     .strokeBorder(Color.accentColor, lineWidth: 2)
