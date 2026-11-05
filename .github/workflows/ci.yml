@@ -144,7 +144,7 @@ jobs:
         run: |
           small=$(xcrun simctl list devices available --json | jq -r '
             .devices | to_entries | map(select(.key | contains("watchOS"))) | sort_by(.key | sub(".*watchOS-"; "") | split("-") | map(tonumber))
-            | last.value | map(select(.name | test("\(\d+mm\)"))) | sort_by(.name | capture("\((?<mm>\d+)mm\)").mm | tonumber) | first.udid')
+            | last.value | map(select(.name | test("[0-9]+mm"))) | sort_by(.name | capture("(?<mm>[0-9]+)mm").mm | tonumber) | first.udid')
           xcrun simctl list devices | grep "$small"
           xcrun simctl boot "$small"
           xcrun simctl bootstatus "$small"
