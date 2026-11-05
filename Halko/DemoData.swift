@@ -77,6 +77,18 @@ enum DemoData {
             }
         }
 
+        #if os(watchOS)
+        // A workout short enough for the watch's tests to do all of it.
+        let quick = Workout(name: "Quick", position: 2)
+        context.insert(quick)
+        context.insert(WorkoutItem(
+            workoutID: quick.id,
+            exerciseID: "lib-Plank",
+            position: 0,
+            targets: Array(repeating: SetTarget(kind: .normal, durationS: 30, restS: 30), count: 2)
+        ))
+        #endif
+
         // An exercise made by the user, beside the library's.
         context.insert(Exercise(
             name: "Home weighted push-ups",
