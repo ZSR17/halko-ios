@@ -112,13 +112,14 @@ final class LiveSessionTests: XCTestCase {
         snap("Session › Rest, largest text")
     }
 
-    // The plank of Quick: getting in position, holding, the set validated with the time held, the rest.
+    // The plank of Core 15 min, given a target: getting in position, holding, the set validated with the time held, the
+    // rest.
     @MainActor
     func testSetTimer() throws {
         let app = launch(language: "fr", locale: "fr_FR")
-        let quick = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Quick")).firstMatch
-        XCTAssertTrue(quick.waitForExistence(timeout: 5))
-        quick.tap()
+        let core = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Core 15 min")).firstMatch
+        XCTAssertTrue(core.waitForExistence(timeout: 5))
+        core.tap()
         app.buttons["Démarrer la séance"].tap()
         XCTAssertTrue(app.alerts.firstMatch.waitForExistence(timeout: 5))
         app.alerts.buttons["La reprendre"].tap()
@@ -136,6 +137,9 @@ final class LiveSessionTests: XCTestCase {
         XCTAssertTrue(startTimer.waitForExistence(timeout: 10))
         XCTAssertTrue(app.buttons["Valider"].exists)
         try app.auditScreen()
+        for _ in 1...30 {
+            app.buttons["Ajouter 1 s"].tap()
+        }
         snap("Chrono › Série à faire")
 
         startTimer.tap()

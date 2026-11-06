@@ -19,13 +19,18 @@ struct SetTimerSettingsView: View {
                 .labelsHidden()
             } header: {
                 Text("At the target")
+                    .foregroundStyle(Color(.secondaryText))
             } footer: {
                 Text("Going on, you can hold longer than the target and stop yourself. Stopping by itself, there is nothing to touch: the target is recorded and the rest starts.")
+                    .foregroundStyle(Color(.secondaryText))
             }
             Section {
                 Toggle("Before the timer", isOn: $getsInPosition)
                 if getsInPosition {
-                    LabeledContent("Duration") {
+                    HStack {
+                        Text("Duration")
+                            .accessibilityHidden(true)
+                        Spacer(minLength: 8)
                         Button {
                             choosing = true
                         } label: {
@@ -43,8 +48,10 @@ struct SetTimerSettingsView: View {
                 }
             } header: {
                 Text("Getting in position")
+                    .foregroundStyle(Color(.secondaryText))
             } footer: {
                 Text("Turned off, the timer starts as soon as you press Start.")
+                    .foregroundStyle(Color(.secondaryText))
             }
         }
         .navigationTitle("Set timer")
