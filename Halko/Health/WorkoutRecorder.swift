@@ -211,12 +211,15 @@ final class WorkoutRecorder {
             if let error {
                 Self.logger.debug("The watch did not start: \(String(describing: error))")
             }
+            guard !started else { return }
             Task { @MainActor [weak self] in
-                if started {
-                    try? await Task.sleep(for: Self.watchDelay)
-                }
                 self?.watchDidNotAnswer(sessionID: sessionID, startedAt: date)
             }
+        }
+        // Whatever becomes of that request, which may not answer with the watch out of reach.
+        Task { [weak self] in
+            try? await Task.sleep(for: Self.watchDelay)
+            self?.watchDidNotAnswer(sessionID: sessionID, startedAt: date)
         }
     }
 

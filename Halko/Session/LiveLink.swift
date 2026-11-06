@@ -140,7 +140,8 @@ final class LiveLink {
         }
     }
 
-    // Saved or discarded on the other device: its workout, when it runs here, goes the same way.
+    // Saved or discarded on the other device: its workout, when it runs here, goes the same way. Its summary is shown
+    // here too only if this device hears of it at once: later, the summary was seen over there long ago.
     private func close(_ session: Session) {
         forget()
         if session.removed {
@@ -149,12 +150,12 @@ final class LiveLink {
             recorder.finish(at: session.endedAt ?? .now)
         }
         #if os(watchOS)
-        let shows = !session.removed
+        let shows = !session.removed && session.justEnded()
         Task {
             await RestAlert.schedule(nil)
         }
         #else
-        let shows = !session.removed && store.isPresented
+        let shows = !session.removed && session.justEnded() && store.isPresented
         store.isPresented = shows
         #endif
         store.finishedElsewhere = shows ? session : nil
