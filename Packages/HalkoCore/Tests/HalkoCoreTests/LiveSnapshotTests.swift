@@ -81,6 +81,15 @@ struct LiveSnapshotTests {
         }
     }
 
+    @Test("A session ended is a moment ago only for a few seconds")
+    func justEnded() throws {
+        var state = try watch.startSession(of: workout, now: start)
+        try watch.logSet(&state, step: 0, values: values, now: start + 60)
+        let session = try #require(try watch.finishSession(state, now: start + 120))
+        #expect(session.justEnded(now: start + 125))
+        #expect(!session.justEnded(now: start + 300))
+    }
+
     @Test("A session of the other device is left alone while another one goes on here")
     func unrelated() throws {
         let state = try watch.startSession(of: workout, now: start)

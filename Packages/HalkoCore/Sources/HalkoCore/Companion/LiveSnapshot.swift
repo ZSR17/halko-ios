@@ -144,4 +144,9 @@ extension Session {
     public var isOver: Bool {
         removed || endedAt != nil
     }
+
+    // Ended a moment ago: the other device can still be told at once.
+    public func justEnded(now: Date = .now) -> Bool {
+        endedAt.map { now.timeIntervalSince($0) < 15 } == true
+    }
 }
