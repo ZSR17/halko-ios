@@ -8,7 +8,7 @@ final class WatchSessionTests: XCTestCase {
         app.buttons["Démarrer"].tap()
         let proceed = app.buttons["Continuer"]
         XCTAssertTrue(proceed.waitForExistence(timeout: 5))
-        XCTAssertTrue(text(app, "Avant ta première séance").exists)
+        XCTAssertTrue(text(app, "Avant ta première séance").waitForExistence(timeout: 5))
         try app.performAccessibilityAudit()
         snap("Watch – Avant ta première séance")
         proceed.tap()

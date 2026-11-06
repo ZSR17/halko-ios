@@ -120,16 +120,6 @@ struct LiveSessionView: View {
         .task(id: state.sessionID) {
             loadPrevious()
         }
-        // Finished or deleted on another device: nothing left to do here.
-        .task(id: sessions.first.map { $0.removed || $0.endedAt != nil } ?? false) {
-            // Finished here, the summary follows: only a session still held is let go.
-            guard let session = sessions.first, session.removed || session.endedAt != nil,
-                  store.state?.sessionID == session.id else { return }
-            // That device's workout is the one in Health.
-            recorder.discard()
-            store.set(nil)
-            store.isPresented = false
-        }
     }
 
     private var table: LiveTable {

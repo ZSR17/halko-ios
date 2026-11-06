@@ -117,7 +117,7 @@ struct LiveSessionView: View {
         if end.timeIntervalSinceNow > -10 {
             WKInterfaceDevice.current().play(.notification)
         }
-        store.change { $0.endRest() }
+        store.restOver()
     }
 
     private func validate(_ table: LiveTable, _ step: LiveStep) {

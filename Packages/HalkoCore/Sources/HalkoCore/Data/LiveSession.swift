@@ -2,8 +2,9 @@ import Foundation
 import SwiftData
 
 // The state of the session being done on this device, besides its session row and its sets: the plan taken when it
-// started (with the sets and exercises added or deleted since), the set to do, the rest. Kept on the device only (like the website's): only the
-// session row and its sets are shared. The end of a rest is an absolute time, so it survives the app being stopped.
+// started (with the sets and exercises added or deleted since), the set to do, the rest. Shared only with the other
+// device of the session (`LiveSnapshot`); on the server, only the session row and its sets. The end of a rest is an
+// absolute time, so it survives the app being stopped.
 public struct LiveState: Codable, Equatable, Sendable {
     public let sessionID: String
     public let workoutID: String?
@@ -14,6 +15,8 @@ public struct LiveState: Codable, Equatable, Sendable {
     public var restTotalS: Int
     // Values reached above the plan on a set, that the following sets of the exercise must reach, by step key.
     public var bumps: [String: SetValues]
+    // The last action on it, on either device: the most recent one wins. Absent from a state kept before there was one.
+    public var changedAt: Date?
 
     public init(
         sessionID: String,
@@ -22,7 +25,8 @@ public struct LiveState: Codable, Equatable, Sendable {
         cursor: Int = 0,
         restEndsAt: Date? = nil,
         restTotalS: Int = 0,
-        bumps: [String: SetValues] = [:]
+        bumps: [String: SetValues] = [:],
+        changedAt: Date? = nil
     ) {
         self.sessionID = sessionID
         self.workoutID = workoutID
@@ -31,6 +35,7 @@ public struct LiveState: Codable, Equatable, Sendable {
         self.restEndsAt = restEndsAt
         self.restTotalS = restTotalS
         self.bumps = bumps
+        self.changedAt = changedAt
     }
 
     public var livePlan: LivePlan {
@@ -78,7 +83,7 @@ extension ModelContext {
     public func startSession(of workout: Workout, now: Date = .now) throws -> LiveState {
         let session = Session(createdAt: now, updatedAt: now, workoutID: workout.id, sport: workout.sport, name: workout.name, startedAt: now)
         insert(session)
-        let state = LiveState(sessionID: session.id, workoutID: workout.id, plan: try plan(of: workout.id))
+        let state = LiveState(sessionID: session.id, workoutID: workout.id, plan: try plan(of: workout.id), changedAt: now)
         try save()
         return state
     }

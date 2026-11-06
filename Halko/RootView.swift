@@ -39,7 +39,7 @@ struct RootView: View {
             }
         }
         .tabViewStyle(.sidebarAdaptable)
-        .fullScreenCover(isPresented: $liveSession.isPresented) {
+        .fullScreenCover(isPresented: $liveSession.isPresented, onDismiss: { liveSession.finishedElsewhere = nil }) {
             SessionCover()
         }
         // A tap on the session outside the app (lock screen, Dynamic Island).

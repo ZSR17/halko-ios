@@ -18,14 +18,16 @@ final class PhoneLink: NSObject {
 
     private let container: ModelContainer
     private let thumbnails: Thumbnails
+    private let live: LiveLink
     private let defaults = UserDefaults.standard
     // Asked for since launch; asked for again at the next one if they have not come.
     private var askedThumbnails: Set<String> = []
     private var pendingSessions: Task<Void, Never>?
 
-    init(container: ModelContainer, thumbnails: Thumbnails) {
+    init(container: ModelContainer, thumbnails: Thumbnails, live: LiveLink) {
         self.container = container
         self.thumbnails = thumbnails
+        self.live = live
         super.init()
         guard WCSession.isSupported() else { return }
         WCSession.default.delegate = self
@@ -124,6 +126,26 @@ extension PhoneLink: WCSessionDelegate {
         guard activationState == .activated else { return }
         Task { @MainActor in
             self.linked()
+        }
+    }
+
+    nonisolated func session(_ session: WCSession, didReceiveMessageData messageData: Data) {
+        Task { @MainActor in
+            self.live.received(messageData)
+        }
+    }
+
+    nonisolated func session(_ session: WCSession, didReceiveApplicationContext applicationContext: [String: Any]) {
+        guard let liveMessage = applicationContext[CompanionMessage.liveKey] as? Data else { return }
+        Task { @MainActor in
+            self.live.received(liveMessage)
+        }
+    }
+
+    nonisolated func session(_ session: WCSession, didReceiveUserInfo userInfo: [String: Any]) {
+        guard let liveMessage = userInfo[CompanionMessage.liveKey] as? Data else { return }
+        Task { @MainActor in
+            self.live.received(liveMessage)
         }
     }
 

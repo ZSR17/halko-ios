@@ -14,6 +14,8 @@ struct HalkoApp: App {
     private let activities: SessionActivities
     // Hands the watch app its workouts, for as long as the app runs.
     private let watch: WatchLink?
+    // The session in progress shared with the watch.
+    private let live: LiveLink?
 
     init() {
         do {
@@ -27,7 +29,7 @@ struct HalkoApp: App {
                     permissions: Permissions(health: nil, defaults: nil),
                     recorder: WorkoutRecorder(health: nil),
                     showsActivity: false,
-                    watch: nil
+                    linksWatch: false
                 )
                 return
             }
@@ -40,14 +42,14 @@ struct HalkoApp: App {
                 permissions: Permissions(health: health, defaults: .standard),
                 recorder: WorkoutRecorder(health: health),
                 showsActivity: true,
-                watch: WatchLink(container: container)
+                linksWatch: true
             )
         } catch {
             fatalError("Cannot open the local database: \(error)")
         }
     }
 
-    private init(container: ModelContainer, liveSession: LiveSessionStore, permissions: Permissions, recorder: WorkoutRecorder, showsActivity: Bool, watch: WatchLink?) {
+    private init(container: ModelContainer, liveSession: LiveSessionStore, permissions: Permissions, recorder: WorkoutRecorder, showsActivity: Bool, linksWatch: Bool) {
         let activities = SessionActivities(container: container, store: liveSession, recorder: recorder, showsActivity: showsActivity)
         // The buttons of the session outside the app run here, even with the app in the background.
         SessionControl.handler = { action in
@@ -55,7 +57,19 @@ struct HalkoApp: App {
         }
         self.container = container
         self.activities = activities
-        self.watch = watch
+        if linksWatch {
+            let live = LiveLink(container: container, store: liveSession, recorder: recorder)
+            // The app may have been launched in the background by a workout on the watch: no view is there to do it.
+            live.onReceived = {
+                await activities.refresh()
+            }
+            recorder.listenForWatch()
+            self.live = live
+            watch = WatchLink(container: container, live: live)
+        } else {
+            live = nil
+            watch = nil
+        }
         _liveSession = State(initialValue: liveSession)
         _permissions = State(initialValue: permissions)
         _recorder = State(initialValue: recorder)
@@ -72,7 +86,7 @@ struct HalkoApp: App {
                     await ExerciseLibrary.install(in: container)
                 }
                 // Outside the app: the Live Activity and the end of the rest.
-                .task(id: OutsideKey(state: liveSession.state, heartRate: recorder.heartRate.map { Int($0.rounded()) })) {
+                .task(id: OutsideKey(state: liveSession.state, heartRate: recorder.heartRate.map { Int($0.rounded()) }, watchRecords: recorder.otherDeviceRecords)) {
                     await activities.refresh()
                 }
         }
@@ -84,6 +98,7 @@ struct HalkoApp: App {
 private struct OutsideKey: Equatable {
     let state: LiveState?
     let heartRate: Int?
+    let watchRecords: Bool
 }
 
 // In the app, the end of the rest only rings: the session shows it already.

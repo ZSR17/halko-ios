@@ -22,11 +22,13 @@ final class WatchLink: NSObject {
     private static let thumbnailPixels = 150.0
 
     private let container: ModelContainer
+    private let live: LiveLink
     private let defaults = UserDefaults.standard
     private var pendingPlan: Task<Void, Never>?
 
-    init(container: ModelContainer) {
+    init(container: ModelContainer, live: LiveLink) {
         self.container = container
+        self.live = live
         super.init()
         guard WCSession.isSupported() else { return }
         WCSession.default.delegate = self
@@ -181,11 +183,28 @@ extension WatchLink: WCSessionDelegate {
     nonisolated func session(_ session: WCSession, didReceiveUserInfo userInfo: [String: Any]) {
         let plan = userInfo[CompanionMessage.planRequestKey] != nil
         let thumbnails = userInfo[CompanionMessage.thumbnailsKey] as? [String] ?? []
+        let liveMessage = userInfo[CompanionMessage.liveKey] as? Data
         Task { @MainActor in
             if plan {
                 self.sendPlan(again: true)
             }
             self.sendThumbnails(thumbnails)
+            if let liveMessage {
+                self.live.received(liveMessage)
+            }
+        }
+    }
+
+    nonisolated func session(_ session: WCSession, didReceiveMessageData messageData: Data) {
+        Task { @MainActor in
+            self.live.received(messageData)
+        }
+    }
+
+    nonisolated func session(_ session: WCSession, didReceiveApplicationContext applicationContext: [String: Any]) {
+        guard let liveMessage = applicationContext[CompanionMessage.liveKey] as? Data else { return }
+        Task { @MainActor in
+            self.live.received(liveMessage)
         }
     }
 

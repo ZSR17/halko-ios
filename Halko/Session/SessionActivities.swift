@@ -12,7 +12,7 @@ import SwiftData
 // The end of a rest is told by the app itself while a workout of Health keeps it running: Halko's sound plays over
 // the music, even in silent mode, and the iPhone vibrates; no notification, which Siri would read in
 // headphones (and no alert of the activity: it did not light the screen up, only played the system's sound). Without
-// that workout the app is not running then: a notification tells it.
+// that workout the app is not running then: a notification tells it. With the workout on the watch, the watch tells it.
 @MainActor
 final class SessionActivities {
     private static let logger = Logger(subsystem: "com.zsr.halko", category: "session")
@@ -58,14 +58,14 @@ final class SessionActivities {
 
     // Shows the session as it is now; once it is over, nothing.
     func refresh() async {
-        sound.hold(store.state != nil)
+        sound.hold(store.state != nil && !recorder.otherDeviceRecords)
         watchRest()
         let found = store.state.flatMap(content(of:))
         // The activity first: a button pressed on it waits for it.
         if showsActivity {
             await show(found)
         }
-        let alert = recorder.isRecording ? nil : found.flatMap { found in
+        let alert = recorder.isRecording || recorder.otherDeviceRecords ? nil : found.flatMap { found in
             found.content.restEndsAt.map { RestAlert.Request(end: $0, body: Self.alertBody(found.content)) }
         }
         if alert != lastAlert {
@@ -102,13 +102,13 @@ final class SessionActivities {
     // The rest ends here, on screen or not: at its end, or at once when it ended while the app was stopped.
     private func watchRest() {
         let end = store.state?.restEndsAt
-        sound.schedule(at: end)
+        sound.schedule(at: recorder.otherDeviceRecords ? nil : end)
         guard end != restWatch?.end else { return }
         restWatch?.task.cancel()
         restWatch = nil
         guard let end else { return }
         guard end > .now else {
-            store.change { $0.endRest() }
+            store.restOver()
             return
         }
         let task = Task { [weak self] in
@@ -122,9 +122,11 @@ final class SessionActivities {
     private func restEnded(at end: Date) async {
         restWatch = nil
         guard let state = store.state, state.restEndsAt == end else { return }
-        store.change { $0.endRest() }
+        store.restOver()
         // Its sound was handed to the audio output when the rest started; the vibration, on screen or not.
-        AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
+        if !recorder.otherDeviceRecords {
+            AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
+        }
         await refresh()
     }
 
@@ -169,6 +171,7 @@ final class SessionActivities {
         var a = a
         a.restEndsAt = b.restEndsAt
         a.restTotalS = b.restTotalS
+        a.changedAt = b.changedAt
         return a == b
     }
 

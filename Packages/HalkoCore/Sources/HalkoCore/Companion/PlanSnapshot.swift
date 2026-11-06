@@ -74,4 +74,6 @@ public enum CompanionMessage {
     // ids, which it lacks.
     public static let planRequestKey = "sendPlan"
     public static let thumbnailsKey = "thumbnails"
+    // In a message, the application context or a user info: a `LiveMessage`.
+    public static let liveKey = "live"
 }
