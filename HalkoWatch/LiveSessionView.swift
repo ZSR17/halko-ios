@@ -403,7 +403,7 @@ private struct SetPage: View {
     }
 
     private func text(_ field: SetField) -> String {
-        table.draft(step)[field].map { table.fields.text($0, of: field) } ?? "–"
+        table.draft(step)[field].map { table.fields.steadyText($0, of: field) } ?? "–"
     }
 
     private func change(_ field: SetField, to value: Double) {

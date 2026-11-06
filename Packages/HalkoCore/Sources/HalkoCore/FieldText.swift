@@ -32,6 +32,13 @@ public struct FieldText: Sendable {
         }
     }
 
+    // A value that changes under the eyes: a weight in kg keeps a decimal ("80,0"), so that its digits stay in place
+    // between steps of 0.5 kg.
+    public func steadyText(_ value: Double, of field: SetField) -> String {
+        guard field == .weight, weightUnit == .kg else { return text(value, of: field) }
+        return (value / weightUnit.grams).formatted(.number.precision(.fractionLength(1...2)).grouping(.never).locale(locale))
+    }
+
     // What is typed, in stored units; nil when it is not a value of the field.
     public func value(_ text: String, of field: SetField) -> Double? {
         switch field {

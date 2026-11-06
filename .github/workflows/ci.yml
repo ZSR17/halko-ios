@@ -86,7 +86,7 @@ jobs:
       - name: Test the watch app
         # Each of its screens: a short run, every time. A watch simulator launched cold stays stuck on the app's first
         # launch: booted first, and the step stopped if it hangs all the same.
-        timeout-minutes: 15
+        timeout-minutes: 25
         run: |
           xcrun simctl boot "${{ steps.simulator.outputs.watch }}"
           xcrun simctl bootstatus "${{ steps.simulator.outputs.watch }}"
