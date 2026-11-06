@@ -115,6 +115,9 @@ extension ModelContext {
         if plan.steps.indices.contains(state.cursor), done.contains(plan.key(plan.steps[state.cursor])) {
             state.cursor = plan.firstOpen(done: done)
         }
+        if let key = state.setTimer?.stepKey, done.contains(key) {
+            state.setTimer = nil
+        }
         return .going(state)
     }
 

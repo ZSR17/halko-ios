@@ -77,6 +77,150 @@ struct SetOrRestPanel: View {
     }
 }
 
+// The timer of the set to do: getting in position, the time held, the pause between two sides. As high as the panel of
+// the set and of the rest, laid out hidden under it. The screen stays on, the iPhone probably on the floor.
+struct TimerPanel: View {
+    let table: LiveTable
+    let actions: LiveActions
+    let step: LiveStep
+    let timer: SetTimer
+    let bottomPadding: CGFloat
+    let begin: () -> Void
+    let cancel: () -> Void
+    let stop: () -> Void
+    @ScaledMetric(relativeTo: .largeTitle) private var timeSize: CGFloat = 52
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    var body: some View {
+        TimelineView(.periodic(from: .now, by: 0.5)) { context in
+            let display = SetTimerDisplay(timer: timer, date: context.date)
+            Panel(tint: display.isPause ? Color(.rest) : nil, bottomPadding: bottomPadding) {
+                ZStack(alignment: .topLeading) {
+                    content(display, tint: display.isPause ? Color(.rest) : Color.accentColor)
+                    SetContent(table: table, actions: actions, step: step)
+                        .hidden()
+                        .accessibilityHidden(true)
+                    RestContent(end: context.date + 60, totalS: 60, next: table.nextText, shorten: {}, skip: {}, lengthen: {})
+                        .hidden()
+                        .accessibilityHidden(true)
+                }
+            }
+        }
+        .onAppear {
+            UIApplication.shared.isIdleTimerDisabled = true
+        }
+        .onDisappear {
+            UIApplication.shared.isIdleTimerDisabled = false
+        }
+    }
+
+    private func content(_ display: SetTimerDisplay, tint: Color) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            let layout = dynamicTypeSize.isAccessibilitySize
+                ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8))
+                : AnyLayout(HStackLayout(alignment: .bottom, spacing: 12))
+            layout {
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(verbatim: display.title)
+                        .font(.subheadline.weight(.semibold))
+                        .textCase(.uppercase)
+                        .foregroundStyle(tint)
+                    Text(verbatim: FieldText.clock(display.seconds))
+                        .font(.system(size: timeSize, weight: .bold))
+                        .monospacedDigit()
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.5)
+                }
+                .accessibilityElement(children: .combine)
+                if !dynamicTypeSize.isAccessibilitySize {
+                    Spacer(minLength: 0)
+                }
+                aside(display)
+            }
+            Capsule()
+                .fill(tint)
+                .scaleEffect(x: display.part, anchor: .leading)
+                .frame(height: 6)
+                .background(tint.opacity(0.25), in: .capsule)
+                .accessibilityHidden(true)
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 10) {
+                    buttons(display, tint: tint)
+                }
+                VStack(spacing: 8) {
+                    buttons(display, tint: tint)
+                }
+            }
+        }
+    }
+
+    // What goes with the time.
+    @ViewBuilder
+    private func aside(_ display: SetTimerDisplay) -> some View {
+        let alignment: HorizontalAlignment = dynamicTypeSize.isAccessibilitySize ? .leading : .trailing
+        VStack(alignment: alignment, spacing: 2) {
+            if display.isPause {
+                if let firstSide = display.firstSide {
+                    Text(verbatim: firstSide)
+                        .font(.subheadline)
+                        .foregroundStyle(Color(.secondaryText))
+                }
+                Text("Next: right side")
+                    .font(.headline)
+            } else if display.isWaiting {
+                Text("Next")
+                    .font(.subheadline)
+                    .foregroundStyle(Color(.secondaryText))
+                if let next = table.nextText {
+                    Text(verbatim: next)
+                        .font(.headline)
+                }
+            } else if let extra = display.extra {
+                Text("Over")
+                    .font(.subheadline)
+                    .foregroundStyle(Color(.secondaryText))
+                Text(verbatim: extra)
+                    .font(.headline)
+                    .monospacedDigit()
+            } else if let targetS = timer.targetS {
+                Text("Target")
+                    .font(.subheadline)
+                    .foregroundStyle(Color(.secondaryText))
+                Text(verbatim: FieldText.clock(targetS))
+                    .font(.headline)
+                    .monospacedDigit()
+            }
+        }
+        .multilineTextAlignment(dynamicTypeSize.isAccessibilitySize ? .leading : .trailing)
+        .accessibilityElement(children: .combine)
+    }
+
+    @ViewBuilder
+    private func buttons(_ display: SetTimerDisplay, tint: Color) -> some View {
+        Button(action: cancel) {
+            Text("Cancel")
+                .foregroundStyle(Color(.label))
+                .frame(maxWidth: .infinity, minHeight: 44)
+        }
+        .buttonStyle(.bordered)
+        Button(action: display.isWaiting ? begin : stop) {
+            Group {
+                if display.isWaiting {
+                    Text("Begin")
+                } else {
+                    Text(verbatim: display.stopTitle)
+                }
+            }
+            .foregroundStyle(display.isPause ? Color(.onRest) : Color(.onAccent))
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
+            .frame(maxWidth: .infinity, minHeight: 44)
+        }
+        .buttonStyle(.borderedProminent)
+        .tint(tint)
+    }
+}
+
 // The set to do: which one, its values with − and + buttons, and Validate.
 private struct SetContent: View {
     let table: LiveTable
@@ -109,16 +253,53 @@ private struct SetContent: View {
                     }
                 }
             }
-            Button(action: actions.validate) {
-                Text(verbatim: validateTitle)
-                    .font(.headline)
-                    .foregroundStyle(Color(.onAccent))
-                    .frame(maxWidth: .infinity, minHeight: 44)
+            if table.canUseTimer(step) {
+                // On one line, so that the panel stays as high as for any other set.
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 10) {
+                        timerButtons
+                    }
+                    VStack(spacing: 8) {
+                        timerButtons
+                    }
+                }
+            } else {
+                Button(action: actions.validate) {
+                    Text(verbatim: validateTitle)
+                        .font(.headline)
+                        .foregroundStyle(Color(.onAccent))
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                }
+                .buttonStyle(.borderedProminent)
+                .buttonBorderShape(.capsule)
+                .controlSize(.large)
             }
-            .buttonStyle(.borderedProminent)
-            .buttonBorderShape(.capsule)
-            .controlSize(.large)
         }
+    }
+
+    @ViewBuilder
+    private var timerButtons: some View {
+        Button(action: actions.validate) {
+            Text("Validate")
+                .font(.headline)
+                .foregroundStyle(Color(.label))
+                .lineLimit(1)
+                .padding(.horizontal, 8)
+                .frame(minHeight: 44)
+        }
+        .buttonStyle(.bordered)
+        .buttonBorderShape(.capsule)
+        .controlSize(.large)
+        Button(action: actions.startTimer) {
+            Text("Start the timer")
+                .font(.headline)
+                .foregroundStyle(Color(.onAccent))
+                .lineLimit(1)
+                .frame(maxWidth: .infinity, minHeight: 44)
+        }
+        .buttonStyle(.borderedProminent)
+        .buttonBorderShape(.capsule)
+        .controlSize(.large)
     }
 
     private var isWarmup: Bool {

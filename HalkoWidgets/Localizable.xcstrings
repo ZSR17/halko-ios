@@ -1,6 +1,16 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Stop the timer and validate" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrêter le chrono et valider"
+          }
+        }
+      }
+    },
     "%lld beats per minute" : {
       "localizations" : {
         "fr" : {

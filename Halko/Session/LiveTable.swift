@@ -104,11 +104,96 @@ struct LiveTable {
         return String(localized: "\(name(step.item)) · set \(plan.items[step.item].workingNumber(step.set)) · \(values)")
     }
 
+    // A set held for a time, not done yet, can use the timer; running or walking keeps its time by hand.
+    func canUseTimer(_ step: LiveStep) -> Bool {
+        let metrics = plan.items[step.item].exerciseType.metrics
+        return metrics.contains(.duration) && !metrics.contains(.distance) && logged[plan.key(step)] == nil
+    }
+
+    // The timer of the set to do.
+    var timer: SetTimer? {
+        guard let step, let timer = state.setTimer, timer.stepKey == plan.key(step), logged[timer.stepKey] == nil else { return nil }
+        return timer
+    }
+
     func metrics(_ item: Int) -> [SetField] {
         plan.items[item].exerciseType.metrics.map(SetField.init)
     }
 
     func columnTitle(_ field: SetField, item: Int, long: Bool) -> String {
         fields.columnTitle(field, type: plan.items[item].exerciseType, perSide: plan.items[item].unilateral, long: long)
+    }
+}
+
+// What the timer of a set shows at a date.
+struct SetTimerDisplay {
+    let timer: SetTimer
+    let date: Date
+
+    var isWaiting: Bool {
+        timer.isWaiting(at: date)
+    }
+
+    // Waiting between the two sides.
+    var isPause: Bool {
+        isWaiting && timer.firstSideS != nil
+    }
+
+    var isOver: Bool {
+        !isWaiting && timer.isOver(at: date)
+    }
+
+    var waitTitle: String {
+        timer.firstSideS == nil ? String(localized: "Get in position") : String(localized: "Change sides")
+    }
+
+    var holdTitle: String {
+        if timer.sidesPauseS != nil {
+            return timer.isFirstSide ? String(localized: "Left side") : String(localized: "Right side")
+        }
+        return timer.targetS == nil ? String(localized: "Held") : String(localized: "Time left")
+    }
+
+    var overTitle: String {
+        timer.sidesPauseS == nil ? String(localized: "Target reached · held") : holdTitle
+    }
+
+    var stopTitle: String {
+        timer.isFirstSide ? String(localized: "Next side") : String(localized: "Stop and validate")
+    }
+
+    var title: String {
+        isWaiting ? waitTitle : isOver ? overTitle : holdTitle
+    }
+
+    // The time shown, in seconds: what is left of the wait or to the target, or what is held once past it.
+    var seconds: Int {
+        if isWaiting {
+            return Int(timer.startsAt.timeIntervalSince(date).rounded(.up))
+        }
+        if let end = timer.targetEnd, date < end {
+            return Int(end.timeIntervalSince(date).rounded(.up))
+        }
+        return timer.heldS(at: date)
+    }
+
+    // How much of the bar or ring is filled, from 0 to 1: the wait empties it, holding fills it.
+    var part: Double {
+        if isWaiting {
+            return timer.waitS > 0 ? min(1, timer.startsAt.timeIntervalSince(date) / Double(timer.waitS)) : 0
+        }
+        guard let targetS = timer.targetS else { return 1 }
+        return min(1, date.timeIntervalSince(timer.startsAt) / Double(targetS))
+    }
+
+    // Past the target: "+0:08".
+    var extra: String? {
+        guard isOver, let targetS = timer.targetS else { return nil }
+        return "+\(FieldText.clock(timer.heldS(at: date) - targetS))"
+    }
+
+    // After the first side: "Left side: 0:40".
+    var firstSide: String? {
+        timer.firstSideS.map { String(localized: "Left side: \(FieldText.clock($0))") }
     }
 }

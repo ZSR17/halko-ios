@@ -1,6 +1,276 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Start the timer" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Démarrer le chrono"
+          }
+        }
+      }
+    },
+    "Get in position" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mets-toi en place"
+          }
+        }
+      }
+    },
+    "Change sides" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Change de côté"
+          }
+        }
+      }
+    },
+    "Left side" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Côté gauche"
+          }
+        }
+      }
+    },
+    "Right side" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Côté droit"
+          }
+        }
+      }
+    },
+    "Left side: %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Côté gauche : %@"
+          }
+        }
+      }
+    },
+    "Next: right side" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ensuite côté droit"
+          }
+        }
+      }
+    },
+    "Held" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tenu"
+          }
+        }
+      }
+    },
+    "Time left" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reste"
+          }
+        }
+      }
+    },
+    "Target reached · held" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Objectif atteint · tenu"
+          }
+        }
+      }
+    },
+    "Target reached" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Objectif atteint"
+          }
+        }
+      }
+    },
+    "Next side" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Côté suivant"
+          }
+        }
+      }
+    },
+    "Stop and validate" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrêter et valider"
+          }
+        }
+      }
+    },
+    "Stop" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrêter"
+          }
+        }
+      }
+    },
+    "Begin" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Commencer"
+          }
+        }
+      }
+    },
+    "Target" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Objectif"
+          }
+        }
+      }
+    },
+    "Over" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En plus"
+          }
+        }
+      }
+    },
+    "Set timer" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chrono d'une série"
+          }
+        }
+      }
+    },
+    "Session" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Séance"
+          }
+        }
+      }
+    },
+    "At the target" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "À l'objectif"
+          }
+        }
+      }
+    },
+    "Go on until I stop" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continuer jusqu'à Arrêter"
+          }
+        }
+      }
+    },
+    "Stop by itself and validate" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "S'arrêter et valider"
+          }
+        }
+      }
+    },
+    "Going on, you can hold longer than the target and stop yourself. Stopping by itself, there is nothing to touch: the target is recorded and the rest starts." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continuer : tu peux tenir plus longtemps que l'objectif, et tu arrêtes toi-même. S'arrêter : rien à toucher, le temps enregistré est l'objectif et le repos commence."
+          }
+        }
+      }
+    },
+    "Before the timer" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avant le chrono"
+          }
+        }
+      }
+    },
+    "Getting in position" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mise en place"
+          }
+        }
+      }
+    },
+    "Turned off, the timer starts as soon as you press Start." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Désactivée, le chrono démarre dès l'appui sur Démarrer."
+          }
+        }
+      }
+    },
+    "Stop the timer and validate" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrêter le chrono et valider"
+          }
+        }
+      }
+    },
     "%@ %@ (before %@)" : {
       "localizations" : {
         "fr" : {

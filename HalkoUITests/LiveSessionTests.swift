@@ -112,6 +112,72 @@ final class LiveSessionTests: XCTestCase {
         snap("Session › Rest, largest text")
     }
 
+    // The plank of Core 15 min, given a target: getting in position, holding, the set validated with the time held, the
+    // rest.
+    @MainActor
+    func testSetTimer() throws {
+        let app = launch(language: "fr", locale: "fr_FR")
+        let core = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Core 15 min")).firstMatch
+        XCTAssertTrue(core.waitForExistence(timeout: 5))
+        core.tap()
+        app.buttons["Démarrer la séance"].tap()
+        XCTAssertTrue(app.alerts.firstMatch.waitForExistence(timeout: 5))
+        app.alerts.buttons["La reprendre"].tap()
+        XCTAssertTrue(app.buttons["Terminer"].waitForExistence(timeout: 5))
+        app.buttons["Terminer"].tap()
+        app.buttons["Abandonner la séance"].tap()
+        app.alerts.buttons["Abandonner"].tap()
+        XCTAssertTrue(app.buttons["Démarrer la séance"].waitForExistence(timeout: 5))
+        app.buttons["Démarrer la séance"].tap()
+        let proceed = app.buttons["Continuer"]
+        XCTAssertTrue(proceed.waitForExistence(timeout: 5))
+        proceed.tap()
+
+        let startTimer = app.buttons["Démarrer le chrono"]
+        XCTAssertTrue(startTimer.waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["Valider"].exists)
+        try app.auditScreen()
+        for _ in 1...30 {
+            app.buttons["Ajouter 1 s"].tap()
+        }
+        snap("Chrono › Série à faire")
+
+        startTimer.tap()
+        let begin = app.buttons["Commencer"]
+        XCTAssertTrue(begin.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.element(containing: "Mets-toi en place").exists)
+        snap("Chrono › Mise en place")
+
+        // Cancelled: nothing recorded, the set to do again.
+        app.buttons["Annuler"].tap()
+        XCTAssertTrue(startTimer.waitForExistence(timeout: 5))
+        startTimer.tap()
+        XCTAssertTrue(begin.waitForExistence(timeout: 5))
+        begin.tap()
+        let stop = app.buttons["Arrêter et valider"]
+        XCTAssertTrue(stop.waitForExistence(timeout: 5))
+        snap("Chrono › Décompte")
+        stop.tap()
+        XCTAssertTrue(app.buttons["Passer"].waitForExistence(timeout: 5))
+        snap("Chrono › Repos après la série")
+    }
+
+    @MainActor
+    func testSetTimerSettings() throws {
+        let app = launch(language: "fr", locale: "fr_FR")
+        app.tabBars.buttons["Réglages"].tap()
+        let row = app.buttons["Chrono d'une série"]
+        XCTAssertTrue(row.waitForExistence(timeout: 5))
+        row.tap()
+        XCTAssertTrue(app.element(containing: "À l'objectif").waitForExistence(timeout: 5))
+        try app.auditScreen()
+        snap("Réglages › Chrono d'une série")
+        app.buttons["Durée"].tap()
+        XCTAssertTrue(app.buttons["Valider"].waitForExistence(timeout: 5))
+        snap("Réglages › Chrono, roues")
+        app.buttons["Valider"].tap()
+    }
+
     @MainActor
     func testStartWorkout() throws {
         let app = launch(language: "en", locale: "en_GB")

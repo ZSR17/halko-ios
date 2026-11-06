@@ -27,6 +27,8 @@ final class SessionActivities {
     private var lastAlert: RestAlert.Request?
     // Waits for the end of the rest going on.
     private var restWatch: (end: Date, task: Task<Void, Never>)?
+    // Waits for the next change of the timer of a set.
+    private var timerWatch: (date: Date, task: Task<Void, Never>)?
     private let sound = RestSound()
 
     init(container: ModelContainer, store: LiveSessionStore, recorder: WorkoutRecorder, showsActivity: Bool) {
@@ -48,6 +50,8 @@ final class SessionActivities {
                 case .validateSet:
                     guard let glance = try context.glance(of: state, unit: .preferred(for: .current)) else { return }
                     try context.logSet(&state, step: state.cursor, values: glance.values, startedFrom: glance.values)
+                case .stopTimer:
+                    try context.stopTimer(&state)
                 }
             }
         } catch {
@@ -60,13 +64,18 @@ final class SessionActivities {
     func refresh() async {
         sound.hold(store.state != nil && !recorder.otherDeviceRecords)
         watchRest()
+        watchTimer()
         let found = store.state.flatMap(content(of:))
         // The activity first: a button pressed on it waits for it.
         if showsActivity {
             await show(found)
         }
-        let alert = recorder.isRecording || recorder.otherDeviceRecords ? nil : found.flatMap { found in
-            found.content.restEndsAt.map { RestAlert.Request(end: $0, body: Self.alertBody(found.content)) }
+        let targetEnd = store.state?.setTimer?.targetEnd
+        let alert = recorder.isRecording || recorder.otherDeviceRecords ? nil : found.flatMap { found -> RestAlert.Request? in
+            if let targetEnd {
+                return RestAlert.Request(end: targetEnd, body: Self.alertBody(found.content), title: String(localized: "Target reached"))
+            }
+            return found.content.restEndsAt.map { RestAlert.Request(end: $0, body: Self.alertBody(found.content)) }
         }
         if alert != lastAlert {
             // A rest over on its own: its notification, just shown, stays.
@@ -83,7 +92,7 @@ final class SessionActivities {
         let sessionID = store.state?.sessionID
         let others = running.filter { $0.attributes.sessionID != sessionID }
         if let found, let sessionID {
-            let content = ActivityContent(state: found.content, staleDate: found.content.restEndsAt)
+            let content = ActivityContent(state: found.content, staleDate: store.state?.setTimer?.nextChange(after: .now) ?? found.content.restEndsAt)
             if let activity = running.first(where: { $0.attributes.sessionID == sessionID }) {
                 await activity.update(content)
             } else if ActivityAuthorizationInfo().areActivitiesEnabled {
@@ -102,7 +111,7 @@ final class SessionActivities {
     // The rest ends here, on screen or not: at its end, or at once when it ended while the app was stopped.
     private func watchRest() {
         let end = store.state?.restEndsAt
-        sound.schedule(at: recorder.otherDeviceRecords ? nil : end)
+        sound.schedule(at: recorder.otherDeviceRecords ? nil : store.state?.setTimer?.nextChange(after: .now) ?? end)
         guard end != restWatch?.end else { return }
         restWatch?.task.cancel()
         restWatch = nil
@@ -117,6 +126,38 @@ final class SessionActivities {
             await self?.restEnded(at: end)
         }
         restWatch = (end, task)
+    }
+
+    // The timer of a set, on screen or not: holding starts, the target is reached, it stops on its own. The workout on
+    // the watch makes the watch tell it and stop it.
+    private func watchTimer() {
+        let next = store.state?.setTimer?.nextChange(after: .now)
+        if next == nil, !recorder.otherDeviceRecords, store.state?.setTimer?.isDue(at: .now) == true {
+            Task {
+                // Still due: several refreshes may have come here.
+                if store.state?.setTimer?.isDue(at: .now) == true {
+                    await apply(.stopTimer)
+                }
+            }
+        }
+        guard next != timerWatch?.date else { return }
+        timerWatch?.task.cancel()
+        timerWatch = nil
+        guard let next else { return }
+        let task = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(next.timeIntervalSinceNow))
+            guard !Task.isCancelled else { return }
+            await self?.timerChanged()
+        }
+        timerWatch = (next, task)
+    }
+
+    private func timerChanged() async {
+        timerWatch = nil
+        if !recorder.otherDeviceRecords {
+            AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
+        }
+        await refresh()
     }
 
     private func restEnded(at end: Date) async {
@@ -159,6 +200,7 @@ final class SessionActivities {
                 let target = SetTarget(kind: .normal, reps: glance.values.reps, weightG: glance.values.weightG, durationS: glance.values.durationS, distanceM: glance.values.distanceM)
                 content.values = SetsText(locale: locale).set(target, type: glance.exerciseType, unit: true)
             }
+            content.timer = state.setTimer.map(Self.timerContent)
             last = (state, content, session.startedAt)
             return (content, session.startedAt)
         } catch {
@@ -173,6 +215,19 @@ final class SessionActivities {
         a.restTotalS = b.restTotalS
         a.changedAt = b.changedAt
         return a == b
+    }
+
+    private static func timerContent(_ timer: SetTimer) -> SessionActivityAttributes.ContentState.Timer {
+        let display = SetTimerDisplay(timer: timer, date: .now)
+        return .init(
+            startsAt: timer.startsAt,
+            targetEnd: timer.targetEnd,
+            isPause: timer.firstSideS != nil,
+            waitTitle: display.waitTitle,
+            holdTitle: display.holdTitle,
+            overTitle: display.overTitle,
+            stopTitle: display.stopTitle
+        )
     }
 
     // "Set 3 · Bench press · 80 kg × 8".

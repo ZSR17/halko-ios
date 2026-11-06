@@ -16,6 +16,19 @@ nonisolated struct SessionActivityAttributes: ActivityAttributes {
         var restTotalS: Int
         // Beats per minute, only while Health measures them.
         var heartRate: Int?
+        // The timer of the set to do, while it runs.
+        var timer: Timer?
+
+        nonisolated struct Timer: Codable, Hashable {
+            var startsAt: Date
+            var targetEnd: Date?
+            // Its wait is the pause between two sides.
+            var isPause: Bool
+            var waitTitle: String
+            var holdTitle: String
+            var overTitle: String
+            var stopTitle: String
+        }
     }
 
     let sessionID: String

@@ -21,7 +21,12 @@ struct SessionLiveActivity: Widget {
                     ExpandedTrailing(state: state)
                 }
                 DynamicIslandExpandedRegion(.bottom) {
-                    if state.rest != nil {
+                    if let timer = state.timer {
+                        if !timer.isWaiting {
+                            StopButton(timer: timer)
+                                .padding(.top, 8)
+                        }
+                    } else if state.rest != nil {
                         RestButtons()
                             .padding(.top, 8)
                     } else if !state.allDone {
@@ -36,7 +41,12 @@ struct SessionLiveActivity: Widget {
                 HalkoMark()
                     .frame(width: 18, height: 18)
             } compactTrailing: {
-                if let rest = state.rest {
+                if let timer = state.timer {
+                    TimerTime(timer: timer)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(timer.tint)
+                        .frame(maxWidth: 52)
+                } else if let rest = state.rest {
                     Countdown(end: rest.end)
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(Color(.rest))
@@ -48,7 +58,12 @@ struct SessionLiveActivity: Widget {
                         .lineLimit(1)
                 }
             } minimal: {
-                if let rest = state.rest {
+                if let timer = state.timer {
+                    TimerTime(timer: timer)
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(timer.tint)
+                        .frame(maxWidth: 40)
+                } else if let rest = state.rest {
                     Countdown(end: rest.end)
                         .font(.caption2.weight(.semibold))
                         .foregroundStyle(Color(.rest))
@@ -66,6 +81,27 @@ struct SessionLiveActivity: Widget {
     }
 }
 
+// The timer of a set as it is when drawn: the app, or the end of its stale date, has it drawn again at each change.
+struct TimerGlimpse {
+    let content: SessionActivityAttributes.ContentState.Timer
+    let isWaiting: Bool
+    let isOver: Bool
+
+    init(_ content: SessionActivityAttributes.ContentState.Timer, at date: Date) {
+        self.content = content
+        isWaiting = date < content.startsAt
+        isOver = !isWaiting && (content.targetEnd.map { date >= $0 } ?? false)
+    }
+
+    var title: String {
+        isWaiting ? content.waitTitle : isOver ? content.overTitle : content.holdTitle
+    }
+
+    var tint: Color {
+        isWaiting && content.isPause ? Color(.rest) : Color(.accent)
+    }
+}
+
 // What a content shows, once its rest is known to be over or not.
 struct SessionGlimpse {
     struct Rest {
@@ -76,11 +112,13 @@ struct SessionGlimpse {
     let content: SessionActivityAttributes.ContentState
     let startedAt: Date
     let rest: Rest?
+    let timer: TimerGlimpse?
 
     init(context: ActivityViewContext<SessionActivityAttributes>) {
         content = context.state
         startedAt = context.attributes.startedAt
         rest = context.isStale ? nil : context.state.restEndsAt.map { Rest(end: $0, totalS: context.state.restTotalS) }
+        timer = context.state.timer.map { TimerGlimpse($0, at: .now) }
     }
 
     var allDone: Bool {
@@ -139,7 +177,11 @@ private struct LockScreenView: View {
                 }
                 .multilineTextAlignment(.trailing)
             }
-            if let rest = state.rest {
+            if let timer = state.timer {
+                if !timer.isWaiting {
+                    StopButton(timer: timer)
+                }
+            } else if let rest = state.rest {
                 RestProgress(rest: rest)
                 RestButtons()
             } else if !state.allDone {
@@ -156,7 +198,14 @@ private struct Headline: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            if let rest = state.rest {
+            if let timer = state.timer {
+                Text(verbatim: timer.title)
+                    .font(.caption.weight(.semibold))
+                    .textCase(.uppercase)
+                    .foregroundStyle(timer.tint)
+                TimerTime(timer: timer)
+                    .font(.system(size, weight: .bold))
+            } else if let rest = state.rest {
                 Text("Rest")
                     .font(.caption.weight(.semibold))
                     .textCase(.uppercase)
@@ -273,6 +322,40 @@ private struct SessionLine: View {
         }
         .font(.footnote)
         .foregroundStyle(.secondary)
+    }
+}
+
+// Time left to the end of the wait or to the target, then time held.
+private struct TimerTime: View {
+    let timer: TimerGlimpse
+
+    var body: some View {
+        if timer.isWaiting {
+            Countdown(end: timer.content.startsAt)
+        } else if !timer.isOver, let end = timer.content.targetEnd {
+            Countdown(end: end)
+        } else {
+            Text(timerInterval: timer.content.startsAt...Date.distantFuture, countsDown: false)
+                .monospacedDigit()
+                .lineLimit(1)
+                .multilineTextAlignment(.trailing)
+        }
+    }
+}
+
+private struct StopButton: View {
+    let timer: TimerGlimpse
+
+    var body: some View {
+        Button(intent: StopTimerIntent()) {
+            Text(verbatim: timer.content.stopTitle)
+                .foregroundStyle(Color(.onAccent))
+                .frame(maxWidth: .infinity, minHeight: 44)
+        }
+        .buttonStyle(.borderedProminent)
+        .buttonBorderShape(.capsule)
+        .tint(Color(.accent))
+        .font(.subheadline.weight(.semibold))
     }
 }
 

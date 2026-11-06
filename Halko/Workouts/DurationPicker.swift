@@ -49,7 +49,7 @@ struct DurationField: View {
 }
 
 // The sheet of the wheels: what they are for, minutes and seconds, and Validate where the session has Validate the set.
-private struct DurationPicker: View {
+struct DurationPicker: View {
     let title: String
     let subtitle: String
     let seconds: Int
