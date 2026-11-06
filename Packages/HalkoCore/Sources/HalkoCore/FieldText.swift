@@ -55,7 +55,7 @@ public struct FieldText: Sendable {
         switch field {
         case .weight: weightUnit == .kg ? 500 : weightUnit.grams
         case .reps: 1
-        case .duration, .rest: 5
+        case .duration, .rest: 1
         case .distance: distanceUnit == .km ? 10 : 16.09344
         }
     }

@@ -10,6 +10,7 @@ enum RestAlert {
         let end: Date
         // The set that follows.
         let body: String
+        var title = String(localized: "Rest over")
     }
 
     private static let logger = Logger(subsystem: "com.zsr.halko", category: "session")
@@ -23,7 +24,7 @@ enum RestAlert {
         guard let request, request.end > .now, await center.notificationSettings().authorizationStatus == .authorized else { return }
         let end = request.end
         let content = UNMutableNotificationContent()
-        content.title = String(localized: "Rest over")
+        content.title = request.title
         content.body = request.body
         content.sound = .default
         content.interruptionLevel = .timeSensitive

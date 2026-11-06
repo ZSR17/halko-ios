@@ -17,6 +17,8 @@ public struct LiveState: Codable, Equatable, Sendable {
     public var bumps: [String: SetValues]
     // The last action on it, on either device: the most recent one wins. Absent from a state kept before there was one.
     public var changedAt: Date?
+    // The timer of the set to do, while it is held for a time.
+    public var setTimer: SetTimer?
 
     public init(
         sessionID: String,
@@ -26,7 +28,8 @@ public struct LiveState: Codable, Equatable, Sendable {
         restEndsAt: Date? = nil,
         restTotalS: Int = 0,
         bumps: [String: SetValues] = [:],
-        changedAt: Date? = nil
+        changedAt: Date? = nil,
+        setTimer: SetTimer? = nil
     ) {
         self.sessionID = sessionID
         self.workoutID = workoutID
@@ -36,6 +39,7 @@ public struct LiveState: Codable, Equatable, Sendable {
         self.restTotalS = restTotalS
         self.bumps = bumps
         self.changedAt = changedAt
+        self.setTimer = setTimer
     }
 
     public var livePlan: LivePlan {
@@ -166,6 +170,9 @@ extension ModelContext {
                 state.bumps[key] = (state.bumps[key] ?? SetValues()).raised(to: added)
             }
         }
+        if state.setTimer?.stepKey == plan.key(step) {
+            state.setTimer = nil
+        }
         let doneNow = doneKeys(done).union([plan.key(step)])
         let next = plan.nextOpen(after: index, done: doneNow)
         state.cursor = next ?? index
@@ -194,6 +201,7 @@ extension ModelContext {
             state.bumps[key] = state.bumps[key]?.lowered(by: added)
         }
         state.cursor = plan.firstOpen(done: doneKeys(done.filter { $0 !== log }))
+        state.setTimer = nil
         try save()
     }
 
@@ -229,6 +237,7 @@ extension ModelContext {
             }
         }
         state.bumps = bumps
+        state.setTimer = nil
         state.cursor = state.livePlan.firstOpen(done: doneKeys(logs.filter { !$0.removed }))
         try save()
     }
@@ -250,6 +259,7 @@ extension ModelContext {
             }
         }
         state.bumps = state.bumps.filter { Self.setIndex($0.key, of: itemID) == nil }
+        state.setTimer = nil
         state.cursor = state.livePlan.firstOpen(done: doneKeys(logs.filter { !$0.removed }))
         try save()
     }

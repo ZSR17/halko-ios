@@ -138,6 +138,7 @@ struct LiveSessionView: View {
     private var actions: LiveActions {
         LiveActions(
             validate: validate,
+            startTimer: startTimer,
             undo: undo,
             correct: correct,
             edit: { key, values in edits[key] = values },
@@ -195,6 +196,14 @@ struct LiveSessionView: View {
             .finishDialog(isPresented: $finishingAllDone, setsDone: sets.count, of: table.plan.steps.count, save: finish) {
                 discarding = true
             }
+        } else if let timer = table.timer, let step = table.step {
+            TimerPanel(table: table, actions: actions, step: step, timer: timer, bottomPadding: panelBottomPadding) {
+                store.change { $0.beginHolding() }
+            } cancel: {
+                store.change { $0.setTimer = nil }
+            } stop: {
+                change { try context.stopTimer(&$0) }
+            }
         } else if state.restEndsAt != nil || table.step != nil {
             SetOrRestPanel(
                 table: table,
@@ -231,6 +240,21 @@ struct LiveSessionView: View {
         focus = nil
         change { try context.logSet(&$0, step: index, values: values, startedFrom: startedFrom) }
         edits[key] = nil
+    }
+
+    private func startTimer() {
+        let table = self.table
+        guard let step = table.step else { return }
+        focus = nil
+        store.change {
+            $0.startTimer(
+                stepKey: table.plan.key(step),
+                values: table.draft(step),
+                startedFrom: table.startedFrom(step),
+                sidesPauseS: table.plan.items[step.item].sidesPauseS,
+                settings: SetTimerSettings(defaults: .standard)
+            )
+        }
     }
 
     // A set validated by mistake: to do again, with the values it had.
@@ -334,6 +358,7 @@ private extension View {
 // What the session's views do.
 struct LiveActions {
     let validate: () -> Void
+    let startTimer: () -> Void
     let undo: (_ item: Int, _ set: Int) -> Void
     let correct: (_ item: Int, _ set: Int, SetValues) -> Void
     // New values of a set not done yet, by step key.

@@ -15,6 +15,8 @@ final class RestSound {
     private static let url = Bundle.main.url(forResource: "RestOver", withExtension: "wav")
 
     private var player: AVAudioPlayer?
+    // The sound that has just started, kept while it plays: the next one is already waiting.
+    private var ringing: AVAudioPlayer?
     // The end of the rest going on, when its sound is to be heard.
     private var end: Date?
     private var observers: [any NSObjectProtocol] = []
@@ -61,6 +63,10 @@ final class RestSound {
         let over = self.end.map { $0 <= .now } ?? false
         self.end = end
         guard end != nil || !over else { return }
+        if over, player?.isPlaying == true {
+            ringing = player
+            prepare()
+        }
         resume()
     }
 

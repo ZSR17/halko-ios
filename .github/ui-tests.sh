@@ -39,7 +39,7 @@ while IFS= read -r file; do
     # The tab and the page of a workout, which the editor and the session open from.
     Halko/Workouts/*) tests+=(WorkoutsTests WorkoutEditorTests LiveSessionTests) ;;
     # The session, and what it shows outside the app (the widgets are not tested on screen: only built).
-    Halko/Session/* | Halko/Health/* | Shared/*) tests+=(LiveSessionTests) ;;
+    Halko/Session/* | Halko/Health/* | Halko/Settings/* | Shared/*) tests+=(LiveSessionTests) ;;
     HalkoWidgets/*) ;;
     # Anything else (the views shared by the screens, the colours, the sample data, the project, the CI): all.
     *)

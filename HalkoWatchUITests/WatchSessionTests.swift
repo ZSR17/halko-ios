@@ -84,6 +84,32 @@ final class WatchSessionTests: XCTestCase {
         XCTAssertTrue(pushA(app).waitForExistence(timeout: 5))
     }
 
+    // The plank of Quick with the timer: getting in position, holding, the rest.
+    @MainActor
+    func testSetTimer() throws {
+        let app = launchApp()
+        XCTAssertTrue(pushA(app).waitForExistence(timeout: 10))
+        let quick = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Quick'")).firstMatch
+        scrollTo(quick, in: app)
+        quick.tap()
+        XCTAssertTrue(app.buttons["Démarrer"].waitForExistence(timeout: 5))
+        start(app)
+
+        let validate = app.buttons["Valider"]
+        XCTAssertTrue(validate.waitForExistence(timeout: 10))
+        snap("Watch – Chrono, série à faire")
+        app.buttons["Démarrer"].tap()
+        let begin = app.buttons["Commencer"]
+        XCTAssertTrue(begin.waitForExistence(timeout: 5))
+        snap("Watch – Chrono, mise en place")
+        begin.tap()
+        let stop = app.buttons["Arrêter"]
+        XCTAssertTrue(stop.waitForExistence(timeout: 5))
+        snap("Watch – Chrono, décompte")
+        stop.tap()
+        XCTAssertTrue(app.buttons["Passer"].waitForExistence(timeout: 5))
+    }
+
     // Every set of a workout validated: the session can only be finished.
     @MainActor
     func testAllDone() throws {

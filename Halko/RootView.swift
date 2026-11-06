@@ -33,8 +33,14 @@ struct RootView: View {
             }
             Tab("Settings", systemImage: "slider.horizontal.3") {
                 NavigationStack {
-                    List {}
-                        .navigationTitle("Settings")
+                    List {
+                        Section("Session") {
+                            NavigationLink("Set timer") {
+                                SetTimerSettingsView()
+                            }
+                        }
+                    }
+                    .navigationTitle("Settings")
                 }
             }
         }

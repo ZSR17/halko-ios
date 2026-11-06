@@ -62,8 +62,11 @@ struct LiveSessionView: View {
         .task(id: state.sessionID) {
             loadPrevious()
         }
-        .task(id: RestAlarm(end: state.restEndsAt, recording: recorder.isRecording)) {
+        .task(id: RestAlarm(end: state.restEndsAt, timerEnd: state.setTimer?.targetEnd, recording: recorder.isRecording)) {
             await waitForTheEndOfRest(next: table.nextText)
+        }
+        .task(id: state.setTimer) {
+            await followTimer()
         }
     }
 
@@ -72,6 +75,14 @@ struct LiveSessionView: View {
         if table.allDone {
             AllDonePage(session: sessions.first) {
                 finishing = true
+            }
+        } else if let timer = table.timer {
+            TimerPage(table: table, timer: timer) {
+                store.change { $0.beginHolding() }
+            } cancel: {
+                store.change { $0.setTimer = nil }
+            } stop: {
+                stopTimer()
             }
         } else if let end = state.restEndsAt {
             RestPage(table: table, end: end, totalS: state.restTotalS) {
@@ -86,6 +97,16 @@ struct LiveSessionView: View {
                 edits[table.plan.key(step)] = values
             } validate: {
                 validate(table, step)
+            } startTimer: {
+                store.change {
+                    $0.startTimer(
+                        stepKey: table.plan.key(step),
+                        values: table.draft(step),
+                        startedFrom: table.startedFrom(step),
+                        sidesPauseS: table.plan.items[step.item].sidesPauseS,
+                        settings: SetTimerSettings(defaults: .standard)
+                    )
+                }
             }
             // Another set starts from its first box.
             .id(table.plan.key(step))
@@ -108,6 +129,10 @@ struct LiveSessionView: View {
     // The end of the rest: a vibration while the app runs (a workout of Health keeps it running with the wrist down);
     // without one, a notification takes over when the watch puts the app to sleep.
     private func waitForTheEndOfRest(next: String?) async {
+        if let timerEnd = state.setTimer?.targetEnd {
+            await RestAlert.schedule(recorder.isRecording ? nil : RestAlert.Request(end: timerEnd, body: next ?? "", title: String(localized: "Target reached")))
+            return
+        }
         let end = state.restEndsAt
         await RestAlert.schedule(recorder.isRecording ? nil : end.map { RestAlert.Request(end: $0, body: next ?? "") })
         guard let end else { return }
@@ -118,6 +143,27 @@ struct LiveSessionView: View {
             WKInterfaceDevice.current().play(.notification)
         }
         store.restOver()
+    }
+
+    // A tap on the wrist when holding starts and at the target, and the stop on its own.
+    private func followTimer() async {
+        guard let timer = state.setTimer else { return }
+        while let next = timer.nextChange(after: .now) {
+            try? await Task.sleep(for: .seconds(next.timeIntervalSinceNow))
+            guard !Task.isCancelled else { return }
+            WKInterfaceDevice.current().play(next == timer.targetEnd ? .notification : .start)
+        }
+        if timer.isDue(at: .now) {
+            stopTimer()
+        }
+    }
+
+    private func stopTimer() {
+        do {
+            try store.change { try context.stopTimer(&$0) }
+        } catch {
+            Self.logger.error("Cannot change the session: \(String(describing: error))")
+        }
     }
 
     private func validate(_ table: LiveTable, _ step: LiveStep) {
@@ -181,6 +227,7 @@ struct LiveSessionView: View {
 // What the alarm of the end of the rest depends on.
 private struct RestAlarm: Equatable {
     let end: Date?
+    let timerEnd: Date?
     let recording: Bool
 }
 
@@ -295,6 +342,7 @@ private struct SetPage: View {
     let session: Session?
     let edit: (SetValues) -> Void
     let validate: () -> Void
+    let startTimer: () -> Void
     @State private var chosen: SetField?
     @State private var crown = 0.0
     @State private var isWide = false
@@ -337,15 +385,38 @@ private struct SetPage: View {
                 // hundreds of them for a single step. Continuous, it shows no scroll bar; the ends are kept below.
                 .digitalCrownRotation($crown, from: 0, through: crownSteps(field), by: 1, sensitivity: .low, isContinuous: true)
                 Spacer(minLength: 4)
-                Button(action: validate) {
-                    Text("Validate")
-                        .font(.headline)
-                        .foregroundStyle(Color(.onAccent))
-                        .frame(maxWidth: .infinity)
+                if table.canUseTimer(step) {
+                    HStack(spacing: 6) {
+                        Button(action: validate) {
+                            Text("Validate")
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.bordered)
+                        Button(action: startTimer) {
+                            Text("Start")
+                                .font(.headline)
+                                .foregroundStyle(Color(.onAccent))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .handGestureShortcut(.primaryAction)
+                    }
+                    .buttonBorderShape(.capsule)
+                } else {
+                    Button(action: validate) {
+                        Text("Validate")
+                            .font(.headline)
+                            .foregroundStyle(Color(.onAccent))
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .buttonBorderShape(.capsule)
+                    .handGestureShortcut(.primaryAction)
                 }
-                .buttonStyle(.borderedProminent)
-                .buttonBorderShape(.capsule)
-                .handGestureShortcut(.primaryAction)
             }
         }
         .onClockLine {
@@ -591,6 +662,120 @@ private struct RestPage: View {
             .background(Color(.rest).opacity(0.25), in: .capsule)
             .accessibilityHidden(true)
         }
+    }
+}
+
+// The timer of the set to do, laid out like the rest: Cancel at the top, the time in a ring when the screen has room for
+// it, the main button at the bottom.
+private struct TimerPage: View {
+    let table: LiveTable
+    let timer: SetTimer
+    let begin: () -> Void
+    let cancel: () -> Void
+    let stop: () -> Void
+    @ScaledMetric(relativeTo: .title2) private var ringSide = 66.0
+
+    var body: some View {
+        NavigationStack {
+            TimelineView(.periodic(from: .now, by: 0.5)) { context in
+                let display = SetTimerDisplay(timer: timer, date: context.date)
+                let tint = display.isPause ? Color(.rest) : Color.accentColor
+                ViewThatFits(in: .vertical) {
+                    page(display, tint: tint, showsRing: true)
+                    page(display, tint: tint, showsRing: false)
+                    // Only when the text is too large for the screen.
+                    ScrollView {
+                        page(display, tint: tint, showsRing: false)
+                    }
+                }
+            }
+            .ignoresSafeArea(edges: .bottom)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Cancel", action: cancel)
+                }
+            }
+        }
+    }
+
+    private func page(_ display: SetTimerDisplay, tint: Color, showsRing: Bool) -> some View {
+        VStack(spacing: 0) {
+            Text(verbatim: display.title)
+                .font(.footnote.weight(.semibold))
+                .textCase(.uppercase)
+                .foregroundStyle(tint)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+            if showsRing {
+                ZStack {
+                    Circle()
+                        .stroke(tint.opacity(0.25), lineWidth: 5)
+                    Circle()
+                        .trim(from: 0, to: display.part)
+                        .stroke(tint, style: StrokeStyle(lineWidth: 5, lineCap: .round))
+                        .rotationEffect(.degrees(-90))
+                    time(display)
+                        .padding(8)
+                }
+                .frame(width: ringSide, height: ringSide)
+            } else {
+                time(display)
+            }
+            Spacer(minLength: 2)
+            Text(verbatim: lines(display).0)
+                .font(.footnote.weight(.semibold))
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+            Text(verbatim: lines(display).1)
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+            Spacer(minLength: 2)
+            Button(action: display.isWaiting ? begin : stop) {
+                Group {
+                    if display.isWaiting {
+                        Text("Begin")
+                    } else {
+                        Text(timer.isFirstSide ? "Next side" : "Stop")
+                    }
+                }
+                .font(.headline)
+                .foregroundStyle(display.isPause ? Color(.onRest) : Color(.onAccent))
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+                .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .buttonBorderShape(.capsule)
+            .tint(tint)
+            .handGestureShortcut(.primaryAction)
+            // Clear of the rounded corners of the screen.
+            .padding(.horizontal, 10)
+        }
+        .padding(.top, -6)
+        .padding(.bottom, 6)
+    }
+
+    private func time(_ display: SetTimerDisplay) -> some View {
+        Text(verbatim: FieldText.clock(display.seconds))
+            .font(.title2.weight(.bold))
+            .monospacedDigit()
+            .lineLimit(1)
+            .minimumScaleFactor(0.5)
+    }
+
+    // Under the time.
+    private func lines(_ display: SetTimerDisplay) -> (String, String) {
+        if display.isPause {
+            return (String(localized: "Next: right side"), display.firstSide ?? "")
+        }
+        if display.isOver {
+            return (String(localized: "Target reached"), display.extra ?? "")
+        }
+        let name = table.step.map { table.name($0.item) } ?? ""
+        let position = table.step.map { table.position($0) } ?? ""
+        return (name, timer.targetS.map { "\(position) · \(FieldText.clock($0))" } ?? position)
     }
 }
 

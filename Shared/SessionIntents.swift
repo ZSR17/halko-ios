@@ -9,6 +9,7 @@ nonisolated enum SessionAction: Sendable {
     case lengthenRest
     // The set to do, with the values shown.
     case validateSet
+    case stopTimer
 }
 
 @MainActor
@@ -57,6 +58,16 @@ nonisolated struct ValidateSetIntent: LiveActivityIntent {
 
     func perform() async throws -> some IntentResult {
         await SessionControl.apply(.validateSet)
+        return .result()
+    }
+}
+
+nonisolated struct StopTimerIntent: LiveActivityIntent {
+    static let title: LocalizedStringResource = "Stop the timer and validate"
+    static let isDiscoverable = false
+
+    func perform() async throws -> some IntentResult {
+        await SessionControl.apply(.stopTimer)
         return .result()
     }
 }
