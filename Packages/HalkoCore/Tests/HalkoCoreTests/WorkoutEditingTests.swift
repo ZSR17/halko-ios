@@ -233,6 +233,18 @@ struct WorkoutEditingTests {
         #expect(pounds.text(20_412, of: .weight) == "45")
     }
 
+    @Test("A weight in kg keeps its decimal while it changes, and nothing else does")
+    func steadyText() {
+        let french = FieldText(weightUnit: .kg, distanceUnit: .km, locale: Locale(identifier: "fr_FR"))
+        #expect(french.steadyText(80_000, of: .weight) == "80,0")
+        #expect(french.steadyText(80_500, of: .weight) == "80,5")
+        #expect(french.steadyText(82_250, of: .weight) == "82,25")
+        #expect(french.steadyText(8, of: .reps) == "8")
+        #expect(french.steadyText(150, of: .rest) == "2:30")
+        let pounds = FieldText(weightUnit: .lb, distanceUnit: .mi, locale: Locale(identifier: "en_US"))
+        #expect(pounds.steadyText(20_412, of: .weight) == "45")
+    }
+
     @Test("An exercise added starts from another workout's plan with the values done last time")
     func startingItem() throws {
         let bench = Exercise(id: "a", name: "Bench press", exerciseType: .weightReps)
