@@ -32,8 +32,15 @@ struct WorkoutView: View {
             WorkoutContent(items: items) {
                 if permissions.asked {
                     start()
-                } else {
-                    isPreparing = true
+                    return
+                }
+                Task {
+                    await permissions.checkAnswered()
+                    if !permissions.asked {
+                        isPreparing = true
+                    } else if store.state == nil {
+                        start()
+                    }
                 }
             }
             .navigationTitle(workout.name)

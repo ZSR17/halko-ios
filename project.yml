@@ -99,12 +99,14 @@ targets:
     sources:
       - HalkoWatch
       # As on the iPhone: how sets are written, the sample data of the interface tests, what a session reads, the
-      # workout of Health, the access to Health and notifications, the notification of the end of a rest.
+      # session shared with the other device, the workout of Health, the access to Health and notifications, the
+      # notification of the end of a rest.
       - Halko/SetsText.swift
       - Halko/ColumnTitle.swift
       - Halko/DemoData.swift
       - Halko/Session/LiveTable.swift
       - Halko/Session/RestAlert.swift
+      - Halko/Session/LiveLink.swift
       - Halko/Health/WorkoutRecorder.swift
       - Halko/Health/HealthTypes.swift
       - Halko/Health/Permissions.swift

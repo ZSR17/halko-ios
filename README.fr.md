@@ -32,7 +32,8 @@ Prérequis : Xcode 26 ou plus récent ; les apps tournent sur iOS 26 et watchOS 
 - `Halko/` : l'app iPhone.
 - `HalkoWatch/` : l'app Apple Watch, installée avec l'app iPhone, qui lui donne les séances et les photos de leurs
   exercices (WatchConnectivity) ; la montre les garde dans sa propre base, fait une séance entière sans l'iPhone,
-  l'enregistre elle-même dans Santé, et les deux apps se donnent les séances faites. `HalkoWatchUITests/` : ses tests
+  l'enregistre elle-même dans Santé, et les deux apps se donnent les séances faites. Avec les deux à portée, la séance en
+  cours est sur les deux et chacun peut agir dessus, son enregistrement Santé sur la montre. `HalkoWatchUITests/` : ses tests
   d'interface, lancés à chaque exécution de la CI, avec une capture de chaque écran.
 - `HalkoWidgets/` : la séance en cours sur l'écran verrouillé et dans la Dynamic Island (Live Activity), dans l'app
   iPhone ; `Shared/` : ce qu'elle partage avec l'app iPhone.

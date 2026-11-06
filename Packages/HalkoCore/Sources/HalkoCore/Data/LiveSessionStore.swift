@@ -12,6 +12,10 @@ public final class LiveSessionStore {
     public private(set) var state: LiveState?
     // Shown in full screen; hidden, the session goes on.
     public var isPresented = false
+    // Saved on the other device while it was on screen here: its summary is shown here too.
+    public var finishedElsewhere: Session?
+    // Called after each change of the state, for the other device.
+    @ObservationIgnored public var onChange: (() -> Void)?
     private let fileURL: URL?
 
     public init(fileURL: URL?) {
@@ -32,6 +36,7 @@ public final class LiveSessionStore {
     public func set(_ state: LiveState?) {
         guard state != self.state else { return }
         self.state = state
+        onChange?()
         guard let fileURL else { return }
         do {
             if let state {
@@ -45,10 +50,21 @@ public final class LiveSessionStore {
         }
     }
 
-    // Changes the state, if there is one.
+    // An action on the state, if there is one: more recent than what the state holds, whatever the clock says.
     public func change(_ body: (inout LiveState) throws -> Void) rethrows {
         guard var state else { return }
+        let before = state
         try body(&state)
+        guard state != before else { return }
+        state.changedAt = max(Date.now, (before.changedAt ?? Date.distantPast) + 0.001)
+        set(state)
+    }
+
+    // The rest reached its end: not an action, each device sees it at the same absolute time. A device waking up late
+    // must not take over from what was done meanwhile on the other one.
+    public func restOver() {
+        guard var state else { return }
+        state.endRest()
         set(state)
     }
 }

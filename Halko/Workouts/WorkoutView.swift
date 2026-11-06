@@ -134,8 +134,15 @@ struct WorkoutView: View {
         }
         if permissions.asked {
             begin()
-        } else {
-            preparing = true
+            return
+        }
+        Task {
+            await permissions.checkAnswered()
+            if !permissions.asked {
+                preparing = true
+            } else if liveSession.state == nil {
+                begin()
+            }
         }
     }
 
@@ -151,7 +158,7 @@ struct WorkoutView: View {
             let state = try context.startSession(of: workout, now: now)
             liveSession.set(state)
             liveSession.isPresented = true
-            recorder.start(sessionID: state.sessionID, at: now)
+            recorder.startWithWatch(sessionID: state.sessionID, at: now)
         }
     }
 

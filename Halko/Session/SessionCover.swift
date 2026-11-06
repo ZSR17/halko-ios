@@ -8,7 +8,7 @@ struct SessionCover: View {
     @State private var finished: Session?
 
     var body: some View {
-        if let finished {
+        if let finished = finished ?? store.finishedElsewhere {
             SessionSummaryView(session: finished)
         } else if let state = store.state {
             LiveSessionView(state: state) { session in
