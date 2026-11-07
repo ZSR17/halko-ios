@@ -22,15 +22,13 @@ struct SessionLiveActivity: Widget {
                 }
                 DynamicIslandExpandedRegion(.bottom) {
                     if let timer = state.timer {
-                        if !timer.isWaiting {
-                            StopButton(timer: timer)
-                                .padding(.top, 8)
-                        }
+                        TimerButtons(timer: timer)
+                            .padding(.top, 8)
                     } else if state.rest != nil {
                         RestButtons()
                             .padding(.top, 8)
                     } else if !state.allDone {
-                        ValidateButton()
+                        SetButtons(usesTimer: state.content.usesTimer == true)
                             .padding(.top, 8)
                     } else {
                         SessionLine(state: state)
@@ -178,14 +176,12 @@ private struct LockScreenView: View {
                 .multilineTextAlignment(.trailing)
             }
             if let timer = state.timer {
-                if !timer.isWaiting {
-                    StopButton(timer: timer)
-                }
+                TimerButtons(timer: timer)
             } else if let rest = state.rest {
                 RestProgress(rest: rest)
                 RestButtons()
             } else if !state.allDone {
-                ValidateButton()
+                SetButtons(usesTimer: state.content.usesTimer == true)
             }
         }
     }
@@ -339,6 +335,68 @@ private struct TimerTime: View {
                 .monospacedDigit()
                 .lineLimit(1)
                 .multilineTextAlignment(.trailing)
+        }
+    }
+}
+
+// While waiting (getting in position, changing sides): Cancel and Begin; while holding: Stop.
+private struct TimerButtons: View {
+    let timer: TimerGlimpse
+
+    var body: some View {
+        if timer.isWaiting {
+            HStack(spacing: 10) {
+                Button(intent: CancelTimerIntent()) {
+                    Text("Cancel")
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                }
+                .buttonStyle(.bordered)
+                .tint(.white)
+                Button(intent: BeginTimerIntent()) {
+                    Text("Begin")
+                        .foregroundStyle(timer.content.isPause ? Color(.onRest) : Color(.onAccent))
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(timer.tint)
+            }
+            .font(.subheadline.weight(.semibold))
+            .buttonBorderShape(.capsule)
+        } else {
+            StopButton(timer: timer)
+        }
+    }
+}
+
+// The set to do: validated with the values shown, or, held for a time, its timer started too.
+private struct SetButtons: View {
+    let usesTimer: Bool
+
+    var body: some View {
+        if usesTimer {
+            HStack(spacing: 10) {
+                Button(intent: ValidateSetIntent()) {
+                    Text("Validate")
+                        .lineLimit(1)
+                        .padding(.horizontal, 8)
+                        .frame(minHeight: 44)
+                }
+                .buttonStyle(.bordered)
+                .tint(.white)
+                Button(intent: StartTimerIntent()) {
+                    Text("Start the timer")
+                        .foregroundStyle(Color(.onAccent))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(Color(.accent))
+            }
+            .font(.subheadline.weight(.semibold))
+            .buttonBorderShape(.capsule)
+        } else {
+            ValidateButton()
         }
     }
 }

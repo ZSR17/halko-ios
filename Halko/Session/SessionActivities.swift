@@ -50,6 +50,19 @@ final class SessionActivities {
                 case .validateSet:
                     guard let glance = try context.glance(of: state, unit: .preferred(for: .current)) else { return }
                     try context.logSet(&state, step: state.cursor, values: glance.values, startedFrom: glance.values)
+                case .startTimer:
+                    guard let glance = try context.glance(of: state, unit: .preferred(for: .current)) else { return }
+                    state.startTimer(
+                        stepKey: LivePlan.key(state.plan[glance.item].itemID, glance.set),
+                        values: glance.values,
+                        startedFrom: glance.values,
+                        sidesPauseS: state.livePlan.items[glance.item].sidesPauseS,
+                        settings: SetTimerSettings(defaults: .standard)
+                    )
+                case .beginTimer:
+                    state.beginHolding()
+                case .cancelTimer:
+                    state.setTimer = nil
                 case .stopTimer:
                     try context.stopTimer(&state)
                 }
@@ -199,6 +212,8 @@ final class SessionActivities {
                 content.set = glance.isWarmup ? String(localized: "Warm-up") : String(localized: "Set \(glance.workingNumber)")
                 let target = SetTarget(kind: .normal, reps: glance.values.reps, weightG: glance.values.weightG, durationS: glance.values.durationS, distanceM: glance.values.distanceM)
                 content.values = SetsText(locale: locale).set(target, type: glance.exerciseType, unit: true)
+                let metrics = glance.exerciseType.metrics
+                content.usesTimer = metrics.contains(.duration) && !metrics.contains(.distance)
             }
             content.timer = state.setTimer.map(Self.timerContent)
             last = (state, content, session.startedAt)
