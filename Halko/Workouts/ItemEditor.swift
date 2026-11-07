@@ -351,7 +351,6 @@ struct ItemEditor<Grip: View>: View {
         commit: @escaping (Double?) -> Void
     ) -> some View {
         let targets = item.targets
-        let retype: ((String) -> String)? = field == .duration ? FieldText.keypadText : nil
         let begin = {
             editStart = EditStart(
                 targets: targets,
@@ -376,7 +375,7 @@ struct ItemEditor<Grip: View>: View {
                 format: { fields.boxText($0, of: field) },
                 parse: { fields.value($0, of: field) },
                 keyboard: field == .weight || field == .distance ? .decimalPad : .numberPad,
-                retype: retype,
+                isTime: field == .duration,
                 workedOut: workedOut,
                 canWorkOut: canWorkOut,
                 focus: focus,
