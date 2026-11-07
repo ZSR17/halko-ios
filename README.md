@@ -34,7 +34,8 @@ Requirements: Xcode 26 or later; the apps run on iOS 26 and watchOS 26.
   their exercises (WatchConnectivity); the watch keeps them in its own database, does a whole session without the
   iPhone, saves it in Health itself, and the two apps give each other the sessions done. With both there, a session in
   progress is on both and either one can act on it, its workout of Health on the watch. `HalkoWatchUITests/`: its interface
-  tests, run by every CI run, with a screenshot of each screen.
+  tests, with a screenshot of each screen, run beside the iPhone app's: by a pull request that changes what the watch
+  app is built with (`.github/watch-tests.sh`), by master after the merge. A test that fails is tried again; those that passed only then are listed in the summary of the run (`.github/retried-tests.sh`).
 - `HalkoWidgets/`: the session in progress on the lock screen and in the Dynamic Island (Live Activity), inside the
   iPhone app; `Shared/`: what it shares with the iPhone app.
 - `Packages/HalkoCore/`: the code both apps share (data, sync, workout logic), tested with `swift test`.

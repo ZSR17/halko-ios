@@ -34,7 +34,8 @@ Prérequis : Xcode 26 ou plus récent ; les apps tournent sur iOS 26 et watchOS 
   exercices (WatchConnectivity) ; la montre les garde dans sa propre base, fait une séance entière sans l'iPhone,
   l'enregistre elle-même dans Santé, et les deux apps se donnent les séances faites. Avec les deux à portée, la séance en
   cours est sur les deux et chacun peut agir dessus, son enregistrement Santé sur la montre. `HalkoWatchUITests/` : ses tests
-  d'interface, lancés à chaque exécution de la CI, avec une capture de chaque écran.
+  d'interface, avec une capture de chaque écran, lancés en même temps que ceux de l'iPhone : par une pull request qui
+  modifie ce avec quoi l'app montre est compilée (`.github/watch-tests.sh`), par master après la fusion. Un test qui échoue est relancé ; ceux qui ne passent qu'alors sont listés dans le résumé de l'exécution (`.github/retried-tests.sh`).
 - `HalkoWidgets/` : la séance en cours sur l'écran verrouillé et dans la Dynamic Island (Live Activity), dans l'app
   iPhone ; `Shared/` : ce qu'elle partage avec l'app iPhone.
 - `Packages/HalkoCore/` : le code commun aux deux apps (données, synchro, logique des séances), testé par `swift test`.
