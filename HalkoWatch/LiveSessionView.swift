@@ -412,6 +412,8 @@ private struct SetPage: View {
                         .handGestureShortcut(.primaryAction)
                     }
                     .buttonBorderShape(.capsule)
+                    // Clear of the rounded corners of the screen.
+                    .padding(.horizontal, 10)
                 } else {
                     Button(action: validate) {
                         Text("Validate")
@@ -646,10 +648,13 @@ private struct RestPage: View {
             Circle()
                 .stroke(Color(.rest).opacity(0.25), lineWidth: 5)
             TimelineView(progressUpdates(dimmed: isDimmed)) { context in
+                let left = left(at: context.date)
                 Circle()
-                    .trim(from: 0, to: left(at: context.date))
+                    .trim(from: 0, to: left)
                     .stroke(Color(.rest), style: StrokeStyle(lineWidth: 5, lineCap: .round))
                     .rotationEffect(.degrees(-90))
+                    // Empty at zero: its rounded ends would still show.
+                    .opacity(left > 0.001 ? 1 : 0)
             }
             timeLeft
                 .font(.title2.weight(.bold))
@@ -732,15 +737,20 @@ private struct TimerPage: View {
                 .foregroundStyle(tint)
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
+                // As high as « Rest » on the page of the rest.
+                .offset(y: showsRing ? -4 : -2)
             if showsRing {
                 ZStack {
                     Circle()
                         .stroke(tint.opacity(0.25), lineWidth: 5)
                     TimelineView(progressUpdates(dimmed: isDimmed)) { context in
+                        let part = SetTimerDisplay(timer: timer, date: context.date).part
                         Circle()
-                            .trim(from: 0, to: SetTimerDisplay(timer: timer, date: context.date).part)
+                            .trim(from: 0, to: part)
                             .stroke(tint, style: StrokeStyle(lineWidth: 5, lineCap: .round))
                             .rotationEffect(.degrees(-90))
+                            // Empty at zero: its rounded ends would still show.
+                            .opacity(part > 0.001 ? 1 : 0)
                     }
                     time
                         .padding(8)

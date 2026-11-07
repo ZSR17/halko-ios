@@ -164,6 +164,8 @@ struct TimerPanel: View {
                 Capsule()
                     .fill(tint)
                     .scaleEffect(x: now.part, anchor: .leading)
+                    // Empty at zero: its rounded ends would still show.
+                    .opacity(now.part > 0.001 ? 1 : 0)
             }
             .frame(height: 6)
             .background(tint.opacity(0.25), in: .capsule)
