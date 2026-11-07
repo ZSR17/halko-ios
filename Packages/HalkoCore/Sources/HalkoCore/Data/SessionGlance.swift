@@ -2,8 +2,7 @@ import Foundation
 import SwiftData
 
 // Where the session in progress is, as shown outside the app (lock screen, Dynamic Island, end of rest notification):
-// the set to do, or the one after the rest, with the values it is offered with. Values typed in the app and not
-// validated yet stay in the app.
+// the set to do, or the one after the rest, with the values it shows: done, changed on either device, or offered.
 public struct SessionGlance: Equatable, Sendable {
     public let item: Int
     public let set: Int
@@ -13,6 +12,8 @@ public struct SessionGlance: Equatable, Sendable {
     // The set number shown: warm-ups are not counted.
     public let workingNumber: Int
     public let values: SetValues
+    // What the set is offered with, before any change: what the values add to it goes to the following sets too.
+    public let startedFrom: SetValues
 }
 
 extension ModelContext {
@@ -26,7 +27,7 @@ extension ModelContext {
         guard plan.steps.indices.contains(state.cursor), !plan.steps.allSatisfy({ logged[plan.key($0)] != nil }) else { return nil }
         let step = plan.steps[state.cursor]
         let item = plan.items[step.item]
-        let values = try logged[plan.key(step)].map(SetValues.init) ?? plan.proposed(
+        let startedFrom = try logged[plan.key(step)].map(SetValues.init) ?? plan.proposed(
             step.item,
             set: step.set,
             previous: previousPerformance(of: item.exerciseID, excluding: state.sessionID),
@@ -40,7 +41,8 @@ extension ModelContext {
             exerciseType: item.exerciseType,
             isWarmup: step.target.kind == .warmup,
             workingNumber: item.workingNumber(step.set),
-            values: values
+            values: logged[plan.key(step)] == nil ? state.edits[plan.key(step)] ?? startedFrom : startedFrom,
+            startedFrom: startedFrom
         )
     }
 }

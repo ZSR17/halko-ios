@@ -18,6 +18,8 @@ struct ValueField: View {
     let format: (Double?) -> String
     let parse: (String) -> Double?
     let keyboard: UIKeyboardType
+    // What is typed, written again as it goes (a time, like a timer keypad).
+    let retype: ((String) -> String)?
     // Worked out from the working sets: in gray italics until typed in.
     let workedOut: Bool
     let canWorkOut: Bool
@@ -36,6 +38,7 @@ struct ValueField: View {
         format: @escaping (Double?) -> String,
         parse: @escaping (String) -> Double?,
         keyboard: UIKeyboardType = .numberPad,
+        retype: ((String) -> String)? = nil,
         workedOut: Bool = false,
         canWorkOut: Bool = false,
         focus: FocusState<EditorField?>.Binding,
@@ -48,6 +51,7 @@ struct ValueField: View {
         self.format = format
         self.parse = parse
         self.keyboard = keyboard
+        self.retype = retype
         self.workedOut = workedOut
         self.canWorkOut = canWorkOut
         self.focus = focus
@@ -93,8 +97,13 @@ struct ValueField: View {
                 text = format(value)
             }
         }
-        .onChange(of: text) { _, text in
+        .onChange(of: text) { _, new in
             guard isFocused else { return }
+            if let retype, retype(new) != new {
+                text = retype(new)
+                selection = TextSelection(insertionPoint: text.endIndex)
+                return
+            }
             if let typed = parse(text) {
                 commit(typed)
             } else if canWorkOut && text.trimmingCharacters(in: .whitespaces).isEmpty {

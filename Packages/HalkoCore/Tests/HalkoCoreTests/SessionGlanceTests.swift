@@ -52,6 +52,15 @@ struct SessionGlanceTests {
         #expect(glance.values == SetValues(reps: 10, weightG: 80_000))
     }
 
+    @Test("Values changed on either device show outside the app; what they add is counted from the values offered")
+    func changed() throws {
+        var state = try context.startSession(of: workout, now: start)
+        state.edits[state.livePlan.key(state.livePlan.steps[0])] = SetValues(reps: 12, weightG: 22_500)
+        let glance = try #require(try context.glance(of: state, unit: .kg))
+        #expect(glance.values == SetValues(reps: 12, weightG: 22_500))
+        #expect(glance.startedFrom == SetValues(reps: 10, weightG: 20_000))
+    }
+
     @Test("Every set done: nothing to show")
     func allDone() throws {
         var state = try context.startSession(of: workout, now: start)

@@ -124,6 +124,40 @@ struct LiveSessionTests {
         #expect(!state.canDeleteSet(of: 0))
     }
 
+    @Test("Values changed on a set to do are kept in the state until it is validated, and come back when it is undone")
+    func changedValues() throws {
+        var state = try context.startSession(of: workout, now: start)
+        let first = LivePlan.key(items[0].id, 0)
+        let second = LivePlan.key(items[0].id, 1)
+        state.edits[first] = SetValues(reps: 6, weightG: 85_000)
+        state.edits[second] = SetValues(reps: 5, weightG: 90_000)
+        try context.logSet(&state, step: 0, values: SetValues(reps: 6, weightG: 85_000), startedFrom: SetValues(reps: 8, weightG: 80_000), now: start + 60)
+        #expect(state.edits == [second: SetValues(reps: 5, weightG: 90_000)])
+
+        try context.unlogSet(&state, item: 0, set: 0, unit: .kg, now: start + 70)
+        #expect(state.edits[first] == SetValues(reps: 6, weightG: 85_000))
+
+        try context.deleteSet(&state, item: 0, set: 0, now: start + 80)
+        #expect(state.edits == [first: SetValues(reps: 5, weightG: 90_000)])
+
+        state.edits[LivePlan.key(items[1].id, 0)] = SetValues(reps: 12, weightG: 12_000)
+        try context.deleteExercise(&state, item: 1, now: start + 90)
+        #expect(state.edits == [first: SetValues(reps: 5, weightG: 90_000)])
+    }
+
+    @Test("A state kept before the values changed were in it still reads, without any")
+    func olderState() throws {
+        var state = try context.startSession(of: workout, now: start)
+        state.edits[LivePlan.key(items[0].id, 0)] = SetValues(reps: 6)
+        var json = try #require(try JSONSerialization.jsonObject(with: JSONEncoder().encode(state)) as? [String: Any])
+        #expect(json["typed"] != nil)
+        json["typed"] = nil
+        let older = try JSONDecoder().decode(LiveState.self, from: JSONSerialization.data(withJSONObject: json))
+        #expect(older.edits.isEmpty)
+        state.edits = [:]
+        #expect(try JSONDecoder().decode(LiveState.self, from: JSONEncoder().encode(state)) == state)
+    }
+
     @Test("Finishing ends the session and gives the workouts the values done")
     func finishing() throws {
         var state = try context.startSession(of: workout, now: start)

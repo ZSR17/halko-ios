@@ -163,6 +163,8 @@ struct ExerciseEditor: View {
                     }
                 }
             }
+            // Scrolled, the form puts the keyboard away, as the list of exercises does: a step's text has no key to.
+            .scrollDismissesKeyboard(.immediately)
             .navigationTitle(exercise == nil ? Text("New exercise") : Text("Edit exercise"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

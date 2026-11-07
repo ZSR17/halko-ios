@@ -181,10 +181,17 @@ struct TimerPanel: View {
         }
     }
 
-    // What goes with the time.
-    @ViewBuilder
+    // What goes with the time, under the heart rate.
     private func aside(_ display: SetTimerDisplay) -> some View {
         let alignment: HorizontalAlignment = dynamicTypeSize.isAccessibilitySize ? .leading : .trailing
+        return VStack(alignment: alignment, spacing: 8) {
+            HeartRateChip()
+            facts(display, alignment: alignment)
+        }
+    }
+
+    @ViewBuilder
+    private func facts(_ display: SetTimerDisplay, alignment: HorizontalAlignment) -> some View {
         VStack(alignment: alignment, spacing: 2) {
             if display.isPause {
                 if let firstSide = display.firstSide {
@@ -261,9 +268,13 @@ private struct SetContent: View {
         let draft = table.draft(step)
         let fields = table.metrics(step.item)
         VStack(alignment: .leading, spacing: 12) {
-            Text(verbatim: title)
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.tint)
+            HStack(spacing: 8) {
+                Text(verbatim: title)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.tint)
+                Spacer(minLength: 0)
+                HeartRateChip()
+            }
             let layout = dynamicTypeSize.isAccessibilitySize || fields.count > 2
                 ? AnyLayout(VStackLayout(spacing: 8))
                 : AnyLayout(HStackLayout(spacing: 10))
@@ -455,16 +466,19 @@ private struct RestContent: View {
                 if !dynamicTypeSize.isAccessibilitySize {
                     Spacer(minLength: 0)
                 }
-                if let next {
-                    VStack(alignment: dynamicTypeSize.isAccessibilitySize ? .leading : .trailing, spacing: 2) {
-                        Text("Next")
-                            .font(.subheadline)
-                            .foregroundStyle(Color(.secondaryText))
-                        Text(verbatim: next)
-                            .font(.headline)
-                            .multilineTextAlignment(dynamicTypeSize.isAccessibilitySize ? .leading : .trailing)
+                VStack(alignment: dynamicTypeSize.isAccessibilitySize ? .leading : .trailing, spacing: 8) {
+                    HeartRateChip()
+                    if let next {
+                        VStack(alignment: dynamicTypeSize.isAccessibilitySize ? .leading : .trailing, spacing: 2) {
+                            Text("Next")
+                                .font(.subheadline)
+                                .foregroundStyle(Color(.secondaryText))
+                            Text(verbatim: next)
+                                .font(.headline)
+                                .multilineTextAlignment(dynamicTypeSize.isAccessibilitySize ? .leading : .trailing)
+                        }
+                        .accessibilityElement(children: .combine)
                     }
-                    .accessibilityElement(children: .combine)
                 }
             }
             ProgressView(timerInterval: (end - Double(totalS))...end, countsDown: true) {
@@ -529,6 +543,32 @@ struct AllDonePanel: View {
             .buttonStyle(.borderedProminent)
             .buttonBorderShape(.capsule)
             .controlSize(.large)
+        }
+    }
+}
+
+// The heart rate measured by a watch or a sensor, in a corner of the panel whatever it shows: absent without one.
+struct HeartRateChip: View {
+    @Environment(WorkoutRecorder.self) private var recorder
+
+    var body: some View {
+        if let bpm = recorder.heartRate {
+            let value = Int(bpm.rounded())
+            Label {
+                Text("\(value) bpm")
+                    .monospacedDigit()
+            } icon: {
+                Image(systemName: "heart.fill")
+                    .foregroundStyle(.red)
+            }
+            .font(.subheadline)
+            .lineLimit(1)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 4)
+            .background(Color(.tertiarySystemFill), in: .capsule)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(Text("Heart rate"))
+            .accessibilityValue(Text("\(value) beats per minute"))
         }
     }
 }
