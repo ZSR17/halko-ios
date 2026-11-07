@@ -44,7 +44,7 @@ final class PhoneLink: NSObject {
         pendingSessions?.cancel()
         pendingSessions = Task {
             try? await Task.sleep(for: .seconds(2))
-            guard !Task.isCancelled else { return }
+            guard !Task.isCancelled, !live.isSessionInProgress else { return }
             sendSessions()
         }
     }

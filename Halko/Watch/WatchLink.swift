@@ -67,7 +67,7 @@ final class WatchLink: NSObject {
         pendingPlan?.cancel()
         pendingPlan = Task {
             try? await Task.sleep(for: .seconds(2))
-            guard !Task.isCancelled else { return }
+            guard !Task.isCancelled, !live.isSessionInProgress else { return }
             sendPlan()
             sendSessions()
         }
