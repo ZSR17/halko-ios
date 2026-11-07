@@ -245,6 +245,24 @@ struct WorkoutEditingTests {
         #expect(pounds.steadyText(20_412, of: .weight) == "45")
     }
 
+    @Test("A time is typed like a timer keypad, its digits coming in from the right")
+    func keypad() {
+        #expect(FieldText.keypadText("1") == "00:01")
+        #expect(FieldText.keypadText("00:012") == "00:12")
+        #expect(FieldText.keypadText("00:123") == "01:23")
+        #expect(FieldText.keypadText("01:2") == "00:12")
+        #expect(FieldText.keypadText("0") == "00:00")
+        #expect(FieldText.keypadText("") == "")
+        #expect(FieldText.keypadText("12345") == "1:23:45")
+        #expect(FieldText.keypadText("1234567") == "23:45:67")
+        #expect(FieldText.seconds(FieldText.keypadText("130")) == 90)
+        let fields = FieldText(weightUnit: .kg, distanceUnit: .km, locale: Locale(identifier: "fr_FR"))
+        #expect(fields.boxText(60, of: .duration) == "01:00")
+        #expect(fields.boxText(3725, of: .duration) == "1:02:05")
+        #expect(fields.boxText(90, of: .rest) == "1:30")
+        #expect(fields.boxText(nil, of: .duration) == "")
+    }
+
     @Test("An exercise added starts from another workout's plan with the values done last time")
     func startingItem() throws {
         let bench = Exercise(id: "a", name: "Bench press", exerciseType: .weightReps)

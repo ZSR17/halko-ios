@@ -19,6 +19,8 @@ public struct LiveState: Codable, Equatable, Sendable {
     public var changedAt: Date?
     // The timer of the set to do, while it is held for a time.
     public var setTimer: SetTimer?
+    // Values changed on sets not done yet, by step key, kept until the set is validated. Absent from an older state.
+    private var typed: [String: SetValues]?
 
     public init(
         sessionID: String,
@@ -40,6 +42,12 @@ public struct LiveState: Codable, Equatable, Sendable {
         self.bumps = bumps
         self.changedAt = changedAt
         self.setTimer = setTimer
+    }
+
+    // Values changed on sets not done yet, by step key: shown on both devices, until the set is validated.
+    public var edits: [String: SetValues] {
+        get { typed ?? [:] }
+        set { typed = newValue.isEmpty ? nil : newValue }
     }
 
     public var livePlan: LivePlan {
@@ -173,6 +181,7 @@ extension ModelContext {
         if state.setTimer?.stepKey == plan.key(step) {
             state.setTimer = nil
         }
+        state.edits[plan.key(step)] = nil
         let doneNow = doneKeys(done).union([plan.key(step)])
         let next = plan.nextOpen(after: index, done: doneNow)
         state.cursor = next ?? index
@@ -193,6 +202,8 @@ extension ModelContext {
         guard let log = done.first(where: { $0.workoutItemID == planItem.itemID && $0.setIndex == set }) else { return }
         log.removed = true
         log.updatedAt = now
+        // To do again with the values it had.
+        state.edits[LivePlan.key(planItem.itemID, set)] = SetValues(log)
         let previous = try previousPerformance(of: planItem.exerciseID, excluding: state.sessionID)
         let startedFrom = plan.proposed(item, set: set, previous: previous, bumps: state.bumps, unit: unit)
         let added = SetValues(log).increase(over: startedFrom)
@@ -226,17 +237,8 @@ extension ModelContext {
             }
             log.updatedAt = now
         }
-        var bumps: [String: SetValues] = [:]
-        for (key, bump) in state.bumps {
-            guard let index = Self.setIndex(key, of: itemID) else {
-                bumps[key] = bump
-                continue
-            }
-            if index != set {
-                bumps[LivePlan.key(itemID, index > set ? index - 1 : index)] = bump
-            }
-        }
-        state.bumps = bumps
+        state.bumps = Self.movingUp(state.bumps, of: itemID, after: set)
+        state.edits = Self.movingUp(state.edits, of: itemID, after: set)
         state.setTimer = nil
         state.cursor = state.livePlan.firstOpen(done: doneKeys(logs.filter { !$0.removed }))
         try save()
@@ -259,9 +261,25 @@ extension ModelContext {
             }
         }
         state.bumps = state.bumps.filter { Self.setIndex($0.key, of: itemID) == nil }
+        state.edits = state.edits.filter { Self.setIndex($0.key, of: itemID) == nil }
         state.setTimer = nil
         state.cursor = state.livePlan.firstOpen(done: doneKeys(logs.filter { !$0.removed }))
         try save()
+    }
+
+    // Values by step key once a set of the item is deleted: its own go, those of the sets after it move up.
+    private static func movingUp(_ values: [String: SetValues], of itemID: String, after set: Int) -> [String: SetValues] {
+        var moved: [String: SetValues] = [:]
+        for (key, value) in values {
+            guard let index = setIndex(key, of: itemID) else {
+                moved[key] = value
+                continue
+            }
+            if index != set {
+                moved[LivePlan.key(itemID, index > set ? index - 1 : index)] = value
+            }
+        }
+        return moved
     }
 
     // The set of a step key of the item; nil for another item's.

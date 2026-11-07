@@ -22,8 +22,8 @@ struct LiveSessionView: View {
     @Query private var sessions: [Session]
     @Query private var sets: [SetLog]
     @Query private var exercises: [Exercise]
-    // Values changed on sets not done yet, by step key: kept until the set is validated.
-    @State private var edits: [String: SetValues] = [:]
+    // Values being changed on sets not done yet, by step key: handed to the session once the changes pause.
+    @State private var typing: [String: SetValues] = [:]
     // Last time's sets of each exercise, by exercise id.
     @State private var previous: [String: [Int: SetValues]] = [:]
     // Exercises done, opened again to correct a set, until the set to do changes.
@@ -51,9 +51,6 @@ struct LiveSessionView: View {
             ScrollViewReader { proxy in
                 ScrollView {
                     VStack(alignment: .leading, spacing: 24) {
-                        if let heartRate = recorder.heartRate {
-                            HeartRateChip(bpm: heartRate)
-                        }
                         ForEach(Array(state.plan.enumerated()), id: \.element.itemID) { index, item in
                             LiveExerciseView(
                                 index: index,
@@ -120,6 +117,13 @@ struct LiveSessionView: View {
         .task(id: state.sessionID) {
             loadPrevious()
         }
+        // On the other device too, once the changes pause: not at each tap or digit.
+        .task(id: typing) {
+            guard !typing.isEmpty else { return }
+            try? await Task.sleep(for: .milliseconds(600))
+            guard !Task.isCancelled else { return }
+            change { _ in }
+        }
     }
 
     private var table: LiveTable {
@@ -128,7 +132,7 @@ struct LiveSessionView: View {
             plan: state.livePlan,
             logged: Dictionary(sets.compactMap { set in set.workoutItemID.map { (LivePlan.key($0, set.setIndex), set) } }, uniquingKeysWith: { first, _ in first }),
             previous: previous,
-            edits: edits,
+            edits: state.edits.merging(typing) { _, typed in typed },
             exercises: Dictionary(exercises.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first }),
             fields: FieldText(weightUnit: .preferred(for: locale), distanceUnit: .preferred(for: locale), locale: locale),
             text: SetsText(locale: locale)
@@ -141,7 +145,7 @@ struct LiveSessionView: View {
             startTimer: startTimer,
             undo: undo,
             correct: correct,
-            edit: { key, values in edits[key] = values },
+            edit: { key, values in typing[key] = values },
             addSet: { item in change { try context.addSet(&$0, item: item, unit: .preferred(for: locale)) } },
             deleteSet: deleteSet,
             deleteExercise: { item in change { try context.deleteExercise(&$0, item: item) } }
@@ -233,20 +237,18 @@ struct LiveSessionView: View {
     private func validate() {
         let table = self.table
         guard let step = table.step else { return }
-        let key = table.plan.key(step)
         let values = table.draft(step)
         let startedFrom = table.startedFrom(step)
         let index = state.cursor
         focus = nil
         change { try context.logSet(&$0, step: index, values: values, startedFrom: startedFrom) }
-        edits[key] = nil
     }
 
     private func startTimer() {
         let table = self.table
         guard let step = table.step else { return }
         focus = nil
-        store.change {
+        change {
             $0.startTimer(
                 stepKey: table.plan.key(step),
                 values: table.draft(step),
@@ -259,10 +261,6 @@ struct LiveSessionView: View {
 
     // A set validated by mistake: to do again, with the values it had.
     private func undo(_ item: Int, _ set: Int) {
-        let key = LivePlan.key(state.plan[item].itemID, set)
-        if let log = table.logged[key] {
-            edits[key] = SetValues(log)
-        }
         change { try context.unlogSet(&$0, item: item, set: set, unit: .preferred(for: locale)) }
     }
 
@@ -272,18 +270,13 @@ struct LiveSessionView: View {
         change { try context.logSet(&$0, step: index, values: values) }
     }
 
-    // The values typed for the sets after it move up with them. The only set of an exercise: the exercise goes.
+    // The only set of an exercise: the exercise goes.
     private func deleteSet(_ item: Int, _ set: Int) {
         guard state.canDeleteSet(of: item) else {
             change { try context.deleteExercise(&$0, item: item) }
             return
         }
-        let itemID = state.plan[item].itemID
-        let count = state.plan[item].targets.count
         change { try context.deleteSet(&$0, item: item, set: set) }
-        for index in set..<count {
-            edits[LivePlan.key(itemID, index)] = index + 1 < count ? edits[LivePlan.key(itemID, index + 1)] : nil
-        }
     }
 
     private func unfold(_ itemID: String) {
@@ -331,9 +324,15 @@ struct LiveSessionView: View {
         }
     }
 
+    // Any action takes the values being changed with it.
     private func change(_ body: (inout LiveState) throws -> Void) {
+        let typed = typing
+        typing = [:]
         do {
-            try store.change(body)
+            try store.change { state in
+                state.edits.merge(typed) { _, typed in typed }
+                try body(&state)
+            }
         } catch {
             Self.logger.error("Cannot change the session: \(String(describing: error))")
         }
@@ -368,25 +367,3 @@ struct LiveActions {
     let deleteExercise: (_ item: Int) -> Void
 }
 
-// The heart rate measured by a watch or a sensor: absent without one.
-private struct HeartRateChip: View {
-    let bpm: Double
-
-    var body: some View {
-        let value = Int(bpm.rounded())
-        Label {
-            Text("\(value) bpm")
-                .monospacedDigit()
-        } icon: {
-            Image(systemName: "heart.fill")
-                .foregroundStyle(.red)
-        }
-        .font(.subheadline)
-        .padding(.horizontal, 10)
-        .padding(.vertical, 5)
-        .background(Color(.secondarySystemGroupedBackground), in: .capsule)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text("Heart rate"))
-        .accessibilityValue(Text("\(value) beats per minute"))
-    }
-}

@@ -393,7 +393,7 @@ struct SetCell: View {
         self.focus = focus
         self.id = id
         self.commit = commit
-        _text = State(initialValue: fields.text(value, of: field))
+        _text = State(initialValue: fields.boxText(value, of: field))
     }
 
     private var isFocused: Bool {
@@ -432,12 +432,18 @@ struct SetCell: View {
             if let typed = fields.value(text, of: field), typed != value {
                 commit(typed)
             }
-            text = fields.text(value, of: field)
+            text = fields.boxText(value, of: field)
         }
         .onChange(of: value) { _, value in
             if !isFocused {
-                text = fields.text(value, of: field)
+                text = fields.boxText(value, of: field)
             }
+        }
+        // A time typed like a timer keypad: the digits come in from the right.
+        .onChange(of: text) { _, new in
+            guard isFocused, field == .duration, FieldText.keypadText(new) != new else { return }
+            text = FieldText.keypadText(new)
+            selection = TextSelection(insertionPoint: text.endIndex)
         }
     }
 }

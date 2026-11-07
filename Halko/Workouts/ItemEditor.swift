@@ -337,7 +337,8 @@ struct ItemEditor<Grip: View>: View {
         type.metrics.map(SetField.init) + [.rest]
     }
 
-    // Durations open wheels, the other values the keyboard. `set`: the one the box is for, none in simple mode.
+    // A rest opens wheels, the other values the keyboard (a time typed like a timer keypad). `set`: the one the box is
+    // for, none in simple mode.
     @ViewBuilder
     private func box(
         _ field: SetField,
@@ -356,11 +357,11 @@ struct ItemEditor<Grip: View>: View {
                 shown: Warmups.filledIn(targets, type: type, equipment: exercise?.equipment ?? [], unit: fields.weightUnit)
             )
         }
-        if field == .rest || field == .duration {
+        if field == .rest {
             DurationField(
                 label: Text(verbatim: label),
                 value: value,
-                title: field == .rest ? String(localized: "Rest") : self.label(field, long: true),
+                title: String(localized: "Rest"),
                 subtitle: wheelsSubtitle(set),
                 format: { fields.text($0, of: field) },
                 focus: focus,
@@ -371,9 +372,10 @@ struct ItemEditor<Grip: View>: View {
             ValueField(
                 Text(verbatim: label),
                 value: value,
-                format: { fields.text($0, of: field) },
+                format: { fields.boxText($0, of: field) },
                 parse: { fields.value($0, of: field) },
                 keyboard: field == .weight || field == .distance ? .decimalPad : .numberPad,
+                isTime: field == .duration,
                 workedOut: workedOut,
                 canWorkOut: canWorkOut,
                 focus: focus,

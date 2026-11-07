@@ -18,8 +18,8 @@ struct LiveSessionView: View {
     @Query private var sessions: [Session]
     @Query private var sets: [SetLog]
     @Query private var exercises: [Exercise]
-    // Values changed on sets not done yet, by step key: kept until the set is validated.
-    @State private var edits: [String: SetValues] = [:]
+    // Values being changed on sets not done yet, by step key: handed to the session once the crown pauses.
+    @State private var typing: [String: SetValues] = [:]
     // Last time's sets of each exercise, by exercise id.
     @State private var previous: [String: [Int: SetValues]] = [:]
     @State private var finishing = false
@@ -62,6 +62,13 @@ struct LiveSessionView: View {
         .task(id: state.sessionID) {
             loadPrevious()
         }
+        // On the iPhone too, once the crown pauses: not at each of its steps.
+        .task(id: typing) {
+            guard !typing.isEmpty else { return }
+            try? await Task.sleep(for: .milliseconds(600))
+            guard !Task.isCancelled else { return }
+            change { _ in }
+        }
         .task(id: RestAlarm(end: state.restEndsAt, timerEnd: state.setTimer?.targetEnd, recording: recorder.isRecording)) {
             await waitForTheEndOfRest(next: table.nextText)
         }
@@ -94,11 +101,11 @@ struct LiveSessionView: View {
             }
         } else if let step = table.step {
             SetPage(table: table, step: step, session: sessions.first) { values in
-                edits[table.plan.key(step)] = values
+                typing[table.plan.key(step)] = values
             } validate: {
                 validate(table, step)
             } startTimer: {
-                store.change {
+                change {
                     $0.startTimer(
                         stepKey: table.plan.key(step),
                         values: table.draft(step),
@@ -119,7 +126,7 @@ struct LiveSessionView: View {
             plan: state.livePlan,
             logged: Dictionary(sets.compactMap { set in set.workoutItemID.map { (LivePlan.key($0, set.setIndex), set) } }, uniquingKeysWith: { first, _ in first }),
             previous: previous,
-            edits: edits,
+            edits: state.edits.merging(typing) { _, typed in typed },
             exercises: Dictionary(exercises.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first }),
             fields: FieldText(weightUnit: .preferred(for: locale), distanceUnit: .preferred(for: locale), locale: locale),
             text: SetsText(locale: locale)
@@ -167,13 +174,21 @@ struct LiveSessionView: View {
     }
 
     private func validate(_ table: LiveTable, _ step: LiveStep) {
-        let key = table.plan.key(step)
         let values = table.draft(step)
         let startedFrom = table.startedFrom(step)
         let index = state.cursor
+        change { try context.logSet(&$0, step: index, values: values, startedFrom: startedFrom) }
+    }
+
+    // An action on the set takes the values being changed with it.
+    private func change(_ body: (inout LiveState) throws -> Void) {
+        let typed = typing
+        typing = [:]
         do {
-            try store.change { try context.logSet(&$0, step: index, values: values, startedFrom: startedFrom) }
-            edits[key] = nil
+            try store.change { state in
+                state.edits.merge(typed) { _, typed in typed }
+                try body(&state)
+            }
         } catch {
             Self.logger.error("Cannot change the session: \(String(describing: error))")
         }
@@ -255,47 +270,61 @@ extension LiveTable {
     }
 }
 
-// On the line of the clock: the heart rate, when it is measured, and in the middle the time since the start.
+// On the line of the clock: the time since the start, and in the middle the heart rate, when it is measured.
 private struct SessionHeader: View {
     let session: Session?
-    @Environment(WorkoutRecorder.self) private var recorder
 
     var body: some View {
         ZStack {
             HStack {
-                if let heartRate = recorder.heartRate {
-                    let value = Int(heartRate.rounded())
-                    Label {
-                        Text(verbatim: value.formatted())
+                if let session {
+                    // A timer text would take all the width the end of its range could need.
+                    TimelineView(.periodic(from: session.startedAt, by: 1)) { context in
+                        Text(verbatim: FieldText.clock(Int(context.date.timeIntervalSince(session.startedAt))))
                             .monospacedDigit()
-                    } icon: {
-                        Image(systemName: "heart.fill")
-                            .foregroundStyle(.red)
+                            .foregroundStyle(.tint)
                     }
-                    .labelStyle(.titleAndIcon)
-                    .accessibilityElement(children: .ignore)
-                    .accessibilityLabel(Text("Heart rate"))
-                    .accessibilityValue(Text("\(value) beats per minute"))
                 }
                 Spacer(minLength: 0)
             }
             .padding(.leading, 10)
-            if let session {
-                // A timer text would take all the width the end of its range could need.
-                TimelineView(.periodic(from: session.startedAt, by: 1)) { context in
-                    Text(verbatim: FieldText.clock(Int(context.date.timeIntervalSince(session.startedAt))))
-                        .monospacedDigit()
-                        .foregroundStyle(.tint)
-                }
-            }
+            HeartRateText()
         }
-        .font(.body.weight(.semibold))
-        .lineLimit(1)
-        .minimumScaleFactor(0.7)
-        // The line is shared with the clock: it does not grow with the rest of the page.
-        .dynamicTypeSize(...DynamicTypeSize.xLarge)
-        // Level with the clock on the watch.
-        .offset(y: -2)
+        .clockLineStyle()
+    }
+}
+
+// The heart rate, when it is measured: in the middle of the line of the clock, on every page of the session.
+private struct HeartRateText: View {
+    @Environment(WorkoutRecorder.self) private var recorder
+
+    var body: some View {
+        if let heartRate = recorder.heartRate {
+            let value = Int(heartRate.rounded())
+            Label {
+                Text(verbatim: value.formatted())
+                    .monospacedDigit()
+            } icon: {
+                Image(systemName: "heart.fill")
+                    .foregroundStyle(.red)
+            }
+            .labelStyle(.titleAndIcon)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(Text("Heart rate"))
+            .accessibilityValue(Text("\(value) beats per minute"))
+        }
+    }
+}
+
+private extension View {
+    func clockLineStyle() -> some View {
+        font(.body.weight(.semibold))
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
+            // The line is shared with the clock: it does not grow with the rest of the page.
+            .dynamicTypeSize(...DynamicTypeSize.xLarge)
+            // Level with the clock on the watch.
+            .offset(y: -2)
     }
 }
 
@@ -345,13 +374,18 @@ extension View {
     // What goes on the line of the clock, above the page: centred on it, as high as it is on every size of watch.
     func onClockLine<Line: View>(@ViewBuilder _ line: () -> Line) -> some View {
         NavigationStack {
-            overlay(alignment: .top) {
-                line()
-                    // A line of no height would shrink its text.
-                    .fixedSize(horizontal: false, vertical: true)
-                    .frame(height: 0)
-                    .offset(y: -18)
-            }
+            clockLine(line)
+        }
+    }
+
+    // The same, for a page in a navigation stack of its own.
+    func clockLine<Line: View>(@ViewBuilder _ line: () -> Line) -> some View {
+        overlay(alignment: .top) {
+            line()
+                // A line of no height would shrink its text.
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(height: 0)
+                .offset(y: -18)
         }
     }
 }
@@ -581,6 +615,10 @@ private struct RestPage: View {
                 }
             }
             .ignoresSafeArea(edges: .bottom)
+            .clockLine {
+                HeartRateText()
+                    .clockLineStyle()
+            }
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Skip", action: skip)
@@ -719,6 +757,10 @@ private struct TimerPage: View {
                 }
             }
             .ignoresSafeArea(edges: .bottom)
+            .clockLine {
+                HeartRateText()
+                    .clockLineStyle()
+            }
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Cancel", action: cancel)

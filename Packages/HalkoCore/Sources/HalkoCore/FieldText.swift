@@ -39,6 +39,31 @@ public struct FieldText: Sendable {
         return (value / weightUnit.grams).formatted(.number.precision(.fractionLength(1...2)).grouping(.never).locale(locale))
     }
 
+    // `value` in a box typed into: a time held always with its minutes ("01:00"), as it is typed; the rest as `text`.
+    public func boxText(_ value: Double?, of field: SetField) -> String {
+        guard field == .duration, let value else { return text(value, of: field) }
+        return Self.timerText(Int(value.rounded()))
+    }
+
+    // 75 -> "01:15", 3725 -> "1:02:05".
+    public static func timerText(_ seconds: Int) -> String {
+        let s = max(0, seconds)
+        return s >= 3600 ? clock(s) : String(format: "%02d:%02d", s / 60, s % 60)
+    }
+
+    // A time as it is typed, like a timer keypad: the digits come in from the right ("1" -> "00:01", "12" -> "00:12",
+    // "123" -> "01:23"), up to hours ("12345" -> "1:23:45"); a digit taken away goes out on the right. Empty without
+    // any digit.
+    public static func keypadText(_ text: String) -> String {
+        let digits = String(text.filter(\.isASCIIDigit).drop(while: { $0 == "0" }).suffix(6))
+        guard !digits.isEmpty || text.contains(where: \.isASCIIDigit) else { return "" }
+        let padded = String(repeating: "0", count: max(0, 4 - digits.count)) + digits
+        let seconds = padded.suffix(2)
+        let minutes = padded.dropLast(2).suffix(2)
+        let hours = padded.dropLast(4)
+        return hours.isEmpty ? "\(minutes):\(seconds)" : "\(hours):\(minutes):\(seconds)"
+    }
+
     // What is typed, in stored units; nil when it is not a value of the field.
     public func value(_ text: String, of field: SetField) -> Double? {
         switch field {
