@@ -299,10 +299,25 @@ private struct SessionHeader: View {
     }
 }
 
-// How often a ring or a bar moves: smoothly with the screen lit, once a second with the wrist down. Only they are drawn
-// again: the page around them stays as it is.
-private func progressUpdates(dimmed: Bool) -> AnimationTimelineSchedule {
-    .animation(minimumInterval: dimmed ? 1 : 0.05)
+// A ring or a bar that moves: smoothly with the screen lit, a step each second with the wrist down, on the whole seconds
+// from `tick`. An animation's schedule stops in the Always On display: a periodic one goes on. Only the ring or the bar
+// is drawn again: the page around it stays as it is.
+private struct Advancing<Content: View>: View {
+    let tick: Date
+    @ViewBuilder let content: (Date) -> Content
+    @Environment(\.isLuminanceReduced) private var isDimmed
+
+    var body: some View {
+        if isDimmed {
+            TimelineView(.periodic(from: tick - 3600, by: 1)) { context in
+                content(context.date + 0.001)
+            }
+        } else {
+            TimelineView(.animation(minimumInterval: 0.05)) { context in
+                content(context.date)
+            }
+        }
+    }
 }
 
 // Enough for the corners of the screen and the dots of the pages.
@@ -548,7 +563,6 @@ private struct RestPage: View {
     let skip: () -> Void
     let lengthen: () -> Void
     @ScaledMetric(relativeTo: .title2) private var ringSide = 66.0
-    @Environment(\.isLuminanceReduced) private var isDimmed
 
     var body: some View {
         NavigationStack {
@@ -647,8 +661,8 @@ private struct RestPage: View {
         ZStack {
             Circle()
                 .stroke(Color(.rest).opacity(0.25), lineWidth: 5)
-            TimelineView(progressUpdates(dimmed: isDimmed)) { context in
-                let left = left(at: context.date)
+            Advancing(tick: end) { date in
+                let left = left(at: date)
                 Circle()
                     .trim(from: 0, to: left)
                     .stroke(Color(.rest), style: StrokeStyle(lineWidth: 5, lineCap: .round))
@@ -668,10 +682,10 @@ private struct RestPage: View {
         VStack(spacing: 2) {
             timeLeft
                 .font(.title2.weight(.bold))
-            TimelineView(progressUpdates(dimmed: isDimmed)) { context in
+            Advancing(tick: end) { date in
                 Capsule()
                     .fill(Color(.rest))
-                    .scaleEffect(x: left(at: context.date), anchor: .leading)
+                    .scaleEffect(x: left(at: date), anchor: .leading)
             }
             .frame(height: 7)
             .background(Color(.rest).opacity(0.25), in: .capsule)
@@ -691,7 +705,6 @@ private struct TimerPage: View {
     // The date the page is drawn for, moved at each change of the timer.
     @State private var phase = Date.now
     @ScaledMetric(relativeTo: .title2) private var ringSide = 66.0
-    @Environment(\.isLuminanceReduced) private var isDimmed
 
     var body: some View {
         NavigationStack {
@@ -743,8 +756,8 @@ private struct TimerPage: View {
                 ZStack {
                     Circle()
                         .stroke(tint.opacity(0.25), lineWidth: 5)
-                    TimelineView(progressUpdates(dimmed: isDimmed)) { context in
-                        let part = SetTimerDisplay(timer: timer, date: context.date).part
+                    Advancing(tick: timer.startsAt) { date in
+                        let part = SetTimerDisplay(timer: timer, date: date).part
                         Circle()
                             .trim(from: 0, to: part)
                             .stroke(tint, style: StrokeStyle(lineWidth: 5, lineCap: .round))
