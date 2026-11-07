@@ -1,6 +1,26 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Begin holding" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Commencer le maintien"
+          }
+        }
+      }
+    },
+    "Cancel the timer" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annuler le chrono"
+          }
+        }
+      }
+    },
     "Start the timer" : {
       "localizations" : {
         "fr" : {

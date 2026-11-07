@@ -9,6 +9,11 @@ nonisolated enum SessionAction: Sendable {
     case lengthenRest
     // The set to do, with the values shown.
     case validateSet
+    // The timer of the set to do, with the values shown.
+    case startTimer
+    // Holding starts now, without waiting any more.
+    case beginTimer
+    case cancelTimer
     case stopTimer
 }
 
@@ -68,6 +73,36 @@ nonisolated struct StopTimerIntent: LiveActivityIntent {
 
     func perform() async throws -> some IntentResult {
         await SessionControl.apply(.stopTimer)
+        return .result()
+    }
+}
+
+nonisolated struct StartTimerIntent: LiveActivityIntent {
+    static let title: LocalizedStringResource = "Start the timer"
+    static let isDiscoverable = false
+
+    func perform() async throws -> some IntentResult {
+        await SessionControl.apply(.startTimer)
+        return .result()
+    }
+}
+
+nonisolated struct BeginTimerIntent: LiveActivityIntent {
+    static let title: LocalizedStringResource = "Begin holding"
+    static let isDiscoverable = false
+
+    func perform() async throws -> some IntentResult {
+        await SessionControl.apply(.beginTimer)
+        return .result()
+    }
+}
+
+nonisolated struct CancelTimerIntent: LiveActivityIntent {
+    static let title: LocalizedStringResource = "Cancel the timer"
+    static let isDiscoverable = false
+
+    func perform() async throws -> some IntentResult {
+        await SessionControl.apply(.cancelTimer)
         return .result()
     }
 }

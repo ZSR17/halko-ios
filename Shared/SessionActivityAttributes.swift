@@ -11,6 +11,8 @@ nonisolated struct SessionActivityAttributes: ActivityAttributes {
         var set: String?
         // "80 kg × 8".
         var values: String?
+        // The set to do is held for a time: its timer can be started from here. Absent from an older content.
+        var usesTimer: Bool?
         // While resting: its end, an absolute time like everywhere else, and its length.
         var restEndsAt: Date?
         var restTotalS: Int
