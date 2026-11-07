@@ -88,22 +88,30 @@ struct TimerPanel: View {
     let begin: () -> Void
     let cancel: () -> Void
     let stop: () -> Void
+    // The date the panel is drawn for, moved at each change of the timer.
+    @State private var phase = Date.now
     @ScaledMetric(relativeTo: .largeTitle) private var timeSize: CGFloat = 52
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 0.5)) { context in
-            let display = SetTimerDisplay(timer: timer, date: context.date)
-            Panel(tint: display.isPause ? Color(.rest) : nil, bottomPadding: bottomPadding) {
-                ZStack(alignment: .topLeading) {
-                    content(display, tint: display.isPause ? Color(.rest) : Color.accentColor)
-                    SetContent(table: table, actions: actions, step: step)
-                        .hidden()
-                        .accessibilityHidden(true)
-                    RestContent(end: context.date + 60, totalS: 60, next: table.nextText, shorten: {}, skip: {}, lengthen: {})
-                        .hidden()
-                        .accessibilityHidden(true)
-                }
+        let display = SetTimerDisplay(timer: timer, date: phase)
+        Panel(tint: display.isPause ? Color(.rest) : nil, bottomPadding: bottomPadding) {
+            ZStack(alignment: .topLeading) {
+                content(display, tint: display.isPause ? Color(.rest) : Color.accentColor)
+                SetContent(table: table, actions: actions, step: step)
+                    .hidden()
+                    .accessibilityHidden(true)
+                RestContent(end: phase + 60, totalS: 60, next: table.nextText, shorten: {}, skip: {}, lengthen: {})
+                    .hidden()
+                    .accessibilityHidden(true)
+            }
+        }
+        .task(id: timer) {
+            phase = .now
+            while let next = timer.nextChange(after: .now) {
+                try? await Task.sleep(for: .seconds(next.timeIntervalSinceNow))
+                guard !Task.isCancelled else { return }
+                phase = .now
             }
         }
         .onAppear {
@@ -111,6 +119,13 @@ struct TimerPanel: View {
         }
         .onDisappear {
             UIApplication.shared.isIdleTimerDisabled = false
+        }
+    }
+
+    // What the timer shows at a tick, which falls exactly on a whole second give or take the rounding of the dates.
+    private func ticking<Content: View>(@ViewBuilder _ content: @escaping (SetTimerDisplay) -> Content) -> some View {
+        TimelineView(.periodic(from: timer.startsAt - 3600, by: 1)) { context in
+            content(SetTimerDisplay(timer: timer, date: context.date + 0.001))
         }
     }
 
@@ -125,7 +140,15 @@ struct TimerPanel: View {
                         .font(.subheadline.weight(.semibold))
                         .textCase(.uppercase)
                         .foregroundStyle(tint)
-                    Text(verbatim: FieldText.clock(display.seconds))
+                    // Over a hidden text as wide as it can get: its change each second does not make the panel work
+                    // out its layout again.
+                    Text(verbatim: FieldText.clock(599))
+                        .hidden()
+                        .overlay(alignment: .leading) {
+                            ticking { now in
+                                Text(verbatim: FieldText.clock(now.seconds))
+                            }
+                        }
                         .font(.system(size: timeSize, weight: .bold))
                         .monospacedDigit()
                         .lineLimit(1)
@@ -137,12 +160,16 @@ struct TimerPanel: View {
                 }
                 aside(display)
             }
-            Capsule()
-                .fill(tint)
-                .scaleEffect(x: display.part, anchor: .leading)
-                .frame(height: 6)
-                .background(tint.opacity(0.25), in: .capsule)
-                .accessibilityHidden(true)
+            ticking { now in
+                Capsule()
+                    .fill(tint)
+                    .scaleEffect(x: now.part, anchor: .leading)
+                    // Empty at zero: its rounded ends would still show.
+                    .opacity(now.part > 0.001 ? 1 : 0)
+            }
+            .frame(height: 6)
+            .background(tint.opacity(0.25), in: .capsule)
+            .accessibilityHidden(true)
             ViewThatFits(in: .horizontal) {
                 HStack(spacing: 10) {
                     buttons(display, tint: tint)
@@ -175,13 +202,15 @@ struct TimerPanel: View {
                     Text(verbatim: next)
                         .font(.headline)
                 }
-            } else if let extra = display.extra {
+            } else if display.isOver {
                 Text("Over")
                     .font(.subheadline)
                     .foregroundStyle(Color(.secondaryText))
-                Text(verbatim: extra)
-                    .font(.headline)
-                    .monospacedDigit()
+                ticking { now in
+                    Text(verbatim: now.extra ?? "")
+                        .font(.headline)
+                        .monospacedDigit()
+                }
             } else if let targetS = timer.targetS {
                 Text("Target")
                     .font(.subheadline)

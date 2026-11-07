@@ -62,9 +62,11 @@ final class RestSound {
         // Over on its own: its sound, just started, plays to its end.
         let over = self.end.map { $0 <= .now } ?? false
         self.end = end
-        guard end != nil || !over else { return }
-        if over, player?.isPlaying == true {
+        // Over on its own: its sound, just started, plays to its end, even when something new waits already (the rest or
+        // the pause that follows a timer stopped by itself) or comes a moment later.
+        if over, let player, player.isPlaying {
             ringing = player
+            self.player = nil
             prepare()
         }
         resume()

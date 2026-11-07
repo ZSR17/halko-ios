@@ -299,6 +299,12 @@ private struct SessionHeader: View {
     }
 }
 
+// How often a ring or a bar moves: smoothly with the screen lit, once a second with the wrist down. Only they are drawn
+// again: the page around them stays as it is.
+private func progressUpdates(dimmed: Bool) -> AnimationTimelineSchedule {
+    .animation(minimumInterval: dimmed ? 1 : 0.05)
+}
+
 // Enough for the corners of the screen and the dots of the pages.
 private let lowerMargin = 10.0
 
@@ -406,6 +412,8 @@ private struct SetPage: View {
                         .handGestureShortcut(.primaryAction)
                     }
                     .buttonBorderShape(.capsule)
+                    // Clear of the rounded corners of the screen.
+                    .padding(.horizontal, 10)
                 } else {
                     Button(action: validate) {
                         Text("Validate")
@@ -540,6 +548,7 @@ private struct RestPage: View {
     let skip: () -> Void
     let lengthen: () -> Void
     @ScaledMetric(relativeTo: .title2) private var ringSide = 66.0
+    @Environment(\.isLuminanceReduced) private var isDimmed
 
     var body: some View {
         NavigationStack {
@@ -614,10 +623,17 @@ private struct RestPage: View {
         .padding(.bottom, 6)
     }
 
+    // Over a hidden text as wide as it can get: its change each second does not make the page work out its layout again.
     private var timeLeft: some View {
-        Text(timerInterval: Date.now...max(end, .now), countsDown: true)
+        Text(verbatim: FieldText.clock(max(totalS, Int(end.timeIntervalSinceNow.rounded(.up)))))
+            .hidden()
+            .overlay {
+                TimelineView(.periodic(from: end - 3600, by: 1)) { context in
+                    // The tick falls exactly on a whole second, give or take the rounding of the dates.
+                    Text(verbatim: FieldText.clock(Int((end.timeIntervalSince(context.date) - 0.001).rounded(.up))))
+                }
+            }
             .monospacedDigit()
-            .multilineTextAlignment(.center)
             .lineLimit(1)
             .minimumScaleFactor(0.5)
     }
@@ -631,13 +647,14 @@ private struct RestPage: View {
         ZStack {
             Circle()
                 .stroke(Color(.rest).opacity(0.25), lineWidth: 5)
-            TimelineView(.periodic(from: .now, by: 1)) { context in
+            TimelineView(progressUpdates(dimmed: isDimmed)) { context in
                 let left = left(at: context.date)
                 Circle()
                     .trim(from: 0, to: left)
                     .stroke(Color(.rest), style: StrokeStyle(lineWidth: 5, lineCap: .round))
                     .rotationEffect(.degrees(-90))
-                    .animation(.linear(duration: 1), value: left)
+                    // Empty at zero: its rounded ends would still show.
+                    .opacity(left > 0.001 ? 1 : 0)
             }
             timeLeft
                 .font(.title2.weight(.bold))
@@ -651,12 +668,10 @@ private struct RestPage: View {
         VStack(spacing: 2) {
             timeLeft
                 .font(.title2.weight(.bold))
-            TimelineView(.periodic(from: .now, by: 1)) { context in
-                let left = left(at: context.date)
+            TimelineView(progressUpdates(dimmed: isDimmed)) { context in
                 Capsule()
                     .fill(Color(.rest))
-                    .scaleEffect(x: left, anchor: .leading)
-                    .animation(.linear(duration: 1), value: left)
+                    .scaleEffect(x: left(at: context.date), anchor: .leading)
             }
             .frame(height: 7)
             .background(Color(.rest).opacity(0.25), in: .capsule)
@@ -673,20 +688,21 @@ private struct TimerPage: View {
     let begin: () -> Void
     let cancel: () -> Void
     let stop: () -> Void
+    // The date the page is drawn for, moved at each change of the timer.
+    @State private var phase = Date.now
     @ScaledMetric(relativeTo: .title2) private var ringSide = 66.0
+    @Environment(\.isLuminanceReduced) private var isDimmed
 
     var body: some View {
         NavigationStack {
-            TimelineView(.periodic(from: .now, by: 0.5)) { context in
-                let display = SetTimerDisplay(timer: timer, date: context.date)
-                let tint = display.isPause ? Color(.rest) : Color.accentColor
-                ViewThatFits(in: .vertical) {
-                    page(display, tint: tint, showsRing: true)
+            let display = SetTimerDisplay(timer: timer, date: phase)
+            let tint = display.isPause ? Color(.rest) : Color.accentColor
+            ViewThatFits(in: .vertical) {
+                page(display, tint: tint, showsRing: true)
+                page(display, tint: tint, showsRing: false)
+                // Only when the text is too large for the screen.
+                ScrollView {
                     page(display, tint: tint, showsRing: false)
-                    // Only when the text is too large for the screen.
-                    ScrollView {
-                        page(display, tint: tint, showsRing: false)
-                    }
                 }
             }
             .ignoresSafeArea(edges: .bottom)
@@ -695,6 +711,21 @@ private struct TimerPage: View {
                     Button("Cancel", action: cancel)
                 }
             }
+        }
+        .task(id: timer) {
+            phase = .now
+            while let next = timer.nextChange(after: .now) {
+                try? await Task.sleep(for: .seconds(next.timeIntervalSinceNow))
+                guard !Task.isCancelled else { return }
+                phase = .now
+            }
+        }
+    }
+
+    // What the timer shows at a tick, which falls exactly on a whole second give or take the rounding of the dates.
+    private func ticking<Content: View>(@ViewBuilder _ content: @escaping (SetTimerDisplay) -> Content) -> some View {
+        TimelineView(.periodic(from: timer.startsAt - 3600, by: 1)) { context in
+            content(SetTimerDisplay(timer: timer, date: context.date + 0.001))
         }
     }
 
@@ -706,31 +737,46 @@ private struct TimerPage: View {
                 .foregroundStyle(tint)
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
+                // As high as « Rest » on the page of the rest.
+                .offset(y: showsRing ? -4 : -2)
             if showsRing {
                 ZStack {
                     Circle()
                         .stroke(tint.opacity(0.25), lineWidth: 5)
-                    Circle()
-                        .trim(from: 0, to: display.part)
-                        .stroke(tint, style: StrokeStyle(lineWidth: 5, lineCap: .round))
-                        .rotationEffect(.degrees(-90))
-                    time(display)
+                    TimelineView(progressUpdates(dimmed: isDimmed)) { context in
+                        let part = SetTimerDisplay(timer: timer, date: context.date).part
+                        Circle()
+                            .trim(from: 0, to: part)
+                            .stroke(tint, style: StrokeStyle(lineWidth: 5, lineCap: .round))
+                            .rotationEffect(.degrees(-90))
+                            // Empty at zero: its rounded ends would still show.
+                            .opacity(part > 0.001 ? 1 : 0)
+                    }
+                    time
                         .padding(8)
                 }
                 .frame(width: ringSide, height: ringSide)
             } else {
-                time(display)
+                time
             }
             Spacer(minLength: 2)
-            Text(verbatim: lines(display).0)
+            Text(verbatim: firstLine(display))
                 .font(.footnote.weight(.semibold))
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
-            Text(verbatim: lines(display).1)
-                .font(.footnote)
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
+            Group {
+                if display.isOver {
+                    ticking { now in
+                        Text(verbatim: now.extra ?? "")
+                    }
+                } else {
+                    Text(verbatim: secondLine(display))
+                }
+            }
+            .font(.footnote)
+            .foregroundStyle(.secondary)
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
             Spacer(minLength: 2)
             Button(action: display.isWaiting ? begin : stop) {
                 Group {
@@ -757,25 +803,37 @@ private struct TimerPage: View {
         .padding(.bottom, 6)
     }
 
-    private func time(_ display: SetTimerDisplay) -> some View {
-        Text(verbatim: FieldText.clock(display.seconds))
+    // Over a hidden text as wide as it can get: its change each second does not make the page work out its layout again.
+    private var time: some View {
+        Text(verbatim: FieldText.clock(599))
+            .hidden()
+            .overlay {
+                ticking { now in
+                    Text(verbatim: FieldText.clock(now.seconds))
+                }
+            }
             .font(.title2.weight(.bold))
             .monospacedDigit()
             .lineLimit(1)
             .minimumScaleFactor(0.5)
     }
 
-    // Under the time.
-    private func lines(_ display: SetTimerDisplay) -> (String, String) {
+    private func firstLine(_ display: SetTimerDisplay) -> String {
         if display.isPause {
-            return (String(localized: "Next: right side"), display.firstSide ?? "")
+            return String(localized: "Next: right side")
         }
         if display.isOver {
-            return (String(localized: "Target reached"), display.extra ?? "")
+            return String(localized: "Target reached")
         }
-        let name = table.step.map { table.name($0.item) } ?? ""
+        return table.step.map { table.name($0.item) } ?? ""
+    }
+
+    private func secondLine(_ display: SetTimerDisplay) -> String {
+        if display.isPause {
+            return display.firstSide ?? ""
+        }
         let position = table.step.map { table.position($0) } ?? ""
-        return (name, timer.targetS.map { "\(position) · \(FieldText.clock($0))" } ?? position)
+        return timer.targetS.map { "\(position) · \(FieldText.clock($0))" } ?? position
     }
 }
 

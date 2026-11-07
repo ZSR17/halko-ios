@@ -22,6 +22,11 @@ final class LiveLink {
     private var shared: LiveSnapshot?
     private var saidRecording: Bool?
     private var pending: Task<Void, Never>?
+    // The last values measured here, and when the other device last heard of them.
+    private var measures: (heartRate: Double?, kilocalories: Double?) = (nil, nil)
+    private var measuresSentAt: Date?
+    // The sensors give several values in that time; the radio is not woken for each one.
+    private static let measuresInterval: TimeInterval = 10
 
     init(container: ModelContainer, store: LiveSessionStore, recorder: WorkoutRecorder) {
         context = container.mainContext
@@ -92,6 +97,14 @@ final class LiveLink {
         current = nil
         shared = nil
         saidRecording = nil
+        measures = (nil, nil)
+        measuresSentAt = nil
+    }
+
+    // Not while the session goes on: the devices keep each other up to date with it by this link, and the rest of what
+    // they exchange can wait for its end, when the database is saved a last time.
+    var isSessionInProgress: Bool {
+        store.state != nil
     }
 
     // MARK: From the other device
@@ -224,8 +237,11 @@ extension LiveLink: WorkoutPeer {
     }
 
     func measured(heartRate: Double?, kilocalories: Double?) {
+        measures = (heartRate ?? measures.heartRate, kilocalories ?? measures.kilocalories)
+        if let measuresSentAt, Date.now.timeIntervalSince(measuresSentAt) < Self.measuresInterval { return }
+        measuresSentAt = .now
         do {
-            let data = try LiveMessage.measures(heartRate: heartRate, kilocalories: kilocalories).encoded()
+            let data = try LiveMessage.measures(heartRate: measures.heartRate, kilocalories: measures.kilocalories).encoded()
             _ = recorder.sendToOtherDevice(data) {}
         } catch {
             Self.logger.error("Cannot tell the other device what is measured: \(String(describing: error))")
