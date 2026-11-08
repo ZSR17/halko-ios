@@ -6,7 +6,7 @@ import SwiftData
 public struct SessionSummary: Equatable, Sendable {
     public struct BeatenRecord: Hashable, Sendable {
         public let exerciseID: String
-        public let kind: RecordKind
+        public let measure: ProgressMeasure
         // In stored units: grams, reps, seconds, metres.
         public let value: Double
         public let before: Double
@@ -30,12 +30,16 @@ public struct SessionSummary: Equatable, Sendable {
         }
         records = order.flatMap { exerciseID -> [BeatenRecord] in
             let type = types[exerciseID] ?? .weightReps
-            let before = ExerciseRecords(sets: earlier.filter { $0.exerciseID == exerciseID }, type: type).records
-            let now = ExerciseRecords(sets: sets.filter { $0.exerciseID == exerciseID }, type: type).records
-            // A first time beats nothing.
-            return now.compactMap { record in
-                guard !record.kind.isEstimate, let old = before.first(where: { $0.kind == record.kind }), record.kind.isBetter(record.value, than: old.value) else { return nil }
-                return BeatenRecord(exerciseID: exerciseID, kind: record.kind, value: record.value, before: old.value)
+            let done = sets.filter { $0.exerciseID == exerciseID }
+            let before = Dictionary(grouping: earlier.filter { $0.exerciseID == exerciseID }, by: \.sessionID).values
+            return ProgressMeasure.measures(for: type).filter(\.isRecord).compactMap { measure in
+                // A first time beats nothing.
+                guard
+                    let value = measure.value(of: done, type: type),
+                    let old = measure.best(of: before.compactMap { measure.value(of: $0, type: type) }),
+                    measure.isBetter(value, than: old)
+                else { return nil }
+                return BeatenRecord(exerciseID: exerciseID, measure: measure, value: value, before: old)
             }
         }
     }

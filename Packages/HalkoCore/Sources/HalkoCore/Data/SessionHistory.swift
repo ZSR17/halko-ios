@@ -59,8 +59,12 @@ public enum ProgressMeasure: String, Sendable, CaseIterable {
     }
 
     // Less assistance is better.
-    var lowerIsBetter: Bool {
-        self == .minAssistance
+    func isBetter(_ value: Double, than other: Double) -> Bool {
+        self == .minAssistance ? value < other : value > other
+    }
+
+    func best(of values: [Double]) -> Double? {
+        values.min { isBetter($0, than: $1) }
     }
 
     // What the sets of a session reach, in stored units (grams, reps, seconds, metres); nil without a value.
@@ -112,7 +116,7 @@ public struct ExerciseProgress: Equatable, Sendable {
     // The first session to reach it, on a tie.
     public var best: ProgressPoint? {
         guard var best = points.first else { return nil }
-        for point in points.dropFirst() where measure.lowerIsBetter ? point.value < best.value : point.value > best.value {
+        for point in points.dropFirst() where measure.isBetter(point.value, than: best.value) {
             best = point
         }
         return best
@@ -143,7 +147,7 @@ public struct SessionHistory {
         let types = Dictionary(exercises.map { ($0.id, $0.exerciseType) }, uniquingKeysWith: { first, _ in first })
         let bySession = Dictionary(grouping: sets, by: \.sessionID)
         // The oldest first: a record is beaten against the sessions before it.
-        var bests: [String: [RecordKind: Double]] = [:]
+        var bests: [String: [ProgressMeasure: Double]] = [:]
         var done: [String: [DoneSession]] = [:]
         var rows: [HistorySession] = []
         for session in sessions.sorted(by: { $0.startedAt < $1.startedAt }) {
@@ -151,15 +155,17 @@ public struct SessionHistory {
             var beatRecord = false
             for (exerciseID, exerciseSets) in Dictionary(grouping: sessionSets, by: \.exerciseID) {
                 done[exerciseID, default: []].append(DoneSession(sessionID: session.id, date: session.startedAt, sets: exerciseSets))
-                for record in ExerciseRecords(sets: exerciseSets, type: types[exerciseID] ?? .weightReps).records where !record.kind.isEstimate {
-                    guard let old = bests[exerciseID]?[record.kind] else {
+                let type = types[exerciseID] ?? .weightReps
+                for measure in ProgressMeasure.measures(for: type) where measure.isRecord {
+                    guard let value = measure.value(of: exerciseSets, type: type) else { continue }
+                    guard let old = bests[exerciseID]?[measure] else {
                         // A first time beats nothing.
-                        bests[exerciseID, default: [:]][record.kind] = record.value
+                        bests[exerciseID, default: [:]][measure] = value
                         continue
                     }
-                    if record.kind.isBetter(record.value, than: old) {
+                    if measure.isBetter(value, than: old) {
                         beatRecord = true
-                        bests[exerciseID, default: [:]][record.kind] = record.value
+                        bests[exerciseID, default: [:]][measure] = value
                     }
                 }
             }

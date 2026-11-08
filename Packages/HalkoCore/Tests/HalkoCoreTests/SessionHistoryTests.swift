@@ -95,10 +95,18 @@ struct SessionHistoryTests {
 
     @Test("Does not count an estimated 1RM beaten as a record")
     func estimateIsNotARecord() throws {
-        session(on: day(10, 1), sets: [(.normal, 3, 85_000)])
+        session(on: day(10, 1), sets: [(.normal, 3, 85_000), (.normal, 12, 60_000)])
         let estimate = session(on: day(10, 8), sets: [(.normal, 8, 80_000)])
         #expect(try loaded().months.flatMap(\.sessions).first { $0.id == estimate.id }?.beatRecord == false)
         #expect(try context.summary(of: estimate).records.isEmpty)
+    }
+
+    @Test("Counts as records the volume of the session and the total reps")
+    func volumeRecords() throws {
+        session(on: day(10, 1), sets: [(.normal, 5, 100_000)])
+        let more = session(on: day(10, 8), sets: [(.normal, 4, 80_000), (.normal, 4, 80_000)])
+        #expect(try loaded().months.flatMap(\.sessions).first { $0.id == more.id }?.beatRecord == true)
+        #expect(try context.summary(of: more).records.map(\.measure) == [.sessionVolume, .totalReps])
     }
 
     @Test("Lists the exercises done, the last one first")

@@ -74,11 +74,12 @@ struct BeatenRecords: View {
         }
     }
 
-    // "Estimated 1RM 101.3 kg (before 98.5 kg)".
+    // "Max weight 85 kg (before 82.5 kg)".
     private func beaten(_ record: SessionSummary.BeatenRecord) -> String {
-        let kind = String(localized: record.kind.name)
-        let value = text.record(ExerciseRecord(kind: record.kind, value: record.value))
-        let before = text.record(ExerciseRecord(kind: record.kind, value: record.before))
+        let history = HistoryText(sets: text)
+        let kind = String(localized: record.measure.name)
+        let value = history.value(record.value, of: record.measure)
+        let before = history.value(record.before, of: record.measure)
         return String(localized: "\(kind) \(value) (before \(before))")
     }
 }

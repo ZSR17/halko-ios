@@ -1,7 +1,7 @@
 import XCTest
 
 final class WatchSessionTests: XCTestCase {
-    // The bench press of Push A: 4 warm-ups, then a working set that beats only the estimated 1RM of the session done before: no record.
+    // The bench press of Push A: 4 warm-ups, then a working set that beats the load of the session done before.
     @MainActor
     func testSession() throws {
         let app = openPushA()
@@ -54,7 +54,7 @@ final class WatchSessionTests: XCTestCase {
         save.tap()
 
         XCTAssertTrue(text(app, "Séance enregistrée").waitForExistence(timeout: 5))
-        XCTAssertFalse(text(app, "Record").exists)
+        XCTAssertTrue(text(app, "Record").waitForExistence(timeout: 5))
         try app.performAccessibilityAudit()
         snap("Watch 6 – Résumé")
 

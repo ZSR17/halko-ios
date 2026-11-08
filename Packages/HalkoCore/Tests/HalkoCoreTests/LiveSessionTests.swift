@@ -211,7 +211,7 @@ struct LiveSessionTests {
         #expect(summary.setCount == 2)
         // 90 × 5 + 12 × 10 per side.
         #expect(summary.volumeG == 450_000 + 240_000)
-        #expect(summary.records.map(\.kind) == [.maxWeight])
+        #expect(summary.records.map(\.measure) == [.maxWeight, .sessionVolume, .bestSetVolume])
         #expect(summary.records.first?.before == 80_000)
     }
 }
