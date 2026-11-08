@@ -67,6 +67,7 @@ struct PastSessionView: View {
         .background(Color(.systemGroupedBackground))
         .navigationTitle(sessions.first?.name ?? "")
         .navigationSubtitle(date)
+        .navigationBarTitleDisplayMode(.large)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Menu("More actions", systemImage: "ellipsis") {

@@ -227,6 +227,8 @@ private struct ProgressChart: View {
             }
         }
         .chartYScale(domain: .automatic(includesZero: false))
+        // Room for the last date and the dot, at the end of the axis.
+        .chartXScale(range: .plotDimension(endPadding: 24))
         .chartXAxis {
             AxisMarks(values: .automatic(desiredCount: 4)) { _ in
                 AxisValueLabel()

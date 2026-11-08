@@ -132,18 +132,20 @@ private struct MonthHeader: View {
 
     var body: some View {
         Button(action: toggle) {
-            HStack(spacing: 8) {
-                Text(verbatim: month.date.formatted(.dateTime.month(.wide).year()).capitalized(with: locale))
-                    .font(.headline)
-                    .foregroundStyle(Color(.label))
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                Text(verbatim: details)
-                    .font(.footnote)
-                    .foregroundStyle(Color(.secondaryText))
-                Image(systemName: isOpen ? "chevron.down" : "chevron.right")
-                    .font(.footnote.weight(.semibold))
-                    .foregroundStyle(Color(.secondaryText))
-                    .accessibilityHidden(true)
+            // The figures under the month when the text is too large for both on a line.
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 8) {
+                    title
+                    figures
+                    chevron
+                }
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 8) {
+                        title
+                        chevron
+                    }
+                    figures
+                }
             }
             .frame(minHeight: 44)
             .contentShape(.rect)
@@ -151,6 +153,26 @@ private struct MonthHeader: View {
         .buttonStyle(.plain)
         .accessibilityValue(isOpen ? Text("Expanded") : Text("Collapsed"))
         .accessibilityAddTraits(.isHeader)
+    }
+
+    private var title: some View {
+        Text(verbatim: month.date.formatted(.dateTime.month(.wide).year()).capitalized(with: locale))
+            .font(.headline)
+            .foregroundStyle(Color(.label))
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var figures: some View {
+        Text(verbatim: details)
+            .font(.footnote)
+            .foregroundStyle(Color(.secondaryText))
+    }
+
+    private var chevron: some View {
+        Image(systemName: isOpen ? "chevron.down" : "chevron.right")
+            .font(.footnote.weight(.semibold))
+            .foregroundStyle(Color(.secondaryText))
+            .accessibilityHidden(true)
     }
 
     // "3 sessions · 14.2 t".
