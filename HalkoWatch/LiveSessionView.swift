@@ -295,7 +295,8 @@ private struct SessionHeader: View {
 }
 
 // The heart rate, when it is measured, on every page of the session. `compact`: beside a button in the corner, where
-// the line has little room left, without the margin of a label's icon, and the number alone when even that is too wide.
+// the line has little room left: without the margin of a label's icon, smaller if needed, and the number alone when
+// even that is too wide.
 private struct HeartRateText: View {
     var compact = false
     @Environment(WorkoutRecorder.self) private var recorder
@@ -315,11 +316,11 @@ private struct HeartRateText: View {
     private func content(_ value: Int) -> some View {
         if compact {
             ViewThatFits(in: .horizontal) {
-                HStack(spacing: 2) {
-                    heart
-                        .imageScale(.small)
-                    number(value)
-                }
+                tight(value)
+                tight(value)
+                    .font(.subheadline.weight(.semibold))
+                tight(value)
+                    .font(.footnote.weight(.semibold))
                 number(value)
             }
         } else {
@@ -329,6 +330,14 @@ private struct HeartRateText: View {
                 heart
             }
             .labelStyle(.titleAndIcon)
+        }
+    }
+
+    private func tight(_ value: Int) -> some View {
+        HStack(spacing: 2) {
+            heart
+                .imageScale(.small)
+            number(value)
         }
     }
 
