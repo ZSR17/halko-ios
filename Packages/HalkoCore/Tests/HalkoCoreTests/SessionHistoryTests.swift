@@ -93,6 +93,14 @@ struct SessionHistoryTests {
         #expect(rows.first { $0.id == lighter.id }?.beatRecord == false)
     }
 
+    @Test("Does not count an estimated 1RM beaten as a record")
+    func estimateIsNotARecord() throws {
+        session(on: day(10, 1), sets: [(.normal, 3, 85_000)])
+        let estimate = session(on: day(10, 8), sets: [(.normal, 8, 80_000)])
+        #expect(try loaded().months.flatMap(\.sessions).first { $0.id == estimate.id }?.beatRecord == false)
+        #expect(try context.summary(of: estimate).records.isEmpty)
+    }
+
     @Test("Lists the exercises done, the last one first")
     func exercises() throws {
         let squat = Exercise(name: "Squat", exerciseType: .weightReps, equipment: [], primaryMuscles: [.quads], secondaryMuscles: [])

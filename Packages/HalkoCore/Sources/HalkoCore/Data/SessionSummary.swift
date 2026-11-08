@@ -34,7 +34,7 @@ public struct SessionSummary: Equatable, Sendable {
             let now = ExerciseRecords(sets: sets.filter { $0.exerciseID == exerciseID }, type: type).records
             // A first time beats nothing.
             return now.compactMap { record in
-                guard let old = before.first(where: { $0.kind == record.kind }), record.kind.isBetter(record.value, than: old.value) else { return nil }
+                guard !record.kind.isEstimate, let old = before.first(where: { $0.kind == record.kind }), record.kind.isBetter(record.value, than: old.value) else { return nil }
                 return BeatenRecord(exerciseID: exerciseID, kind: record.kind, value: record.value, before: old.value)
             }
         }

@@ -151,7 +151,7 @@ public struct SessionHistory {
             var beatRecord = false
             for (exerciseID, exerciseSets) in Dictionary(grouping: sessionSets, by: \.exerciseID) {
                 done[exerciseID, default: []].append(DoneSession(sessionID: session.id, date: session.startedAt, sets: exerciseSets))
-                for record in ExerciseRecords(sets: exerciseSets, type: types[exerciseID] ?? .weightReps).records {
+                for record in ExerciseRecords(sets: exerciseSets, type: types[exerciseID] ?? .weightReps).records where !record.kind.isEstimate {
                     guard let old = bests[exerciseID]?[record.kind] else {
                         // A first time beats nothing.
                         bests[exerciseID, default: [:]][record.kind] = record.value

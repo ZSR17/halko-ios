@@ -18,6 +18,11 @@ public enum RecordKind: Sendable {
         return value.flatMap { $0 > 0 ? $0 : nil }
     }
 
+    // Not a weight actually lifted: shown among the bests of an exercise, never as a record beaten.
+    var isEstimate: Bool {
+        self == .oneRepMax
+    }
+
     // Less assistance is better.
     func isBetter(_ value: Double, than other: Double) -> Bool {
         self == .minAssistance ? value < other : value > other
