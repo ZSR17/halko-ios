@@ -51,6 +51,9 @@ final class WorkoutRecorder {
     @ObservationIgnored private var relay: Relay?
     // This device's workout is mirrored on the other one.
     @ObservationIgnored private var isMirroring = false
+    // The other device has said something by the workout: it listens to it. Until then, what is sent by it may go
+    // nowhere (the mirrored workout is not set up over there yet), and goes by WatchConnectivity too.
+    @ObservationIgnored private var heardBack = false
     // The other device's workout, mirrored here.
     @ObservationIgnored private var mirrored: HKWorkoutSession?
     @ObservationIgnored private var mirroredRelay: Relay?
@@ -178,6 +181,9 @@ final class WorkoutRecorder {
                 failed()
             }
         }
+        if !heardBack {
+            failed()
+        }
         return true
     }
 
@@ -193,6 +199,7 @@ final class WorkoutRecorder {
             Task { @MainActor [weak self] in
                 self?.mirrored = found.value.0
                 self?.mirroredRelay = found.value.1
+                self?.heardBack = false
                 self?.peer?.channelOpened()
             }
         }
@@ -241,6 +248,7 @@ final class WorkoutRecorder {
             guard success else { return }
             Task { @MainActor [weak self] in
                 self?.isMirroring = true
+                self?.heardBack = false
                 self?.peer?.channelOpened()
             }
         }
@@ -284,6 +292,7 @@ final class WorkoutRecorder {
         otherDeviceRecords = false
         mirrored = nil
         mirroredRelay = nil
+        heardBack = false
         heartRate = nil
         activeKilocalories = nil
     }
@@ -319,6 +328,7 @@ final class WorkoutRecorder {
         sessionID = nil
         relay = nil
         isMirroring = false
+        heardBack = false
         heartRate = nil
         activeKilocalories = nil
         peer?.recordingChanged()
@@ -330,6 +340,7 @@ final class WorkoutRecorder {
             self?.activeKilocalories = kilocalories ?? self?.activeKilocalories
             self?.peer?.measured(heartRate: heartRate, kilocalories: kilocalories)
         } received: { [weak self] data in
+            self?.heardBack = true
             for message in data {
                 self?.peer?.received(message)
             }
@@ -338,6 +349,7 @@ final class WorkoutRecorder {
             if let mirrored = self?.mirrored, ObjectIdentifier(mirrored) == session {
                 self?.mirrored = nil
                 self?.mirroredRelay = nil
+                self?.heardBack = false
             }
         } failed: { [weak self] session in
             // It could not start (from the background, without having been asked by the iPhone): tried again later.

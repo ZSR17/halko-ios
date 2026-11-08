@@ -618,6 +618,8 @@ private struct RestPage: View {
             .clockLine {
                 HeartRateText()
                     .clockLineStyle()
+                    // Clear of the button in the corner on its left.
+                    .padding(.leading, 24)
             }
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
@@ -760,6 +762,8 @@ private struct TimerPage: View {
             .clockLine {
                 HeartRateText()
                     .clockLineStyle()
+                    // Clear of the button in the corner on its left.
+                    .padding(.leading, 24)
             }
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
