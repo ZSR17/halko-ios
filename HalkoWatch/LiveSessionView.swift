@@ -295,8 +295,8 @@ private struct SessionHeader: View {
 }
 
 // The heart rate, when it is measured, on every page of the session. `compact`: beside a button in the corner, where
-// the line has little room left: without the margin of a label's icon, smaller if needed, and the number alone when
-// even that is too wide.
+// the line has little room left: without the margin of a label's icon, smaller if needed, the number alone when even
+// that is too wide, and nothing on a watch too small for it.
 private struct HeartRateText: View {
     var compact = false
     @Environment(WorkoutRecorder.self) private var recorder
@@ -304,33 +304,36 @@ private struct HeartRateText: View {
     var body: some View {
         if let heartRate = recorder.heartRate {
             let value = Int(heartRate.rounded())
-            content(value)
-                .accessibilityElement(children: .ignore)
-                .accessibilityAddTraits(.isStaticText)
-                .accessibilityLabel(Text("Heart rate"))
-                .accessibilityValue(Text("\(value) beats per minute"))
+            if compact {
+                ViewThatFits(in: .horizontal) {
+                    announced(tight(value), value)
+                    announced(tight(value).font(.subheadline.weight(.semibold)), value)
+                    announced(tight(value).font(.footnote.weight(.semibold)), value)
+                    announced(number(value), value)
+                    Color.clear
+                        .frame(width: 0, height: 0)
+                }
+            } else {
+                announced(label(value), value)
+            }
         }
     }
 
-    @ViewBuilder
-    private func content(_ value: Int) -> some View {
-        if compact {
-            ViewThatFits(in: .horizontal) {
-                tight(value)
-                tight(value)
-                    .font(.subheadline.weight(.semibold))
-                tight(value)
-                    .font(.footnote.weight(.semibold))
-                number(value)
-            }
-        } else {
-            Label {
-                number(value)
-            } icon: {
-                heart
-            }
-            .labelStyle(.titleAndIcon)
+    private func announced(_ content: some View, _ value: Int) -> some View {
+        content
+            .accessibilityElement(children: .ignore)
+            .accessibilityAddTraits(.isStaticText)
+            .accessibilityLabel(Text("Heart rate"))
+            .accessibilityValue(Text("\(value) beats per minute"))
+    }
+
+    private func label(_ value: Int) -> some View {
+        Label {
+            number(value)
+        } icon: {
+            heart
         }
+        .labelStyle(.titleAndIcon)
     }
 
     private func tight(_ value: Int) -> some View {
@@ -354,13 +357,16 @@ private struct HeartRateText: View {
 
 private extension View {
     // On a page with a button in its corner, which takes the left of the line of the clock and lowers the top of the
-    // page: the heart rate just after the button, clear of the clock, and as high as on the other pages.
-    func heartBesideCorner(_ cornerWidth: Double) -> some View {
+    // page: the heart rate clear of the button and of the clock, and as high as on the other pages. `centred`: in the
+    // middle of the room between them; otherwise just after the button.
+    func heartBesideCorner(_ cornerWidth: Double, centred: Bool = false) -> some View {
         clockLine {
             HStack {
                 HeartRateText(compact: true)
                     .clockLineStyle()
-                Spacer(minLength: 0)
+                if !centred {
+                    Spacer(minLength: 0)
+                }
             }
             // Past the button: its margin to the edge of the screen, its capsule around the text, and a small gap.
             .padding(.leading, cornerWidth + 28)
@@ -677,7 +683,7 @@ private struct RestPage: View {
                 }
             }
             .ignoresSafeArea(edges: .bottom)
-            .heartBesideCorner(cornerWidth)
+            .heartBesideCorner(cornerWidth, centred: true)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button(action: skip) {
