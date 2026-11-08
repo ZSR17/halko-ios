@@ -27,7 +27,7 @@ struct HalkoApp: App {
                     container: try DemoData.container(),
                     liveSession: LiveSessionStore(fileURL: nil),
                     permissions: Permissions(health: nil, defaults: nil),
-                    recorder: WorkoutRecorder(health: nil),
+                    recorder: WorkoutRecorder.demo(),
                     showsActivity: false,
                     linksWatch: false
                 )

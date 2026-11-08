@@ -567,6 +567,7 @@ struct HeartRateChip: View {
             .padding(.vertical, 4)
             .background(Color(.tertiarySystemFill), in: .capsule)
             .accessibilityElement(children: .ignore)
+            .accessibilityAddTraits(.isStaticText)
             .accessibilityLabel(Text("Heart rate"))
             .accessibilityValue(Text("\(value) beats per minute"))
         }

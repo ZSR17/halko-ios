@@ -66,6 +66,15 @@ final class WorkoutRecorder {
         self.health = health
     }
 
+    #if DEBUG
+    // For the interface tests: without Health, and with a heart rate as a watch measures it, to show where it goes.
+    static func demo() -> WorkoutRecorder {
+        let recorder = WorkoutRecorder(health: nil)
+        recorder.heartRate = 128
+        return recorder
+    }
+    #endif
+
     // A workout of Health in progress keeps the app running in the background, where it can tell the end of a rest
     // itself. A mirrored one does not.
     var isRecording: Bool {

@@ -310,6 +310,7 @@ private struct HeartRateText: View {
             }
             .labelStyle(.titleAndIcon)
             .accessibilityElement(children: .ignore)
+            .accessibilityAddTraits(.isStaticText)
             .accessibilityLabel(Text("Heart rate"))
             .accessibilityValue(Text("\(value) beats per minute"))
         }
@@ -618,8 +619,10 @@ private struct RestPage: View {
             .clockLine {
                 HeartRateText()
                     .clockLineStyle()
-                    // Clear of the button in the corner on its left.
+                    // Clear of the button in the corner on its left, and as high as on the set's page: the button
+                    // lowers the top of the page.
                     .padding(.leading, 24)
+                    .offset(y: -6)
             }
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
@@ -762,8 +765,10 @@ private struct TimerPage: View {
             .clockLine {
                 HeartRateText()
                     .clockLineStyle()
-                    // Clear of the button in the corner on its left.
+                    // Clear of the button in the corner on its left, and as high as on the set's page: the button
+                    // lowers the top of the page.
                     .padding(.leading, 24)
+                    .offset(y: -6)
             }
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
