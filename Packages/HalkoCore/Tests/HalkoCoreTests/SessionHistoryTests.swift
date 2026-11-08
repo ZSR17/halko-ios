@@ -111,8 +111,8 @@ struct SessionHistoryTests {
         #expect(value(.sessionVolume) == 1_090_000)
         #expect(value(.bestSetVolume) == 640_000)
         #expect(value(.totalReps) == 13)
-        // 80 kg × 8, Epley.
-        #expect(value(.oneRepMax) == 101_333)
+        // 90 kg × 5, Epley.
+        #expect(value(.oneRepMax) == 105_000)
     }
 
     @Test("Offers the measures of the type of the exercise")

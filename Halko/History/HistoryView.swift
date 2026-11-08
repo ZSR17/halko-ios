@@ -70,12 +70,22 @@ struct HistoryView: View {
                 .foregroundStyle(Color(.secondaryText))
                 .accessibilityAddTraits(.isHeader)
             ThreeFigures(
-                first: Figure(value: week.sessionCount.formatted(), label: Text("\(week.sessionCount) sessions this week")),
+                first: Figure(value: week.sessionCount.formatted(), label: sessionsLabel(week.sessionCount)),
                 second: Figure(value: text.tonnage(week.volumeG), label: Text("lifted")),
                 third: Figure(value: text.minutes(week.duration), label: Text("of training"))
             )
         }
         .sessionCard()
+    }
+
+    // Beside a number shown apart, so without the plural of the catalog, which needs the number in its text. In French,
+    // no session is singular.
+    private func sessionsLabel(_ count: Int) -> Text {
+        switch count {
+        case 0: Text("sessions (none)")
+        case 1: Text("session")
+        default: Text("sessions (several)")
+        }
     }
 }
 

@@ -181,6 +181,8 @@ struct ProgressPage: View {
                     Group {
                         if showsAll {
                             Text("Show less")
+                        } else if latest.count - Self.listed == 1 {
+                            Text("See the other one")
                         } else {
                             Text("See the \(latest.count - Self.listed) others")
                         }

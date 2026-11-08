@@ -3457,46 +3457,6 @@
         }
       }
     },
-    "%lld sessions this week" : {
-      "localizations" : {
-        "en" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "session"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "sessions"
-                }
-              }
-            }
-          }
-        },
-        "fr" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "séance"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "séances"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "%lld sessions" : {
       "localizations" : {
         "en" : {
@@ -3539,40 +3499,62 @@
     },
     "See the %lld others" : {
       "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voir les %lld autres"
+          }
+        }
+      }
+    },
+    "sessions (none)" : {
+      "localizations" : {
         "en" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "See the other one"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "See the %lld others"
-                }
-              }
-            }
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "sessions"
           }
         },
         "fr" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Voir l’autre"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Voir les %lld autres"
-                }
-              }
-            }
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "séance"
+          }
+        }
+      }
+    },
+    "session" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "séance"
+          }
+        }
+      }
+    },
+    "sessions (several)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "sessions"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "séances"
+          }
+        }
+      }
+    },
+    "See the other one" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voir l’autre"
           }
         }
       }
