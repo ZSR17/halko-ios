@@ -21,8 +21,7 @@ struct RootView: View {
             }
             Tab("History", systemImage: "clock") {
                 NavigationStack {
-                    List {}
-                        .navigationTitle("History")
+                    HistoryView()
                 }
             }
             Tab("Tools", systemImage: "plus.forwardslash.minus") {

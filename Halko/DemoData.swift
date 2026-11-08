@@ -103,6 +103,23 @@ enum DemoData {
         let earlier = Session(workoutID: push.id, name: push.name, startedAt: .now - 4 * day, endedAt: .now - 4 * day + 3600)
         context.insert(earlier)
         typealias DoneSet = (kind: SetKind, reps: Int, weightG: Int)
+        // Push A over the weeks before, for the history: lighter, so that the session above beats its record.
+        for (daysAgo, weightG) in [(11.0, 82_500), (19, 82_500), (33, 80_000), (47, 77_500), (61, 75_000), (75, 72_500)] {
+            let past = Session(workoutID: push.id, name: push.name, startedAt: .now - daysAgo * day, endedAt: .now - daysAgo * day + 3240)
+            context.insert(past)
+            for setIndex in 0..<2 {
+                context.insert(SetLog(
+                    sessionID: past.id,
+                    exerciseID: pushItems[0].exerciseID,
+                    workoutItemID: pushItems[0].id,
+                    position: 0,
+                    setIndex: setIndex,
+                    reps: 3,
+                    weightG: weightG,
+                    completedAt: past.startedAt + Double(5 + 4 * setIndex) * 60
+                ))
+            }
+        }
         let warmups: [DoneSet] = [(.warmup, 10, 20_000), (.warmup, 5, 32_500), (.warmup, 3, 50_000), (.warmup, 2, 67_500)]
         let benchSets: [DoneSet] = warmups + [(.normal, 3, 85_000), (.normal, 3, 85_000)]
         for (setIndex, set) in benchSets.enumerated() {

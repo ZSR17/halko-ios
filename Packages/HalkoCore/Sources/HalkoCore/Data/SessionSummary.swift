@@ -22,11 +22,8 @@ public struct SessionSummary: Equatable, Sendable {
     public init(session: Session, sets: [SetLog], earlier: [SetLog], exercises: [Exercise]) {
         duration = (session.endedAt ?? session.startedAt).timeIntervalSince(session.startedAt)
         let types = Dictionary(exercises.map { ($0.id, $0.exerciseType) }, uniquingKeysWith: { first, _ in first })
-        let working = sets.filter { $0.kind != .warmup }
-        setCount = working.count
-        volumeG = working.reduce(0) { total, set in
-            total + setVolumeG(type: types[set.exerciseID] ?? .weightReps, values: SetValues(set), unilateral: set.unilateral == true)
-        }
+        setCount = sets.count(where: { $0.kind != .warmup })
+        volumeG = Self.volumeG(of: sets, types: types)
         var order: [String] = []
         for set in sets.sorted(by: { $0.completedAt < $1.completedAt }) where !order.contains(set.exerciseID) {
             order.append(set.exerciseID)
@@ -40,6 +37,13 @@ public struct SessionSummary: Equatable, Sendable {
                 guard let old = before.first(where: { $0.kind == record.kind }), record.kind.isBetter(record.value, than: old.value) else { return nil }
                 return BeatenRecord(exerciseID: exerciseID, kind: record.kind, value: record.value, before: old.value)
             }
+        }
+    }
+
+    // The load moved by the working sets.
+    static func volumeG(of sets: [SetLog], types: [String: ExerciseType]) -> Int {
+        sets.filter { $0.kind != .warmup }.reduce(0) { total, set in
+            total + setVolumeG(type: types[set.exerciseID] ?? .weightReps, values: SetValues(set), unilateral: set.unilateral == true)
         }
     }
 }
