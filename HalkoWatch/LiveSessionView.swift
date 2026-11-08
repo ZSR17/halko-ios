@@ -318,6 +318,29 @@ private struct HeartRateText: View {
 }
 
 private extension View {
+    // On a page with a button in its corner, which takes the left of the line of the clock and lowers the top of the
+    // page: the heart rate just after the button, clear of the clock, and as high as on the other pages.
+    func heartBesideCorner(_ cornerEnd: Double) -> some View {
+        clockLine {
+            HStack {
+                HeartRateText()
+                    .clockLineStyle()
+                Spacer(minLength: 0)
+            }
+            // Past the capsule of the button, which goes on beyond its text.
+            .padding(.leading, cornerEnd + 16)
+            .padding(.trailing, 44)
+            .offset(y: -17)
+        }
+    }
+
+    // Where the view ends across the screen, kept in `end`.
+    func measuringEnd(_ end: Binding<Double>) -> some View {
+        onGeometryChange(for: Double.self) { $0.frame(in: .global).maxX } action: { value in
+            end.wrappedValue = value
+        }
+    }
+
     func clockLineStyle() -> some View {
         font(.body.weight(.semibold))
             .lineLimit(1)
@@ -598,6 +621,8 @@ private struct RestPage: View {
     let skip: () -> Void
     let lengthen: () -> Void
     @ScaledMetric(relativeTo: .title2) private var ringSide = 66.0
+    // Where the text of the button in the corner ends, across the screen.
+    @State private var cornerEnd = 0.0
 
     var body: some View {
         NavigationStack {
@@ -616,18 +641,14 @@ private struct RestPage: View {
                 }
             }
             .ignoresSafeArea(edges: .bottom)
-            .clockLine {
-                HeartRateText()
-                    .clockLineStyle()
-                    // Clear of the button in the corner on its left, and as high as on the set's page: the button
-                    // lowers the top of the page.
-                    .padding(.leading, 24)
-                    .offset(y: -6)
-            }
+            .heartBesideCorner(cornerEnd)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Skip", action: skip)
-                        .foregroundStyle(Color(.rest))
+                    Button(action: skip) {
+                        Text("Skip")
+                            .measuringEnd($cornerEnd)
+                    }
+                    .foregroundStyle(Color(.rest))
                 }
             }
         }
@@ -748,6 +769,8 @@ private struct TimerPage: View {
     // The date the page is drawn for, moved at each change of the timer.
     @State private var phase = Date.now
     @ScaledMetric(relativeTo: .title2) private var ringSide = 66.0
+    // Where the text of the button in the corner ends, across the screen.
+    @State private var cornerEnd = 0.0
 
     var body: some View {
         NavigationStack {
@@ -762,17 +785,13 @@ private struct TimerPage: View {
                 }
             }
             .ignoresSafeArea(edges: .bottom)
-            .clockLine {
-                HeartRateText()
-                    .clockLineStyle()
-                    // Clear of the button in the corner on its left, and as high as on the set's page: the button
-                    // lowers the top of the page.
-                    .padding(.leading, 24)
-                    .offset(y: -6)
-            }
+            .heartBesideCorner(cornerEnd)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel", action: cancel)
+                    Button(action: cancel) {
+                        Text("Cancel")
+                            .measuringEnd($cornerEnd)
+                    }
                 }
             }
         }
