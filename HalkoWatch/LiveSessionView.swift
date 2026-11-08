@@ -328,8 +328,9 @@ private extension View {
                 Spacer(minLength: 0)
             }
             // Past the capsule of the button, which goes on beyond its text.
-            .padding(.leading, cornerEnd + 16)
-            .padding(.trailing, 44)
+            .padding(.leading, cornerEnd + 12)
+            // Clear of the clock, at its widest ("10:09"): the number gets smaller rather than running into it.
+            .padding(.trailing, 60)
             .offset(y: -17)
         }
     }
