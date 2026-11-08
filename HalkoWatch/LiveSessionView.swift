@@ -358,13 +358,9 @@ private struct HeartRateText: View {
 private extension View {
     // On a page with a button in its corner, which takes the left of the line of the clock and lowers the top of the
     // page: the heart rate clear of the button and of the clock, and as high as on the other pages. `centred`: in the
-    // middle of the screen, as on the other pages; otherwise just after the button, for a button too wide for that.
+    // middle of the room between them; otherwise just after the button.
     func heartBesideCorner(_ cornerWidth: Double, centred: Bool = false) -> some View {
-        // Past the button: its margin to the edge of the screen, its capsule around the text, and a small gap.
-        let pastButton = cornerWidth + 28
-        // Clear of the clock, at its widest ("10:09"): the number gets smaller rather than running into it.
-        let clearOfClock = 60.0
-        return clockLine {
+        clockLine {
             HStack {
                 HeartRateText(compact: true)
                     .clockLineStyle()
@@ -372,8 +368,10 @@ private extension View {
                     Spacer(minLength: 0)
                 }
             }
-            .padding(.leading, centred ? max(pastButton, clearOfClock) : pastButton)
-            .padding(.trailing, centred ? max(pastButton, clearOfClock) : clearOfClock)
+            // Past the button: its margin to the edge of the screen, its capsule around the text, and a small gap.
+            .padding(.leading, cornerWidth + 28)
+            // Clear of the clock, at its widest ("10:09"): the number gets smaller rather than running into it.
+            .padding(.trailing, 60)
             .offset(y: -17)
         }
     }
