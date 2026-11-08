@@ -355,25 +355,25 @@ private struct HeartRateText: View {
 private extension View {
     // On a page with a button in its corner, which takes the left of the line of the clock and lowers the top of the
     // page: the heart rate just after the button, clear of the clock, and as high as on the other pages.
-    func heartBesideCorner(_ cornerEnd: Double) -> some View {
+    func heartBesideCorner(_ cornerWidth: Double) -> some View {
         clockLine {
             HStack {
                 HeartRateText(compact: true)
                     .clockLineStyle()
                 Spacer(minLength: 0)
             }
-            // Past the capsule of the button, which goes on beyond its text.
-            .padding(.leading, cornerEnd + 12)
+            // Past the button: its margin to the edge of the screen, its capsule around the text, and a small gap.
+            .padding(.leading, cornerWidth + 22)
             // Clear of the clock, at its widest ("10:09"): the number gets smaller rather than running into it.
             .padding(.trailing, 60)
             .offset(y: -17)
         }
     }
 
-    // Where the view ends across the screen, kept in `end`.
-    func measuringEnd(_ end: Binding<Double>) -> some View {
-        onGeometryChange(for: Double.self) { $0.frame(in: .global).maxX } action: { value in
-            end.wrappedValue = value
+    // The width of the view, kept in `width`: unlike its place on the screen, it does not change as the pages move.
+    func measuringWidth(_ width: Binding<Double>) -> some View {
+        onGeometryChange(for: Double.self) { $0.size.width } action: { value in
+            width.wrappedValue = value
         }
     }
 
@@ -657,8 +657,8 @@ private struct RestPage: View {
     let skip: () -> Void
     let lengthen: () -> Void
     @ScaledMetric(relativeTo: .title2) private var ringSide = 66.0
-    // Where the text of the button in the corner ends, across the screen.
-    @State private var cornerEnd = 0.0
+    // The width of the text of the button in the corner.
+    @State private var cornerWidth = 0.0
 
     var body: some View {
         NavigationStack {
@@ -677,12 +677,12 @@ private struct RestPage: View {
                 }
             }
             .ignoresSafeArea(edges: .bottom)
-            .heartBesideCorner(cornerEnd)
+            .heartBesideCorner(cornerWidth)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button(action: skip) {
                         Text("Skip")
-                            .measuringEnd($cornerEnd)
+                            .measuringWidth($cornerWidth)
                     }
                     .foregroundStyle(Color(.rest))
                 }
@@ -805,8 +805,8 @@ private struct TimerPage: View {
     // The date the page is drawn for, moved at each change of the timer.
     @State private var phase = Date.now
     @ScaledMetric(relativeTo: .title2) private var ringSide = 66.0
-    // Where the text of the button in the corner ends, across the screen.
-    @State private var cornerEnd = 0.0
+    // The width of the text of the button in the corner.
+    @State private var cornerWidth = 0.0
 
     var body: some View {
         NavigationStack {
@@ -821,12 +821,12 @@ private struct TimerPage: View {
                 }
             }
             .ignoresSafeArea(edges: .bottom)
-            .heartBesideCorner(cornerEnd)
+            .heartBesideCorner(cornerWidth)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button(action: cancel) {
                         Text("Cancel")
-                            .measuringEnd($cornerEnd)
+                            .measuringWidth($cornerWidth)
                     }
                 }
             }
