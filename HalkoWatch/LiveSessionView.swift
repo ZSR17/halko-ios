@@ -294,26 +294,52 @@ private struct SessionHeader: View {
     }
 }
 
-// The heart rate, when it is measured: in the middle of the line of the clock, on every page of the session.
+// The heart rate, when it is measured, on every page of the session. `compact`: beside a button in the corner, where
+// the line has little room left, without the margin of a label's icon, and the number alone when even that is too wide.
 private struct HeartRateText: View {
+    var compact = false
     @Environment(WorkoutRecorder.self) private var recorder
 
     var body: some View {
         if let heartRate = recorder.heartRate {
             let value = Int(heartRate.rounded())
+            content(value)
+                .accessibilityElement(children: .ignore)
+                .accessibilityAddTraits(.isStaticText)
+                .accessibilityLabel(Text("Heart rate"))
+                .accessibilityValue(Text("\(value) beats per minute"))
+        }
+    }
+
+    @ViewBuilder
+    private func content(_ value: Int) -> some View {
+        if compact {
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 2) {
+                    heart
+                        .imageScale(.small)
+                    number(value)
+                }
+                number(value)
+            }
+        } else {
             Label {
-                Text(verbatim: value.formatted())
-                    .monospacedDigit()
+                number(value)
             } icon: {
-                Image(systemName: "heart.fill")
-                    .foregroundStyle(.red)
+                heart
             }
             .labelStyle(.titleAndIcon)
-            .accessibilityElement(children: .ignore)
-            .accessibilityAddTraits(.isStaticText)
-            .accessibilityLabel(Text("Heart rate"))
-            .accessibilityValue(Text("\(value) beats per minute"))
         }
+    }
+
+    private var heart: some View {
+        Image(systemName: "heart.fill")
+            .foregroundStyle(.red)
+    }
+
+    private func number(_ value: Int) -> some View {
+        Text(verbatim: value.formatted())
+            .monospacedDigit()
     }
 }
 
@@ -323,7 +349,7 @@ private extension View {
     func heartBesideCorner(_ cornerEnd: Double) -> some View {
         clockLine {
             HStack {
-                HeartRateText()
+                HeartRateText(compact: true)
                     .clockLineStyle()
                 Spacer(minLength: 0)
             }
