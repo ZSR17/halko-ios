@@ -28,7 +28,7 @@ struct HalkoWatchApp: App {
                 container = try DemoData.container()
                 _liveSession = State(initialValue: LiveSessionStore(fileURL: nil))
                 _permissions = State(initialValue: Permissions(health: nil, defaults: nil))
-                _recorder = State(initialValue: WorkoutRecorder(health: nil))
+                _recorder = State(initialValue: WorkoutRecorder.demo())
                 phone = nil
                 live = nil
                 return

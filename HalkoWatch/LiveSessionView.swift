@@ -294,29 +294,89 @@ private struct SessionHeader: View {
     }
 }
 
-// The heart rate, when it is measured: in the middle of the line of the clock, on every page of the session.
+// The heart rate, when it is measured, on every page of the session. `compact`: beside a button in the corner, where
+// the line has little room left: without the margin of a label's icon, smaller if needed, and the number alone when
+// even that is too wide.
 private struct HeartRateText: View {
+    var compact = false
     @Environment(WorkoutRecorder.self) private var recorder
 
     var body: some View {
         if let heartRate = recorder.heartRate {
             let value = Int(heartRate.rounded())
+            content(value)
+                .accessibilityElement(children: .ignore)
+                .accessibilityAddTraits(.isStaticText)
+                .accessibilityLabel(Text("Heart rate"))
+                .accessibilityValue(Text("\(value) beats per minute"))
+        }
+    }
+
+    @ViewBuilder
+    private func content(_ value: Int) -> some View {
+        if compact {
+            ViewThatFits(in: .horizontal) {
+                tight(value)
+                tight(value)
+                    .font(.subheadline.weight(.semibold))
+                tight(value)
+                    .font(.footnote.weight(.semibold))
+                number(value)
+            }
+        } else {
             Label {
-                Text(verbatim: value.formatted())
-                    .monospacedDigit()
+                number(value)
             } icon: {
-                Image(systemName: "heart.fill")
-                    .foregroundStyle(.red)
+                heart
             }
             .labelStyle(.titleAndIcon)
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel(Text("Heart rate"))
-            .accessibilityValue(Text("\(value) beats per minute"))
         }
+    }
+
+    private func tight(_ value: Int) -> some View {
+        HStack(spacing: 2) {
+            heart
+                .imageScale(.small)
+            number(value)
+        }
+    }
+
+    private var heart: some View {
+        Image(systemName: "heart.fill")
+            .foregroundStyle(.red)
+    }
+
+    private func number(_ value: Int) -> some View {
+        Text(verbatim: value.formatted())
+            .monospacedDigit()
     }
 }
 
 private extension View {
+    // On a page with a button in its corner, which takes the left of the line of the clock and lowers the top of the
+    // page: the heart rate just after the button, clear of the clock, and as high as on the other pages.
+    func heartBesideCorner(_ cornerWidth: Double) -> some View {
+        clockLine {
+            HStack {
+                HeartRateText(compact: true)
+                    .clockLineStyle()
+                Spacer(minLength: 0)
+            }
+            // Past the button: its margin to the edge of the screen, its capsule around the text, and a small gap.
+            .padding(.leading, cornerWidth + 28)
+            // Clear of the clock, at its widest ("10:09"): the number gets smaller rather than running into it.
+            .padding(.trailing, 60)
+            .offset(y: -17)
+        }
+    }
+
+    // The width of the view, kept in `width`: unlike its place on the screen, it does not change as the pages move.
+    func measuringWidth(_ width: Binding<Double>) -> some View {
+        onGeometryChange(for: Double.self) { $0.size.width } action: { value in
+            width.wrappedValue = value
+        }
+    }
+
     func clockLineStyle() -> some View {
         font(.body.weight(.semibold))
             .lineLimit(1)
@@ -597,6 +657,8 @@ private struct RestPage: View {
     let skip: () -> Void
     let lengthen: () -> Void
     @ScaledMetric(relativeTo: .title2) private var ringSide = 66.0
+    // The width of the text of the button in the corner.
+    @State private var cornerWidth = 0.0
 
     var body: some View {
         NavigationStack {
@@ -615,16 +677,14 @@ private struct RestPage: View {
                 }
             }
             .ignoresSafeArea(edges: .bottom)
-            .clockLine {
-                HeartRateText()
-                    .clockLineStyle()
-                    // Clear of the button in the corner on its left.
-                    .padding(.leading, 24)
-            }
+            .heartBesideCorner(cornerWidth)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Skip", action: skip)
-                        .foregroundStyle(Color(.rest))
+                    Button(action: skip) {
+                        Text("Skip")
+                            .measuringWidth($cornerWidth)
+                    }
+                    .foregroundStyle(Color(.rest))
                 }
             }
         }
@@ -745,6 +805,8 @@ private struct TimerPage: View {
     // The date the page is drawn for, moved at each change of the timer.
     @State private var phase = Date.now
     @ScaledMetric(relativeTo: .title2) private var ringSide = 66.0
+    // The width of the text of the button in the corner.
+    @State private var cornerWidth = 0.0
 
     var body: some View {
         NavigationStack {
@@ -759,15 +821,13 @@ private struct TimerPage: View {
                 }
             }
             .ignoresSafeArea(edges: .bottom)
-            .clockLine {
-                HeartRateText()
-                    .clockLineStyle()
-                    // Clear of the button in the corner on its left.
-                    .padding(.leading, 24)
-            }
+            .heartBesideCorner(cornerWidth)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel", action: cancel)
+                    Button(action: cancel) {
+                        Text("Cancel")
+                            .measuringWidth($cornerWidth)
+                    }
                 }
             }
         }
