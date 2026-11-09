@@ -122,20 +122,28 @@ struct ToolStepper: View {
 
     private var box: some View {
         HStack(spacing: 2) {
-            TextField(text: $text, selection: $selection) {
-                title
-            }
-            .focused(focus, equals: id)
-            .keyboardType(field == .weight ? .decimalPad : .numberPad)
-            .multilineTextAlignment(.center)
-            .fontWeight(.bold)
-            .monospacedDigit()
-            .accessibilityLabel(title)
-            // As wide as its digits, so that they and the unit are centred together between the buttons.
-            .fixedSize(horizontal: true, vertical: false)
+            // As wide as its digits, drawn hidden for that: a text field's own width is not reliable, and it left no room
+            // for the unit. The digits and the unit are then centred together between the buttons.
+            Text(verbatim: text.isEmpty ? "0" : text)
+                .fontWeight(.bold)
+                .monospacedDigit()
+                .padding(.horizontal, 2)
+                .hidden()
+                .overlay {
+                    TextField(text: $text, selection: $selection) {
+                        title
+                    }
+                    .focused(focus, equals: id)
+                    .keyboardType(field == .weight ? .decimalPad : .numberPad)
+                    .multilineTextAlignment(.center)
+                    .fontWeight(.bold)
+                    .monospacedDigit()
+                    .accessibilityLabel(title)
+                }
             if let unit {
                 Text(verbatim: unit)
                     .fontWeight(.bold)
+                    .fixedSize()
                     .accessibilityHidden(true)
             }
         }
