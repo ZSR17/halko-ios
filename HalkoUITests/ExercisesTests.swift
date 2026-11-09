@@ -43,7 +43,14 @@ final class ExercisesTests: XCTestCase {
         snap("Exercise")
         app.scrollViews.firstMatch.swipeUp()
         XCTAssertTrue(app.element(containing: "How to").exists)
+        XCTAssertTrue(app.element(containing: "Progress").exists)
         snap("Exercise, scrolled")
+
+        // A session of its progress opens.
+        let session = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "85 kg")).firstMatch
+        XCTAssertTrue(session.waitForExistence(timeout: 5))
+        session.tap()
+        XCTAssertTrue(app.navigationBars["Push A"].waitForExistence(timeout: 5))
     }
 
     @MainActor
@@ -59,7 +66,7 @@ final class ExercisesTests: XCTestCase {
         custom.tap()
         XCTAssertTrue(app.element(containing: "Weighted bodyweight").waitForExistence(timeout: 5))
         // Never done: no records.
-        XCTAssertFalse(app.element(containing: "Records").exists)
+        XCTAssertFalse(app.element(containing: "Stats").exists)
         try app.auditScreen()
         snap("Exercise, custom")
     }

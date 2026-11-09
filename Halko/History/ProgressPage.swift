@@ -3,22 +3,18 @@ import HalkoCore
 import SwiftData
 import SwiftUI
 
-// The progress of an exercise: chosen among those done, the last one done first; a measure that counts for its type; its
-// curve over a period, which is remembered; and the sessions of that period, each one opening.
+// The Progress page of the History tab: an exercise chosen among those done, the last one done first, and its progress.
 struct ProgressPage: View {
-    // Listed under the chart before « See the … others ».
-    private static let listed = 5
-
     let history: SessionHistory
     let text: HistoryText
-    @AppStorage("progressPeriod") private var period = ProgressPeriod.threeMonths
     @State private var exerciseID: String?
-    @State private var chosenMeasure: ProgressMeasure?
-    @State private var showsAll = false
 
     var body: some View {
         if let exercise = history.exercises.first(where: { $0.id == exerciseID }) ?? history.exercises.first {
-            content(exercise)
+            VStack(alignment: .leading, spacing: 10) {
+                exerciseMenu(exercise)
+                ExerciseProgressPanel(exercise: exercise, history: history, text: text)
+            }
         } else {
             Text("Do a session to track your progress.")
                 .foregroundStyle(Color(.secondaryText))
@@ -28,13 +24,46 @@ struct ProgressPage: View {
         }
     }
 
-    private func content(_ exercise: Exercise) -> some View {
+    private func exerciseMenu(_ exercise: Exercise) -> some View {
+        Menu {
+            Picker("Exercise", selection: Binding {
+                exercise.id
+            } set: { id in
+                exerciseID = id
+            }) {
+                ForEach(history.exercises) { exercise in
+                    Text(verbatim: exercise.localizedName)
+                        .tag(exercise.id)
+                }
+            }
+            .pickerStyle(.inline)
+        } label: {
+            menuLabel(Text(verbatim: exercise.localizedName).font(.headline))
+        }
+        .accessibilityLabel(Text("Exercise"))
+        .accessibilityValue(Text(verbatim: exercise.localizedName))
+    }
+}
+
+// The progress of an exercise, in the History tab and on its page: a measure that counts for its type; its curve over a
+// period, which is remembered; and the sessions of that period, each one opening.
+struct ExerciseProgressPanel: View {
+    // Listed under the chart before « See the … others ».
+    private static let listed = 5
+
+    let exercise: Exercise
+    let history: SessionHistory
+    let text: HistoryText
+    @AppStorage("progressPeriod") private var period = ProgressPeriod.threeMonths
+    @State private var chosenMeasure: ProgressMeasure?
+    @State private var showsAll = false
+
+    var body: some View {
         let measures = ProgressMeasure.measures(for: exercise.exerciseType)
         let measure = chosenMeasure.flatMap { measures.contains($0) ? $0 : nil } ?? measures[0]
         let progress = history.progress(of: exercise, measure: measure)
         let shown = progress.points(in: period, now: .now, calendar: .current)
-        return VStack(alignment: .leading, spacing: 10) {
-            exerciseMenu(exercise)
+        VStack(alignment: .leading, spacing: 10) {
             VStack(alignment: .leading, spacing: 6) {
                 measureMenu(measures, chosen: measure)
                 headline(progress)
@@ -63,27 +92,9 @@ struct ProgressPage: View {
         .onChange(of: period) {
             showsAll = false
         }
-    }
-
-    private func exerciseMenu(_ exercise: Exercise) -> some View {
-        Menu {
-            Picker("Exercise", selection: Binding {
-                exercise.id
-            } set: { id in
-                exerciseID = id
-                showsAll = false
-            }) {
-                ForEach(history.exercises) { exercise in
-                    Text(verbatim: exercise.localizedName)
-                        .tag(exercise.id)
-                }
-            }
-            .pickerStyle(.inline)
-        } label: {
-            menuLabel(Text(verbatim: exercise.localizedName).font(.headline))
+        .onChange(of: exercise.id) {
+            showsAll = false
         }
-        .accessibilityLabel(Text("Exercise"))
-        .accessibilityValue(Text(verbatim: exercise.localizedName))
     }
 
     @ViewBuilder
@@ -111,18 +122,6 @@ struct ProgressPage: View {
                 .font(.subheadline.weight(.semibold))
                 .frame(minHeight: 44)
         }
-    }
-
-    private func menuLabel(_ title: some View) -> some View {
-        HStack(spacing: 6) {
-            title
-                .foregroundStyle(Color(.label))
-            Image(systemName: "chevron.down")
-                .font(.footnote.weight(.semibold))
-                .foregroundStyle(Color(.secondaryText))
-        }
-        .frame(minHeight: 44)
-        .contentShape(.rect)
     }
 
     // The record and the day it was reached; for an estimate, which is not a record, the latest one.
@@ -198,6 +197,18 @@ struct ProgressPage: View {
         .padding(.horizontal, 14)
         .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 18))
     }
+}
+
+private func menuLabel(_ title: some View) -> some View {
+    HStack(spacing: 6) {
+        title
+            .foregroundStyle(Color(.label))
+        Image(systemName: "chevron.down")
+            .font(.footnote.weight(.semibold))
+            .foregroundStyle(Color(.secondaryText))
+    }
+    .frame(minHeight: 44)
+    .contentShape(.rect)
 }
 
 // The curve of a measure, the oldest session on the left, with a dot on the latest one.
