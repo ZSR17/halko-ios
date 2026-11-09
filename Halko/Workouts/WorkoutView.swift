@@ -73,6 +73,7 @@ struct WorkoutView: View {
             Text("Finish “\(session.name)” before starting another one.")
         }
         .navigationTitle(workout.name)
+        .navigationBarTitleDisplayMode(.large)
         .navigationSubtitle("\(items.count) exercises")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
