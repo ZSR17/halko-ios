@@ -39,6 +39,7 @@ while IFS= read -r file; do
     # The tab and the page of a workout, which the editor and the session open from.
     Halko/Workouts/*) tests+=(WorkoutsTests WorkoutEditorTests LiveSessionTests) ;;
     Halko/History/*) tests+=(HistoryTests) ;;
+    Halko/Tools/*) tests+=(ToolsTests) ;;
     # What the end of a session and the history show alike.
     Halko/Session/SessionFigures.swift) tests+=(LiveSessionTests HistoryTests) ;;
     # The session, and what it shows outside the app (the widgets are not tested on screen: only built).

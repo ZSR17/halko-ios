@@ -154,6 +154,15 @@ enum DemoData {
             ))
         }
         try context.save()
+        // The plates of the mockups, and the weight they make.
+        UserDefaults.standard.set(try JSONEncoder().encode(PlateSettings(barG: 20_000, targetG: 100_000, plates: [
+            Plate(weightG: 25_000, count: 2),
+            Plate(weightG: 20_000, count: 2),
+            Plate(weightG: 15_000, count: 2),
+            Plate(weightG: 10_000, count: 4),
+            Plate(weightG: 5_000, count: 4),
+            Plate(weightG: 2_500, count: 2),
+        ])), forKey: PlateSettings.storageKey)
         return container
     }
 }
