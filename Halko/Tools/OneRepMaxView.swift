@@ -106,7 +106,7 @@ struct OneRepMaxView: View {
                     reserve = Int(value)
                 }
             }
-            Section("Method") {
+            Section {
                 FlowLayout(spacing: 8, lineSpacing: 8) {
                     ForEach(OneRepMaxFormula.allCases, id: \.self) { method in
                         Toggle(isOn: Binding { formula == method } set: { if $0 { formula = method } }) {
@@ -115,6 +115,10 @@ struct OneRepMaxView: View {
                         .toggleStyle(ChipToggleStyle())
                     }
                 }
+            } header: {
+                // In a darker grey than the system's, for a contrast of 4.5:1.
+                Text("Method")
+                    .foregroundStyle(Color(.secondaryText))
             }
             Section {
                 VStack(alignment: .leading, spacing: 4) {

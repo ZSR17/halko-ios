@@ -20,6 +20,7 @@ final class ToolsTests: XCTestCase {
         XCTAssertTrue(app.element(containing: "with your plates").waitForExistence(timeout: 5))
         snap("Plates, closest")
 
+        app.reveal(app.buttons["Add a plate"])
         app.buttons["Add a plate"].tap()
         XCTAssertTrue(app.alerts.firstMatch.waitForExistence(timeout: 5))
         snap("Plates › Add a plate")
@@ -32,7 +33,7 @@ final class ToolsTests: XCTestCase {
         let tool = app.buttons["1RM calculator"]
         XCTAssertTrue(tool.waitForExistence(timeout: 5))
         tool.tap()
-        XCTAssertTrue(app.element(containing: "Estimated 1RM").waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Exercise"].waitForExistence(timeout: 5))
         try app.auditScreen()
         snap("1RM")
 
@@ -41,13 +42,14 @@ final class ToolsTests: XCTestCase {
         let bench = app.buttons["Barbell Bench Press - Medium Grip"]
         XCTAssertTrue(bench.waitForExistence(timeout: 5))
         bench.tap()
-        XCTAssertTrue(app.element(containing: "Estimated 1RM").waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Exercise"].waitForExistence(timeout: 5))
         snap("1RM, from an exercise")
 
         // A line of the table opens the plates for its weight.
-        app.collectionViews.firstMatch.swipeUp()
         let line = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "95")).firstMatch
-        XCTAssertTrue(line.waitForExistence(timeout: 5))
+        app.reveal(line)
+        XCTAssertTrue(app.element(containing: "Estimated 1RM").exists)
+        snap("1RM, table")
         line.tap()
         XCTAssertTrue(app.navigationBars["Plate calculator"].waitForExistence(timeout: 5))
         snap("1RM › Plates")
@@ -74,5 +76,17 @@ final class ToolsTests: XCTestCase {
         XCTAssertTrue(app.element(containing: "Total weight").waitForExistence(timeout: 5))
         try app.auditScreen()
         snap("Plates, largest text")
+    }
+}
+
+extension XCUIApplication {
+    // The rows of a list exist only once near the screen.
+    @MainActor
+    func reveal(_ element: XCUIElement) {
+        var swipes = 0
+        while !element.isHittable && swipes < 6 {
+            collectionViews.firstMatch.swipeUp(velocity: .slow)
+            swipes += 1
+        }
     }
 }

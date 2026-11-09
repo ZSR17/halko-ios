@@ -35,9 +35,9 @@ private struct ToolRow: View {
         HStack(spacing: 14) {
             Image(systemName: symbol)
                 .font(.title3)
-                .foregroundStyle(.tint)
+                .foregroundStyle(Color(.onAccent))
                 .frame(width: iconSide, height: iconSide)
-                .background(Color(.tertiarySystemFill), in: .rect(cornerRadius: 14))
+                .background(.tint, in: .rect(cornerRadius: 14))
                 .accessibilityHidden(true)
             title
                 .font(.headline)
@@ -77,7 +77,9 @@ struct ToolStepper: View {
     @State private var text = ""
     @State private var selection: TextSelection?
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-    @ScaledMetric(relativeTo: .body) private var boxWidth = 64.0
+    // Room for "100.5" beside its unit, for a count less.
+    @ScaledMetric(relativeTo: .body) private var weightWidth = 68.0
+    @ScaledMetric(relativeTo: .body) private var countWidth = 40.0
     @ScaledMetric(relativeTo: .body) private var buttonSide = 44.0
 
     private var isFocused: Bool {
@@ -97,6 +99,8 @@ struct ToolStepper: View {
                     .accessibilityLabel(more)
             }
         }
+        // Its buttons and its box on a line, at the largest text sizes too.
+        .dynamicTypeSize(...DynamicTypeSize.accessibility1)
         .onAppear {
             text = fields.text(value, of: field)
         }
@@ -128,13 +132,14 @@ struct ToolStepper: View {
             .fontWeight(.bold)
             .monospacedDigit()
             .accessibilityLabel(title)
+            .frame(width: field == .weight ? weightWidth : countWidth)
             if let unit {
                 Text(verbatim: unit)
                     .fontWeight(.bold)
                     .accessibilityHidden(true)
             }
         }
-        .frame(minWidth: boxWidth, minHeight: 44)
+        .frame(minHeight: 44)
     }
 
     private func button(_ symbol: String, by amount: Double) -> some View {

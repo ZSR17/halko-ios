@@ -70,7 +70,7 @@ struct PlatesView: View {
             Section {
                 answer
             }
-            Section("My plates") {
+            Section {
                 ForEach(settings.plates.sorted { $0.weightG > $1.weightG }) { plate in
                     plateRow(plate)
                         .swipeActions {
@@ -83,6 +83,10 @@ struct PlatesView: View {
                     newWeight = ""
                     adding = true
                 }
+            } header: {
+                // In a darker grey than the system's, for a contrast of 4.5:1.
+                Text("My plates")
+                    .foregroundStyle(Color(.secondaryText))
             }
         }
         .scrollDismissesKeyboard(.immediately)
@@ -203,12 +207,16 @@ private struct LoadView: View {
             if !load.perSide.isEmpty {
                 BarDrawing(load: load, fields: fields)
                     .frame(height: 90)
+                    // Its numbers stay within the plates.
+                    .dynamicTypeSize(.large)
                     .accessibilityHidden(true)
             }
             Text(verbatim: details)
                 .frame(maxWidth: .infinity)
                 .multilineTextAlignment(.center)
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("plates-load")
     }
 
     // "Per side: 1 × 25 kg + 1 × 15 kg".
