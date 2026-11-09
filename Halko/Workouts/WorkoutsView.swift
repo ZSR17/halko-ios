@@ -75,6 +75,13 @@ struct WorkoutsView: View {
         .navigationDestination(for: Workout.self) { workout in
             WorkoutView(workout: workout)
         }
+        .navigationDestination(for: Exercise.self) { exercise in
+            ExerciseView(exercise: exercise)
+        }
+        // From the progress on the page of an exercise.
+        .navigationDestination(for: PastSessionLink.self) { link in
+            PastSessionView(link: link)
+        }
     }
 }
 

@@ -124,34 +124,16 @@ struct LiveExerciseView: View {
     }
 
     private var header: some View {
-        let exercise = table.exercise(index)
-        let sets = PlannedSets(item.targets, type: item.exerciseType, equipment: item.equipment, unit: table.fields.weightUnit)
-        return HStack(alignment: .top, spacing: 12) {
-            ExerciseThumbnail(mediaID: exercise?.mediaIDs.first)
-            VStack(alignment: .leading, spacing: 4) {
-                Text(verbatim: table.name(index))
-                    .font(.headline)
-                if !sets.working.isEmpty {
-                    Text(verbatim: table.text.working(sets, type: item.exerciseType, perSide: item.unilateral, sidesPauseS: item.sidesPauseS))
-                        .font(.subheadline)
-                        .foregroundStyle(Color(.secondaryText))
+        HStack(alignment: .top, spacing: 12) {
+            // A tap on its picture or its name opens the page of the exercise.
+            if let exercise = table.exercise(index) {
+                NavigationLink(value: exercise) {
+                    summary
                 }
-                if item.supersetGroup != nil {
-                    Tag(Text("Superset"), color: Color(.superset))
-                }
-                if let note = item.note {
-                    Label {
-                        Text(verbatim: note)
-                    } icon: {
-                        Image(systemName: "pencil")
-                            .accessibilityHidden(true)
-                    }
-                    .font(.subheadline)
-                }
+                .buttonStyle(.plain)
+            } else {
+                summary
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .accessibilityElement(children: .combine)
-            .accessibilityAddTraits(.isHeader)
             if table.state.canDeleteExercise {
                 Menu {
                     Button("Delete this exercise", systemImage: "trash", role: .destructive) {
@@ -180,6 +162,38 @@ struct LiveExerciseView: View {
                 }
             }
         }
+    }
+
+    private var summary: some View {
+        let sets = PlannedSets(item.targets, type: item.exerciseType, equipment: item.equipment, unit: table.fields.weightUnit)
+        return HStack(alignment: .top, spacing: 12) {
+            ExerciseThumbnail(mediaID: table.exercise(index)?.mediaIDs.first)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(verbatim: table.name(index))
+                    .font(.headline)
+                if !sets.working.isEmpty {
+                    Text(verbatim: table.text.working(sets, type: item.exerciseType, perSide: item.unilateral, sidesPauseS: item.sidesPauseS))
+                        .font(.subheadline)
+                        .foregroundStyle(Color(.secondaryText))
+                }
+                if item.supersetGroup != nil {
+                    Tag(Text("Superset"), color: Color(.superset))
+                }
+                if let note = item.note {
+                    Label {
+                        Text(verbatim: note)
+                    } icon: {
+                        Image(systemName: "pencil")
+                            .accessibilityHidden(true)
+                    }
+                    .font(.subheadline)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .contentShape(.rect)
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isHeader)
     }
 
     private var hasSetsDone: Bool {

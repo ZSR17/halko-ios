@@ -105,6 +105,13 @@ struct LiveSessionView: View {
             .toolbar {
                 toolbar(table)
             }
+            // The page of an exercise, without leaving the session, and a session of its progress.
+            .navigationDestination(for: Exercise.self) { exercise in
+                ExerciseView(exercise: exercise)
+            }
+            .navigationDestination(for: PastSessionLink.self) { link in
+                PastSessionView(link: link)
+            }
         }
         .alert("Discard the session?", isPresented: $discarding) {
             Button("Discard", role: .destructive) {
