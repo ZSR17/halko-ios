@@ -31,6 +31,9 @@ final class ExercisesTests: XCTestCase {
         app.searchFields.firstMatch.typeText("medium bench")
         let bench = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Barbell Bench Press - Medium Grip")).firstMatch
         XCTAssertTrue(bench.waitForExistence(timeout: 5))
+        // The title and its button stay while searching.
+        XCTAssertTrue(app.navigationBars["Exercises"].buttons["New exercise"].exists)
+        snap("Exercises, searching")
         bench.tap()
 
         // The records of the sample sessions: 85 kg × 3 before, 80 kg × 8 today.
