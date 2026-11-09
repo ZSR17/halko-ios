@@ -1,14 +1,19 @@
 import HalkoCore
+import os
 import SwiftData
 import SwiftUI
 
-// The page of an exercise: its pictures, what it is, the muscles it works, the records from the sets done of it, and
-// how to do it, in the language of the app. "Edit" changes it in a sheet; "Add to a workout" asks which one, then opens
+// The page of an exercise: its pictures, what it is, the muscles it works, the stats and the progress from the sets done
+// of it, and how to do it, in the language of the app. "Edit" changes it in a sheet; "Add to a workout" asks which one, then opens
 // its editor with the exercise added.
 struct ExerciseView: View {
+    private static let logger = Logger(subsystem: "com.zsr.halko", category: "exercises")
+
     let exercise: Exercise
     @Query private var sets: [SetLog]
     @State private var sheet: ExerciseSheet?
+    @State private var history: SessionHistory?
+    @Environment(\.modelContext) private var context
     @Environment(\.locale) private var locale
     @Environment(\.dismiss) private var dismiss
 
@@ -43,6 +48,12 @@ struct ExerciseView: View {
                     WorkedMusclesCard(muscles: muscles)
                 }
                 RecordTiles(records: ExerciseRecords(sets: sets, type: exercise.exerciseType), type: exercise.exerciseType, text: SetsText(locale: locale))
+                if let history, history.exercises.contains(where: { $0.id == exercise.id }) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Heading("Progress")
+                        ExerciseProgressPanel(exercise: exercise, history: history, text: HistoryText(sets: SetsText(locale: locale)))
+                    }
+                }
                 if !instructions.isEmpty {
                     Steps(steps: instructions)
                 }
@@ -50,6 +61,13 @@ struct ExerciseView: View {
             .padding([.horizontal, .bottom])
         }
         .background(Color(.systemGroupedBackground))
+        .task(id: sets.map(\.updatedAt)) {
+            do {
+                history = try context.sessionHistory()
+            } catch {
+                Self.logger.error("Cannot read the history of the exercise: \(String(describing: error))")
+            }
+        }
         // Below the steps, never over them.
         .safeAreaInset(edge: .bottom) {
             Button {
@@ -121,7 +139,7 @@ private struct RecordTiles: View {
     var body: some View {
         if !records.isEmpty {
             VStack(alignment: .leading, spacing: 8) {
-                Heading("Records")
+                Heading("Stats")
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: tileWidth), spacing: 8)], alignment: .leading, spacing: 8) {
                     ForEach(records.records, id: \.kind) { record in
                         tile(text.record(record), caption: Text(record.kind.name))

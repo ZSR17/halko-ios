@@ -28,6 +28,10 @@ struct ExercisesView: View {
         .navigationDestination(for: Exercise.self) { exercise in
             ExerciseView(exercise: exercise)
         }
+        // From the progress on the page of an exercise.
+        .navigationDestination(for: PastSessionLink.self) { link in
+            PastSessionView(link: link)
+        }
     }
 }
 
