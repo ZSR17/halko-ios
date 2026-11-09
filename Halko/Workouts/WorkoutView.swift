@@ -240,10 +240,29 @@ private struct PlannedExerciseRow: View {
     let exercise: Exercise?
     let text: SetsText
 
+    // A tap opens the page of the exercise.
     var body: some View {
+        if let exercise {
+            NavigationLink(value: exercise) {
+                HStack(spacing: 8) {
+                    details
+                    Image(systemName: "chevron.right")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(Color(.secondaryText))
+                        .accessibilityHidden(true)
+                }
+                .contentShape(.rect)
+            }
+            .buttonStyle(.plain)
+        } else {
+            details
+        }
+    }
+
+    private var details: some View {
         let type = exercise?.exerciseType ?? .weightReps
         let sets = PlannedSets(item.targets, type: type, equipment: exercise?.equipment ?? [], unit: text.weightUnit)
-        HStack(alignment: .top, spacing: 12) {
+        return HStack(alignment: .top, spacing: 12) {
             ExerciseThumbnail(mediaID: exercise?.mediaIDs.first)
             VStack(alignment: .leading, spacing: 4) {
                 FlowLayout(spacing: 8, lineSpacing: 4) {

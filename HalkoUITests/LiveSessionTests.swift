@@ -88,6 +88,23 @@ final class LiveSessionTests: XCTestCase {
     }
 
     @MainActor
+    func testExerciseOpensFromTheSession() throws {
+        let app = launch(language: "en", locale: "en_GB")
+        app.openSessionInProgress()
+        XCTAssertTrue(app.element(containing: "Set 2 of 4 · Barbell Bench Press - Medium Grip").waitForExistence(timeout: 30))
+
+        let exercise = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Barbell Bench Press - Medium Grip")).firstMatch
+        XCTAssertTrue(exercise.waitForExistence(timeout: 5))
+        exercise.tap()
+        XCTAssertTrue(app.element(containing: "Max weight").waitForExistence(timeout: 5))
+        snap("Session › Exercise")
+
+        // Back in the session, where it was.
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        XCTAssertTrue(app.element(containing: "Set 2 of 4 · Barbell Bench Press - Medium Grip").waitForExistence(timeout: 5))
+    }
+
+    @MainActor
     func testLiveSessionInFrench() throws {
         let app = launch(language: "fr", locale: "fr_FR")
         app.openSessionInProgress()

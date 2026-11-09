@@ -75,6 +75,18 @@ final class WorkoutsTests: XCTestCase {
     }
 
     @MainActor
+    func testExerciseOpensFromTheWorkoutPage() throws {
+        let app = launch(language: "en", locale: "en_GB")
+        app.openPushA()
+        let exercise = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "4 × 8 · 80 kg")).firstMatch
+        XCTAssertTrue(exercise.waitForExistence(timeout: 30))
+        exercise.tap()
+        XCTAssertTrue(app.element(containing: "Max weight").waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Add to a workout"].exists)
+        snap("Workout › Exercise")
+    }
+
+    @MainActor
     func testWorkoutPageInFrench() throws {
         let app = launch(language: "fr", locale: "fr_FR")
 
