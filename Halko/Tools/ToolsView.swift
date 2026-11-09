@@ -77,9 +77,8 @@ struct ToolStepper: View {
     @State private var text = ""
     @State private var selection: TextSelection?
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-    // Room for "100.5 kg", for a count less.
-    @ScaledMetric(relativeTo: .body) private var weightWidth = 100.0
-    @ScaledMetric(relativeTo: .body) private var countWidth = 40.0
+    // Room for "100.5 kg", the same for every value, so that the buttons of a page line up.
+    @ScaledMetric(relativeTo: .body) private var boxWidth = 100.0
 
     private var isFocused: Bool {
         focus.wrappedValue == id
@@ -150,7 +149,7 @@ struct ToolStepper: View {
             }
         }
         // Grows with the text, up to what still leaves room for the buttons on the line.
-        .frame(width: field == .weight ? min(weightWidth, 170) : min(countWidth, 80))
+        .frame(width: min(boxWidth, 170))
         .frame(minHeight: 44)
     }
 
