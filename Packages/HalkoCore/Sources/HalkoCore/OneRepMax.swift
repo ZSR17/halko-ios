@@ -1,7 +1,7 @@
 import Foundation
 
 // One-rep max estimates from a set of `reps` at `weight` (any unit). Most of them assume a set taken close to failure.
-public enum OneRepMaxFormula: Sendable, CaseIterable {
+public enum OneRepMaxFormula: String, Sendable, CaseIterable {
     case brzycki, epley, mcglothin, lombardi, mayhew, oconner, wathen
 
     func estimate(_ weight: Double, reps: Double) -> Double {

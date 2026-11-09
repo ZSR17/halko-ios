@@ -29,8 +29,7 @@ struct RootView: View {
             }
             Tab("Tools", systemImage: "plus.forwardslash.minus") {
                 NavigationStack {
-                    List {}
-                        .navigationTitle("Tools")
+                    ToolsView()
                         .toolbarTitleDisplayMode(.inlineLarge)
                 }
             }

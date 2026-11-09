@@ -3548,6 +3548,356 @@
           }
         }
       }
+    },
+    "Plate calculator" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Calculateur de disques"
+          }
+        }
+      }
+    },
+    "1RM calculator" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Calculateur de 1RM"
+          }
+        }
+      }
+    },
+    "Total weight" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Charge totale"
+          }
+        }
+      }
+    },
+    "Bar" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Barre"
+          }
+        }
+      }
+    },
+    "My plates" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mes disques"
+          }
+        }
+      }
+    },
+    "Add a plate" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter un disque"
+          }
+        }
+      }
+    },
+    "Plate weight" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poids du disque"
+          }
+        }
+      }
+    },
+    "Lighter bar" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Barre plus légère"
+          }
+        }
+      }
+    },
+    "Heavier bar" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Barre plus lourde"
+          }
+        }
+      }
+    },
+    "One plate of %@ less" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un disque de %@ de moins"
+          }
+        }
+      }
+    },
+    "One plate of %@ more" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un disque de %@ de plus"
+          }
+        }
+      }
+    },
+    "The weight is lighter than the bar." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le poids voulu est plus léger que la barre."
+          }
+        }
+      }
+    },
+    "Add your plates first, at least two of each weight (one on each side)." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajoute d’abord tes disques, au moins deux de chaque poids (un de chaque côté)."
+          }
+        }
+      }
+    },
+    "You can't make %@ with your plates. The closest:" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de faire %@ avec tes disques. Voici le plus proche :"
+          }
+        }
+      }
+    },
+    "You don't have enough plates to go higher." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu n’as pas assez de disques pour monter au-dessus."
+          }
+        }
+      }
+    },
+    "%@ in total, bar included" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ au total, barre comprise"
+          }
+        }
+      }
+    },
+    "Choose %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisir %@"
+          }
+        }
+      }
+    },
+    "Just the bar, nothing to add." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La barre seule, rien à ajouter."
+          }
+        }
+      }
+    },
+    "Per side: %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Par côté : %@"
+          }
+        }
+      }
+    },
+    "Load" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Charge"
+          }
+        }
+      }
+    },
+    "Repetitions" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Répétitions"
+          }
+        }
+      }
+    },
+    "Method" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Méthode"
+          }
+        }
+      }
+    },
+    "Optional: fills in the load and reps with your best set." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Facultatif : remplit charge et réps avec ta meilleure série."
+          }
+        }
+      }
+    },
+    "Choose" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisir"
+          }
+        }
+      }
+    },
+    "Add" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter"
+          }
+        }
+      }
+    },
+    "≈ %lld reps" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "≈ %lld rep"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "≈ %lld reps"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "≈ %lld rép"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "≈ %lld réps"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld+ reps" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld+ réps"
+          }
+        }
+      }
+    },
+    "In reserve" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En réserve"
+          }
+        }
+      }
+    },
+    "One rep less in reserve" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une répétition de moins en réserve"
+          }
+        }
+      }
+    },
+    "One rep more in reserve" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une répétition de plus en réserve"
+          }
+        }
+      }
+    },
+    "Counted as %lld reps to failure (%lld done + %lld in reserve)" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compté comme %lld répétitions jusqu’à l’échec (%lld faites + %lld en réserve)"
+          }
+        }
+      }
+    },
+    "Tap a line to see the plates to put on the bar." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Touche une ligne pour voir les disques à mettre sur la barre."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
