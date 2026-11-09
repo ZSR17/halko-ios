@@ -307,7 +307,11 @@ extension ModelContext {
 
     // Removes the session and its sets.
     public func discardSession(_ state: LiveState, now: Date = .now) throws {
-        let id = state.sessionID
+        try removeSession(id: state.sessionID, now: now)
+    }
+
+    // Kept as removed, so that the deletion reaches every device. The workout saved in Health is not touched.
+    public func removeSession(id: String, now: Date = .now) throws {
         for session in try fetch(FetchDescriptor(predicate: #Predicate<Session> { $0.id == id })) {
             session.removed = true
             session.updatedAt = now

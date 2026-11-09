@@ -73,12 +73,13 @@ final class LiveSessionTests: XCTestCase {
         app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.08)).tap()
         XCTAssertTrue(app.element(containing: "Exercise 1 of 5").waitForExistence(timeout: 5))
 
-        // Saved: the summary, with the estimated 1RM beaten (80 × 8 today, 85 × 3 before).
+        // Saved: the summary, with the load beaten (80 × 8 today, 85 × 3 twice before); an estimated 1RM beaten is no record.
         app.buttons["Finish"].tap()
         snap("Session › Finish")
         app.buttons["Save the session"].tap()
         XCTAssertTrue(app.staticTexts["Workout saved"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.element(containing: "Estimated 1RM").exists)
+        XCTAssertTrue(app.element(containing: "Session volume").exists)
+        XCTAssertFalse(app.element(containing: "Estimated 1RM").exists)
         try app.auditScreen()
         snap("Session › Summary")
         app.buttons["Done"].tap()

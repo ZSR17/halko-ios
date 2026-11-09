@@ -101,6 +101,7 @@ struct FolderView: View {
             }
         }
         .navigationTitle(folder.name)
+        .navigationBarTitleDisplayMode(.large)
         .navigationSubtitle("\(workouts.count) workouts")
     }
 }

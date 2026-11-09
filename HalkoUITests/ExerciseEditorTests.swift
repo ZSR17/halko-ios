@@ -52,7 +52,7 @@ final class ExerciseEditorTests: XCTestCase {
         let alert = app.alerts.firstMatch
         XCTAssertTrue(alert.waitForExistence(timeout: 5))
         XCTAssertTrue(alert.label.contains("Duration"))
-        XCTAssertTrue(alert.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS %@", "Your 11 sets")).firstMatch.exists)
+        XCTAssertTrue(alert.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS %@", "Your 23 sets")).firstMatch.exists)
         snap("Edit exercise, type change")
         alert.buttons["Cancel"].tap()
         XCTAssertFalse(app.buttons["Save"].isEnabled)

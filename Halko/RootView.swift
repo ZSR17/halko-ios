@@ -1,8 +1,8 @@
 import HalkoCore
 import SwiftUI
 
-// The five tabs, which become a sidebar when there is room. Each tab has its own navigation stack. The session in
-// progress covers them, in full screen.
+// The five tabs, which become a sidebar when there is room. Each tab has its own navigation stack, its title large on
+// the line of its buttons, so that the page starts high. The session in progress covers them, in full screen.
 struct RootView: View {
     @Environment(LiveSessionStore.self) private var liveSession
 
@@ -12,23 +12,26 @@ struct RootView: View {
             Tab("Workouts", systemImage: "dumbbell") {
                 NavigationStack {
                     WorkoutsView()
+                        .toolbarTitleDisplayMode(.inlineLarge)
                 }
             }
             Tab("Exercises", systemImage: "list.bullet") {
                 NavigationStack {
                     ExercisesView()
+                        .toolbarTitleDisplayMode(.inlineLarge)
                 }
             }
             Tab("History", systemImage: "clock") {
                 NavigationStack {
-                    List {}
-                        .navigationTitle("History")
+                    HistoryView()
+                        .toolbarTitleDisplayMode(.inlineLarge)
                 }
             }
             Tab("Tools", systemImage: "plus.forwardslash.minus") {
                 NavigationStack {
                     List {}
                         .navigationTitle("Tools")
+                        .toolbarTitleDisplayMode(.inlineLarge)
                 }
             }
             Tab("Settings", systemImage: "slider.horizontal.3") {
@@ -41,6 +44,7 @@ struct RootView: View {
                         }
                     }
                     .navigationTitle("Settings")
+                    .toolbarTitleDisplayMode(.inlineLarge)
                 }
             }
         }

@@ -14,7 +14,7 @@ public struct FieldText: Sendable {
     }
 
     // Metres in one distance unit.
-    static func metres(_ unit: DistanceUnit) -> Double {
+    public static func metres(_ unit: DistanceUnit) -> Double {
         switch unit {
         case .km: 1000
         case .mi: 1609.344

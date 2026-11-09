@@ -28,7 +28,7 @@ struct SessionSummaryView: View {
                 if let summary {
                     stats(summary, text: text)
                     if !summary.records.isEmpty {
-                        records(summary, text: text)
+                        BeatenRecords(records: summary.records, names: names, text: text)
                     }
                 }
                 if let health = recorder.saved, health.sessionID == session.id {
@@ -86,62 +86,12 @@ struct SessionSummaryView: View {
     private func stats(_ summary: SessionSummary, text: SetsText) -> some View {
         let seconds = Int(summary.duration.rounded())
         let duration = Duration.seconds(seconds).formatted(.time(pattern: seconds >= 3600 ? .hourMinuteSecond : .minuteSecond))
-        return ViewThatFits(in: .horizontal) {
-            HStack(alignment: .top) {
-                stat(duration, Text("duration"))
-                Spacer()
-                stat(summary.setCount.formatted(), Text("sets"))
-                Spacer()
-                stat(text.volume(summary.volumeG), Text("volume"))
-            }
-            VStack(alignment: .leading, spacing: 12) {
-                stat(duration, Text("duration"))
-                stat(summary.setCount.formatted(), Text("sets"))
-                stat(text.volume(summary.volumeG), Text("volume"))
-            }
-        }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 18))
-    }
-
-    private func stat(_ value: String, _ label: Text) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(verbatim: value)
-                .font(.title2.bold())
-                .monospacedDigit()
-            label
-                .font(.caption)
-                .foregroundStyle(Color(.secondaryText))
-        }
-        .accessibilityElement(children: .combine)
-    }
-
-    private func records(_ summary: SessionSummary, text: SetsText) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Records beaten")
-                .font(.title3.bold())
-                .accessibilityAddTraits(.isHeader)
-            VStack(alignment: .leading, spacing: 12) {
-                ForEach(summary.records, id: \.self) { record in
-                    HStack(alignment: .firstTextBaseline, spacing: 10) {
-                        Image(systemName: "trophy")
-                            .foregroundStyle(Color(.warmup))
-                            .accessibilityHidden(true)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(verbatim: names[record.exerciseID] ?? String(localized: "Exercise"))
-                                .font(.headline)
-                            Text(verbatim: beaten(record, text: text))
-                                .font(.subheadline)
-                        }
-                    }
-                    .accessibilityElement(children: .combine)
-                }
-            }
-            .padding(16)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 18))
-        }
+        return ThreeFigures(
+            first: Figure(value: duration, label: Text("duration")),
+            second: Figure(value: summary.setCount.formatted(), label: Text("sets")),
+            third: Figure(value: text.volume(summary.volumeG), label: Text("volume"))
+        )
+        .sessionCard()
     }
 
     private func healthCard(_ health: HealthResult) -> some View {
@@ -178,14 +128,6 @@ struct SessionSummaryView: View {
                 .monospacedDigit()
         }
         .accessibilityElement(children: .combine)
-    }
-
-    // "Estimated 1RM 101.3 kg (before 98.5 kg)".
-    private func beaten(_ record: SessionSummary.BeatenRecord, text: SetsText) -> String {
-        let kind = String(localized: record.kind.name)
-        let value = text.record(ExerciseRecord(kind: record.kind, value: record.value))
-        let before = text.record(ExerciseRecord(kind: record.kind, value: record.before))
-        return String(localized: "\(kind) \(value) (before \(before))")
     }
 
     private func load() {

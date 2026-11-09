@@ -1,7 +1,7 @@
 import XCTest
 
 final class WatchSessionTests: XCTestCase {
-    // The bench press of Push A: 4 warm-ups, then a working set that beats the 1RM of the session done before.
+    // The bench press of Push A: 4 warm-ups, then a working set that beats the load of the session done before.
     @MainActor
     func testSession() throws {
         let app = openPushA()

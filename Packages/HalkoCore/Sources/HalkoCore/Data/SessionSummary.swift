@@ -6,7 +6,7 @@ import SwiftData
 public struct SessionSummary: Equatable, Sendable {
     public struct BeatenRecord: Hashable, Sendable {
         public let exerciseID: String
-        public let kind: RecordKind
+        public let measure: ProgressMeasure
         // In stored units: grams, reps, seconds, metres.
         public let value: Double
         public let before: Double
@@ -22,24 +22,32 @@ public struct SessionSummary: Equatable, Sendable {
     public init(session: Session, sets: [SetLog], earlier: [SetLog], exercises: [Exercise]) {
         duration = (session.endedAt ?? session.startedAt).timeIntervalSince(session.startedAt)
         let types = Dictionary(exercises.map { ($0.id, $0.exerciseType) }, uniquingKeysWith: { first, _ in first })
-        let working = sets.filter { $0.kind != .warmup }
-        setCount = working.count
-        volumeG = working.reduce(0) { total, set in
-            total + setVolumeG(type: types[set.exerciseID] ?? .weightReps, values: SetValues(set), unilateral: set.unilateral == true)
-        }
+        setCount = sets.count(where: { $0.kind != .warmup })
+        volumeG = Self.volumeG(of: sets, types: types)
         var order: [String] = []
         for set in sets.sorted(by: { $0.completedAt < $1.completedAt }) where !order.contains(set.exerciseID) {
             order.append(set.exerciseID)
         }
         records = order.flatMap { exerciseID -> [BeatenRecord] in
             let type = types[exerciseID] ?? .weightReps
-            let before = ExerciseRecords(sets: earlier.filter { $0.exerciseID == exerciseID }, type: type).records
-            let now = ExerciseRecords(sets: sets.filter { $0.exerciseID == exerciseID }, type: type).records
-            // A first time beats nothing.
-            return now.compactMap { record in
-                guard let old = before.first(where: { $0.kind == record.kind }), record.kind.isBetter(record.value, than: old.value) else { return nil }
-                return BeatenRecord(exerciseID: exerciseID, kind: record.kind, value: record.value, before: old.value)
+            let done = sets.filter { $0.exerciseID == exerciseID }
+            let before = Dictionary(grouping: earlier.filter { $0.exerciseID == exerciseID }, by: \.sessionID).values
+            return ProgressMeasure.measures(for: type).filter(\.isRecord).compactMap { measure in
+                // A first time beats nothing.
+                guard
+                    let value = measure.value(of: done, type: type),
+                    let old = measure.best(of: before.compactMap { measure.value(of: $0, type: type) }),
+                    measure.isBetter(value, than: old)
+                else { return nil }
+                return BeatenRecord(exerciseID: exerciseID, measure: measure, value: value, before: old)
             }
+        }
+    }
+
+    // The load moved by the working sets.
+    static func volumeG(of sets: [SetLog], types: [String: ExerciseType]) -> Int {
+        sets.filter { $0.kind != .warmup }.reduce(0) { total, set in
+            total + setVolumeG(type: types[set.exerciseID] ?? .weightReps, values: SetValues(set), unilateral: set.unilateral == true)
         }
     }
 }
