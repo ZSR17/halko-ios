@@ -80,7 +80,6 @@ struct ToolStepper: View {
     // Room for "100.5" beside its unit, for a count less.
     @ScaledMetric(relativeTo: .body) private var weightWidth = 68.0
     @ScaledMetric(relativeTo: .body) private var countWidth = 40.0
-    @ScaledMetric(relativeTo: .body) private var buttonSide = 44.0
 
     private var isFocused: Bool {
         focus.wrappedValue == id
@@ -98,9 +97,9 @@ struct ToolStepper: View {
                 button("plus", by: step)
                     .accessibilityLabel(more)
             }
+            // Its own width, whatever room the title takes.
+            .fixedSize(horizontal: true, vertical: false)
         }
-        // Its buttons and its box on a line, at the largest text sizes too.
-        .dynamicTypeSize(...DynamicTypeSize.accessibility1)
         .onAppear {
             text = fields.text(value, of: field)
         }
@@ -132,7 +131,8 @@ struct ToolStepper: View {
             .fontWeight(.bold)
             .monospacedDigit()
             .accessibilityLabel(title)
-            .frame(width: field == .weight ? weightWidth : countWidth)
+            // Grows with the text, up to what still leaves room for the buttons on the line.
+            .frame(width: field == .weight ? min(weightWidth, 130) : min(countWidth, 80))
             if let unit {
                 Text(verbatim: unit)
                     .fontWeight(.bold)
@@ -148,7 +148,7 @@ struct ToolStepper: View {
         } label: {
             Image(systemName: symbol)
                 .font(.body.weight(.semibold))
-                .frame(width: buttonSide, height: buttonSide)
+                .frame(width: 44, height: 44)
                 .background(Color(.tertiarySystemFill), in: .rect(cornerRadius: 10))
                 .contentShape(.rect)
         }
