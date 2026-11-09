@@ -77,8 +77,8 @@ struct ToolStepper: View {
     @State private var text = ""
     @State private var selection: TextSelection?
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-    // Room for "100.5" beside its unit, for a count less.
-    @ScaledMetric(relativeTo: .body) private var weightWidth = 68.0
+    // Room for "100.5 kg", for a count less.
+    @ScaledMetric(relativeTo: .body) private var weightWidth = 100.0
     @ScaledMetric(relativeTo: .body) private var countWidth = 40.0
 
     private var isFocused: Bool {
@@ -127,18 +127,20 @@ struct ToolStepper: View {
             }
             .focused(focus, equals: id)
             .keyboardType(field == .weight ? .decimalPad : .numberPad)
-            .multilineTextAlignment(.trailing)
+            .multilineTextAlignment(.center)
             .fontWeight(.bold)
             .monospacedDigit()
             .accessibilityLabel(title)
-            // Grows with the text, up to what still leaves room for the buttons on the line.
-            .frame(width: field == .weight ? min(weightWidth, 130) : min(countWidth, 80))
+            // As wide as its digits, so that they and the unit are centred together between the buttons.
+            .fixedSize(horizontal: true, vertical: false)
             if let unit {
                 Text(verbatim: unit)
                     .fontWeight(.bold)
                     .accessibilityHidden(true)
             }
         }
+        // Grows with the text, up to what still leaves room for the buttons on the line.
+        .frame(width: field == .weight ? min(weightWidth, 170) : min(countWidth, 80))
         .frame(minHeight: 44)
     }
 
