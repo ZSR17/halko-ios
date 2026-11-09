@@ -139,6 +139,8 @@ struct ToolStepper: View {
                     .fontWeight(.bold)
                     .monospacedDigit()
                     .accessibilityLabel(title)
+                    // Easy to touch, wider than the digits it is centred on.
+                    .frame(minWidth: 44, minHeight: 44)
                 }
             if let unit {
                 Text(verbatim: unit)

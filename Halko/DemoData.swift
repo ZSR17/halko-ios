@@ -163,6 +163,8 @@ enum DemoData {
             Plate(weightG: 5_000, count: 4),
             Plate(weightG: 2_500, count: 2),
         ])), forKey: PlateSettings.storageKey)
+        // No exercise left chosen by a test tried again.
+        UserDefaults.standard.removeObject(forKey: "oneRepMaxExercise")
         return container
     }
 }
