@@ -15,6 +15,8 @@ struct ExercisesView: View {
             .buttonStyle(.plain)
         }
         .navigationTitle("Exercises")
+        // The title and + stay while searching.
+        .searchPresentationToolbarBehavior(.avoidHidingContent)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button("New exercise", systemImage: "plus") {
