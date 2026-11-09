@@ -148,6 +148,8 @@ struct ToolStepper: View {
         } label: {
             Image(systemName: symbol)
                 .font(.body.weight(.semibold))
+                // Within its 44 points, at the largest text sizes too.
+                .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
                 .frame(width: 44, height: 44)
                 .background(Color(.tertiarySystemFill), in: .rect(cornerRadius: 10))
                 .contentShape(.rect)
