@@ -7,9 +7,12 @@ struct PlatesView: View {
     var openingTargetG: Int?
     @AppStorage(PlateSettings.storageKey) private var stored = Data()
     @Environment(\.locale) private var locale
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @FocusState private var focus: ToolField?
     @State private var adding = false
     @State private var newWeight = ""
+    @State private var correcting = false
+    @State private var corrected: Plate?
 
     private var settings: PlateSettings {
         (try? JSONDecoder().decode(PlateSettings.self, from: stored)) ?? PlateSettings()
@@ -111,6 +114,20 @@ struct PlatesView: View {
             Button("Add", action: addPlate)
             Button("Cancel", role: .cancel) {}
         }
+        .alert("Edit the plate", isPresented: $correcting, presenting: corrected) { plate in
+            TextField("Plate weight", text: $newWeight)
+                .keyboardType(.decimalPad)
+            Button("Save") {
+                if let weight = typedWeight {
+                    update { $0.correct(id: plate.id, weightG: weight) }
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        }
+    }
+
+    private var typedWeight: Int? {
+        fields.value(newWeight, of: .weight).map { Int($0) }
     }
 
     private func update(_ change: (inout PlateSettings) -> Void) {
@@ -121,15 +138,9 @@ struct PlatesView: View {
         }
     }
 
-    // Two of them, one on each side, or two more of a weight already there.
     private func addPlate() {
-        guard let weight = fields.value(newWeight, of: .weight).map({ Int($0) }), weight > 0 else { return }
-        update { settings in
-            if let index = settings.plates.firstIndex(where: { $0.weightG == weight }) {
-                settings.plates[index].count += 2
-            } else {
-                settings.plates.append(Plate(weightG: weight, count: 2))
-            }
+        if let weight = typedWeight {
+            update { $0.add(weightG: weight) }
         }
     }
 
@@ -144,33 +155,20 @@ struct PlatesView: View {
             case .exact(let load):
                 LoadView(load: load, text: text, fields: fields)
             case .closest(let below, let above):
-                Text("You can't make \(text.toolWeight(targetG)) with your plates. The closest:")
-                closest(below)
-                if let above {
-                    closest(above)
-                } else {
-                    Text("You don't have enough plates to go higher.")
-                        .font(.subheadline)
-                        .foregroundStyle(Color(.secondaryText))
+                // In place of the bar, the closest weights that can be made: below on the left, above on the right.
+                let layout = dynamicTypeSize.isAccessibilitySize ? AnyLayout(VStackLayout(spacing: 10)) : AnyLayout(HStackLayout(alignment: .top, spacing: 10))
+                layout {
+                    ClosestChoice(side: Text("Below"), load: below, text: text, fields: fields) {
+                        update { $0.targetG = below.totalG }
+                    }
+                    ClosestChoice(side: Text("Above"), load: above, text: text, fields: fields) {
+                        if let above {
+                            update { $0.targetG = above.totalG }
+                        }
+                    }
                 }
+                .padding(.vertical, 4)
             }
-        }
-    }
-
-    private func closest(_ load: PlateLoad) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text("\(text.toolWeight(load.totalG)) in total, bar included")
-                    .font(.headline)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                Button("Choose") {
-                    update { $0.targetG = load.totalG }
-                }
-                .buttonStyle(.borderless)
-                .frame(minHeight: 44)
-                .accessibilityLabel(Text("Choose \(text.toolWeight(load.totalG))"))
-            }
-            LoadView(load: load, text: text, fields: fields)
         }
     }
 
@@ -185,7 +183,12 @@ struct PlatesView: View {
             range: 1...100,
             fields: fields,
             focus: $focus,
-            id: .plate(plate.id)
+            id: .plate(plate.id),
+            edit: (Text("Edit the plate of \(text.toolWeight(plate.weightG))"), {
+                newWeight = fields.text(Double(plate.weightG), of: .weight)
+                corrected = plate
+                correcting = true
+            })
         ) { value in
             update { settings in
                 if let index = settings.plates.firstIndex(where: { $0.id == plate.id }) {
@@ -224,6 +227,64 @@ private struct LoadView: View {
         guard !load.perSide.isEmpty else { return String(localized: "Just the bar, nothing to add.") }
         let plates = load.perSide.map { "\($0.count.formatted()) × \(text.toolWeight($0.weightG))" }.joined(separator: " + ")
         return String(localized: "Per side: \(plates)")
+    }
+}
+
+// One of the closest weights that can be made, taken as the total weight when touched. Without one above, the plates
+// owned don't go higher.
+private struct ClosestChoice: View {
+    let side: Text
+    let load: PlateLoad?
+    let text: SetsText
+    let fields: FieldText
+    let choose: () -> Void
+
+    var body: some View {
+        Button(action: choose) {
+            VStack(spacing: 4) {
+                side
+                    .font(.footnote)
+                    .foregroundStyle(Color(.secondaryText))
+                if let load {
+                    Text(verbatim: text.toolWeight(load.totalG))
+                        .font(.title2.bold())
+                        .monospacedDigit()
+                    Text(verbatim: perSide(load))
+                        .font(.footnote)
+                        .foregroundStyle(Color(.secondaryText))
+                    Text("Choose")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.tint)
+                        .padding(.top, 4)
+                } else {
+                    Text("Not enough plates")
+                        .font(.subheadline)
+                        .foregroundStyle(Color(.secondaryText))
+                }
+            }
+            .multilineTextAlignment(.center)
+            .frame(maxWidth: .infinity, minHeight: 44)
+            .padding(.vertical, 12)
+            .padding(.horizontal, 8)
+            .overlay {
+                RoundedRectangle(cornerRadius: 14)
+                    .strokeBorder(Color(.separator))
+            }
+            .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
+        .disabled(load == nil)
+        .accessibilityElement(children: .combine)
+    }
+
+    // "Per side: 25 + 2 × 10", or the bar alone.
+    private func perSide(_ load: PlateLoad) -> String {
+        guard !load.perSide.isEmpty else { return String(localized: "Just the bar") }
+        let plates = load.perSide.map { side in
+            let weight = fields.text(Double(side.weightG), of: .weight)
+            return side.count > 1 ? "\(side.count.formatted()) × \(weight)" : weight
+        }
+        return String(localized: "Per side: \(plates.joined(separator: " + "))")
     }
 }
 

@@ -1,6 +1,16 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Above" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Au-dessus"
+          }
+        }
+      }
+    },
     "Begin holding" : {
       "localizations" : {
         "fr" : {
@@ -11,12 +21,62 @@
         }
       }
     },
+    "Below" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En dessous"
+          }
+        }
+      }
+    },
     "Cancel the timer" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Annuler le chrono"
+          }
+        }
+      }
+    },
+    "Edit the plate" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modifier le disque"
+          }
+        }
+      }
+    },
+    "Edit the plate of %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modifier le disque de %@"
+          }
+        }
+      }
+    },
+    "Just the bar" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La barre seule"
+          }
+        }
+      }
+    },
+    "Not enough plates" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pas assez de disques"
           }
         }
       }
@@ -3675,46 +3735,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ajoute d’abord tes disques, au moins deux de chaque poids (un de chaque côté)."
-          }
-        }
-      }
-    },
-    "You can't make %@ with your plates. The closest:" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Impossible de faire %@ avec tes disques. Voici le plus proche :"
-          }
-        }
-      }
-    },
-    "You don't have enough plates to go higher." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tu n’as pas assez de disques pour monter au-dessus."
-          }
-        }
-      }
-    },
-    "%@ in total, bar included" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ au total, barre comprise"
-          }
-        }
-      }
-    },
-    "Choose %@" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Choisir %@"
           }
         }
       }

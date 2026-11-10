@@ -73,9 +73,14 @@ struct ToolStepper: View {
     let fields: FieldText
     let focus: FocusState<ToolField?>.Binding
     let id: ToolField
+    // Makes the title a button, with this label: a plate's weight opens it to be corrected.
+    var edit: (label: Text, action: () -> Void)?
     let change: (Double) -> Void
     @State private var text = ""
     @State private var selection: TextSelection?
+    // The value last given: a button held down repeats the action it had when pressed, so it starts from here and not
+    // from that old `value`.
+    @State private var latest: Double?
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     // Room for "100.5 kg", the same for every value, so that the buttons of a page line up.
     @ScaledMetric(relativeTo: .body) private var boxWidth = 100.0
@@ -87,8 +92,20 @@ struct ToolStepper: View {
     var body: some View {
         let layout = dynamicTypeSize.isAccessibilitySize ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8)) : AnyLayout(HStackLayout(spacing: 8))
         layout {
-            title
-                .frame(maxWidth: .infinity, alignment: .leading)
+            Group {
+                if let edit {
+                    Button(action: edit.action) {
+                        title
+                            .frame(minHeight: 44)
+                            .contentShape(.rect)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(edit.label)
+                } else {
+                    title
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
             HStack(spacing: 6) {
                 button("minus", by: -step)
                     .accessibilityLabel(less)
@@ -103,6 +120,7 @@ struct ToolStepper: View {
             text = fields.text(value, of: field)
         }
         .onChange(of: value) { _, value in
+            latest = value
             if !isFocused {
                 text = fields.text(value, of: field)
             }
@@ -155,7 +173,9 @@ struct ToolStepper: View {
 
     private func button(_ symbol: String, by amount: Double) -> some View {
         Button {
-            change(min(max(value + amount, range.lowerBound), range.upperBound))
+            let changed = min(max((latest ?? value) + amount, range.lowerBound), range.upperBound)
+            latest = changed
+            change(changed)
         } label: {
             Image(systemName: symbol)
                 .font(.body.weight(.semibold))
@@ -166,6 +186,8 @@ struct ToolStepper: View {
                 .contentShape(.rect)
         }
         .buttonStyle(.plain)
+        // Held down, it goes on changing the value.
+        .buttonRepeatBehavior(.enabled)
     }
 }
 

@@ -15,10 +15,33 @@ final class ToolsTests: XCTestCase {
         try app.auditScreen()
         snap("Plates")
 
-        // One step up cannot be made with these plates: the closest loads instead.
+        // One step up cannot be made with these plates: the closest loads instead, below and above.
         app.buttons["Add 0.5 kg"].tap()
-        XCTAssertTrue(app.element(containing: "with your plates").waitForExistence(timeout: 5))
+        let below = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Below")).firstMatch
+        XCTAssertTrue(below.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Above")).firstMatch.exists)
+        try app.auditScreen()
         snap("Plates, closest")
+        below.tap()
+        XCTAssertTrue(app.element(containing: "Per side: 1 × 25 kg + 1 × 15 kg").waitForExistence(timeout: 5))
+
+        // Held down, + goes on adding.
+        let total = app.textFields["Total weight"]
+        let before = try XCTUnwrap(kilograms(total))
+        app.buttons["Add 0.5 kg"].press(forDuration: 2)
+        XCTAssertGreaterThanOrEqual(try XCTUnwrap(kilograms(total)), before + 1.5)
+
+        // A plate typed wrong is corrected, not deleted.
+        let plate = app.buttons["Edit the plate of 25 kg"]
+        app.reveal(plate)
+        plate.tap()
+        let field = app.alerts.textFields.firstMatch
+        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        snap("Plates › Edit the plate")
+        field.tap()
+        field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 4) + "30")
+        app.alerts.buttons["Save"].tap()
+        XCTAssertTrue(app.buttons["Edit the plate of 30 kg"].waitForExistence(timeout: 5))
 
         app.reveal(app.buttons["Add a plate"])
         app.buttons["Add a plate"].tap()
@@ -44,6 +67,12 @@ final class ToolsTests: XCTestCase {
         bench.tap()
         XCTAssertTrue(app.buttons["Exercise"].waitForExistence(timeout: 5))
         snap("1RM, from an exercise")
+
+        // The estimate opens the plates for its weight.
+        app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Estimated 1RM")).firstMatch.tap()
+        XCTAssertTrue(app.navigationBars["Plate calculator"].waitForExistence(timeout: 5))
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        XCTAssertTrue(app.buttons["Exercise"].waitForExistence(timeout: 5))
 
         // A line of the table opens the plates for its weight.
         let line = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "95")).firstMatch
@@ -76,6 +105,12 @@ final class ToolsTests: XCTestCase {
         XCTAssertTrue(app.element(containing: "Total weight").waitForExistence(timeout: 5))
         try app.auditScreen()
         snap("Plates, largest text")
+    }
+
+    // The value of a box in kilograms, typed in English.
+    @MainActor
+    private func kilograms(_ field: XCUIElement) -> Double? {
+        (field.value as? String).flatMap { Double($0) }
     }
 }
 
