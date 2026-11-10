@@ -78,9 +78,11 @@ struct ToolStepper: View {
     let change: (Double) -> Void
     @State private var text = ""
     @State private var selection: TextSelection?
-    // The value last given: a button held down repeats the action it had when pressed, so it starts from here and not
-    // from that old `value`.
+    // The value last given: steps made while a button is held start from here, not from the `value` it had when pressed.
     @State private var latest: Double?
+    // Steps made while a button is held down, and whether they started: the touch let go then changes nothing more.
+    @State private var holding: Task<Void, Never>?
+    @State private var held = false
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     // Room for "100.5 kg", the same for every value, so that the buttons of a page line up.
     @ScaledMetric(relativeTo: .body) private var boxWidth = 100.0
@@ -118,6 +120,9 @@ struct ToolStepper: View {
         }
         .onAppear {
             text = fields.text(value, of: field)
+        }
+        .onDisappear {
+            holding?.cancel()
         }
         .onChange(of: value) { _, value in
             latest = value
@@ -173,9 +178,9 @@ struct ToolStepper: View {
 
     private func button(_ symbol: String, by amount: Double) -> some View {
         Button {
-            let changed = min(max((latest ?? value) + amount, range.lowerBound), range.upperBound)
-            latest = changed
-            change(changed)
+            if !held {
+                step(by: amount)
+            }
         } label: {
             Image(systemName: symbol)
                 .font(.body.weight(.semibold))
@@ -185,9 +190,46 @@ struct ToolStepper: View {
                 .background(Color(.tertiarySystemFill), in: .rect(cornerRadius: 10))
                 .contentShape(.rect)
         }
-        .buttonStyle(.plain)
-        // Held down, it goes on changing the value.
-        .buttonRepeatBehavior(.enabled)
+        .buttonStyle(HoldButtonStyle { pressed in
+            hold(pressed, by: amount)
+        })
+    }
+
+    private func step(by amount: Double) {
+        let changed = min(max((latest ?? value) + amount, range.lowerBound), range.upperBound)
+        latest = changed
+        change(changed)
+    }
+
+    // Held down, a button starts stepping soon, then faster and faster.
+    private func hold(_ pressed: Bool, by amount: Double) {
+        holding?.cancel()
+        holding = nil
+        guard pressed else { return }
+        held = false
+        holding = Task {
+            try? await Task.sleep(for: .milliseconds(300))
+            var pause = 150.0
+            while !Task.isCancelled {
+                held = true
+                step(by: amount)
+                try? await Task.sleep(for: .milliseconds(Int(pause)))
+                pause = max(35, pause * 0.85)
+            }
+        }
+    }
+}
+
+// A plain button that tells when it is pressed and let go.
+private struct HoldButtonStyle: ButtonStyle {
+    let pressing: (Bool) -> Void
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .opacity(configuration.isPressed ? 0.6 : 1)
+            .onChange(of: configuration.isPressed) { _, pressed in
+                pressing(pressed)
+            }
     }
 }
 
