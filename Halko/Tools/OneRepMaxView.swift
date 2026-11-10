@@ -125,24 +125,15 @@ struct OneRepMaxView: View {
                 NavigationLink {
                     PlatesView(openingTargetG: text.weightUnit.rounded(Double(estimate), step: 0.1))
                 } label: {
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack(alignment: .firstTextBaseline) {
-                            Text("Estimated 1RM")
-                                .foregroundStyle(Color(.secondaryText))
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                            Text(verbatim: oneRepMax(estimate))
-                                .font(.largeTitle.bold())
-                                .monospacedDigit()
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.6)
-                        }
-                        // Its two lines are kept without reps in reserve, so that the estimate doesn't move.
-                        Text("Counted as \(toFailure) reps to failure (\(reps) done + \(reserve) in reserve)")
-                            .font(.footnote)
+                    HStack(alignment: .firstTextBaseline) {
+                        Text("Estimated 1RM")
                             .foregroundStyle(Color(.secondaryText))
-                            .lineLimit(2, reservesSpace: true)
-                            .opacity(reserve > 0 ? 1 : 0)
-                            .accessibilityHidden(reserve == 0)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        Text(verbatim: oneRepMax(estimate))
+                            .font(.largeTitle.bold())
+                            .monospacedDigit()
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.6)
                     }
                     .accessibilityElement(children: .combine)
                 }

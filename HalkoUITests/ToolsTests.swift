@@ -67,10 +67,6 @@ final class ToolsTests: XCTestCase {
         bench.tap()
         XCTAssertTrue(app.buttons["Exercise"].waitForExistence(timeout: 5))
         snap("1RM, from an exercise")
-        app.buttons["One rep more in reserve"].tap()
-        app.buttons["One rep more in reserve"].tap()
-        XCTAssertTrue(app.element(containing: "in reserve)").waitForExistence(timeout: 5))
-        snap("1RM, in reserve")
 
         // The estimate opens the plates for its weight.
         app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Estimated 1RM")).firstMatch.tap()
