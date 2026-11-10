@@ -7,6 +7,8 @@ struct SettingsView: View {
     @AppStorage(Units.weightKey) private var weight: WeightUnit?
     @AppStorage(Units.distanceKey) private var distance: DistanceUnit?
     @Environment(\.units) private var units
+    // The two units side by side, wide enough to touch each one easily, growing with the text as far as the row allows.
+    @ScaledMetric(relativeTo: .body) private var unitsWidth = 150.0
 
     var body: some View {
         List {
@@ -29,7 +31,8 @@ struct SettingsView: View {
                     }
                     .pickerStyle(.segmented)
                     .labelsHidden()
-                    .fixedSize()
+                    .controlSize(.large)
+                    .frame(maxWidth: unitsWidth)
                 }
                 HStack {
                     Text("Distance")
@@ -42,7 +45,8 @@ struct SettingsView: View {
                     }
                     .pickerStyle(.segmented)
                     .labelsHidden()
-                    .fixedSize()
+                    .controlSize(.large)
+                    .frame(maxWidth: unitsWidth)
                 }
             } header: {
                 // In a darker grey than the system's, for a contrast of 4.5:1.
