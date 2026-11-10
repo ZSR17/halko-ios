@@ -76,9 +76,9 @@ final class SessionActivities {
 
     // Shows the session as it is now; once it is over, nothing.
     func refresh() async {
-        let alert = RestAlertSettings(defaults: .standard)
-        sound.hold(store.state != nil && alertsHere(alert) && alert.sound, tone: alert.tone, volume: alert.volume)
-        watchRest(alert)
+        let settings = RestAlertSettings(defaults: .standard)
+        sound.hold(store.state != nil && alertsHere(settings) && settings.sound, tone: settings.tone, volume: settings.volume)
+        watchRest(settings)
         watchTimer()
         let found = store.state.flatMap(content(of:))
         // The activity first: a button pressed on it waits for it.
