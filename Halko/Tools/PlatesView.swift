@@ -294,7 +294,8 @@ private struct ClosestChoice: View {
     }
 }
 
-// One side of the bar: the heaviest plates against the collar, each as tall as it is heavy.
+// One side of the bar: the heaviest plates against the collar, each as tall as it is heavy, in the colours of
+// competition plates, the change plates thinner.
 private struct BarDrawing: View {
     let load: PlateLoad
     let fields: FieldText
@@ -304,25 +305,29 @@ private struct BarDrawing: View {
             let plates = load.perSide.flatMap { Array(repeating: $0.weightG, count: $0.count) }.reversed()
             let heaviest = Double(load.perSide.map(\.weightG).max() ?? 1)
             let stems = 64.0 + 18 + 36
-            let room = max(0, size.width - stems - 12)
-            let plateWidth = min(19, room / Double(plates.count) - 3)
-            let total = stems + Double(plates.count) * (plateWidth + 3) + 6
+            let room = max(0, size.width - stems - 12 - 3 * Double(plates.count))
+            let widths = plates.map { PlateColor.isChange(weightG: $0) ? 0.75 : 1.0 }
+            let unit = min(19, room / widths.reduce(0, +))
+            let total = stems + widths.reduce(0) { $0 + $1 * unit + 3 } + 6
             var x = (size.width - total) / 2
             let middle = size.height / 2
             let bar = GraphicsContext.Shading.color(Color(.systemGray))
             context.fill(Path(roundedRect: CGRect(x: x, y: middle - 4, width: 64, height: 8), cornerRadius: 4), with: bar)
             x += 67
-            for weight in plates {
+            for (weight, width) in zip(plates, widths) {
                 let height = 36 + 44 * Double(weight) / heaviest
-                let rect = CGRect(x: x, y: middle - height / 2, width: plateWidth, height: height)
-                context.fill(Path(roundedRect: rect, cornerRadius: 4), with: .color(color(weight)))
-                if plateWidth >= 14 {
+                let rect = CGRect(x: x, y: middle - height / 2, width: width * unit, height: height)
+                let plate = Path(roundedRect: rect, cornerRadius: 4)
+                context.fill(plate, with: .color(color(PlateColor(weightG: weight))))
+                // The white ones stand out from a light background.
+                context.stroke(plate, with: .color(.black.opacity(0.25)), lineWidth: 1)
+                if rect.width >= 14 {
                     let label = Text(verbatim: fields.text(Double(weight), of: .weight))
                         .font(.caption2.bold())
                         .foregroundStyle(.black)
                     context.draw(context.resolve(label), at: CGPoint(x: rect.midX, y: rect.midY))
                 }
-                x += plateWidth + 3
+                x += rect.width + 3
             }
             context.fill(Path(roundedRect: CGRect(x: x, y: middle - 6, width: 18, height: 12), cornerRadius: 3), with: bar)
             x += 18
@@ -330,13 +335,13 @@ private struct BarDrawing: View {
         }
     }
 
-    private func color(_ grams: Int) -> Color {
-        switch grams {
-        case 25_000...: .red
-        case 20_000..<25_000: .yellow
-        case 15_000..<20_000: .blue
-        case 10_000..<15_000: .green
-        default: Color(.systemGray3)
+    private func color(_ plate: PlateColor) -> Color {
+        switch plate {
+        case .red: .red
+        case .blue: .blue
+        case .yellow: .yellow
+        case .green: .green
+        case .white: .white
         }
     }
 }

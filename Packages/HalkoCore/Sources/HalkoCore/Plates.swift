@@ -63,6 +63,31 @@ public struct PlateLoad: Equatable, Sendable {
     public let perSide: [Side]
 }
 
+// The colour of a plate in the competition code, from the standard weight nearest to it, so that pound plates take
+// theirs too: 45 lb is blue like 20 kg. The change plates, 5 kg and lighter, repeat the colours of the big ones.
+public enum PlateColor: Equatable, Sendable {
+    case red, blue, yellow, green, white
+
+    private static let standard: [(grams: Int, color: PlateColor)] = [
+        (25_000, .red), (20_000, .blue), (15_000, .yellow), (10_000, .green), (5_000, .white),
+        (2_500, .red), (2_000, .blue), (1_500, .yellow), (1_000, .green), (500, .white),
+    ]
+
+    public init(weightG: Int) {
+        self = Self.nearest(weightG).color
+    }
+
+    // The thin plates, 5 kg and lighter.
+    public static func isChange(weightG: Int) -> Bool {
+        nearest(weightG).grams <= 5_000
+    }
+
+    // The heavier one on a tie, 7.5 kg as 10 kg.
+    private static func nearest(_ weightG: Int) -> (grams: Int, color: PlateColor) {
+        standard.min { abs($0.grams - weightG) < abs($1.grams - weightG) } ?? standard[0]
+    }
+}
+
 public enum PlateResult: Equatable, Sendable {
     case exact(PlateLoad)
     // The closest ones; `above` nil without enough plates to go higher.

@@ -76,6 +76,39 @@ struct PlatesTests {
         #expect(settings.plates == [Plate(id: "b", weightG: 25_000, count: 6)])
     }
 
+    @Test("Colours the plates as in competition, pounds by the nearest weight")
+    func colours() {
+        #expect(PlateColor(weightG: 25_000) == .red)
+        #expect(!PlateColor.isChange(weightG: 25_000))
+        #expect(PlateColor(weightG: 20_000) == .blue)
+        #expect(!PlateColor.isChange(weightG: 20_000))
+        #expect(PlateColor(weightG: 15_000) == .yellow)
+        #expect(!PlateColor.isChange(weightG: 15_000))
+        #expect(PlateColor(weightG: 10_000) == .green)
+        #expect(!PlateColor.isChange(weightG: 10_000))
+        #expect(PlateColor(weightG: 5_000) == .white)
+        #expect(PlateColor.isChange(weightG: 5_000))
+        #expect(PlateColor(weightG: 2_500) == .red)
+        #expect(PlateColor.isChange(weightG: 2_500))
+        #expect(PlateColor(weightG: 1_250) == .yellow)
+        #expect(PlateColor.isChange(weightG: 1_250))
+        #expect(PlateColor(weightG: 7_500) == .green)
+        #expect(!PlateColor.isChange(weightG: 7_500))
+        #expect(PlateColor(weightG: 50_000) == .red)
+        #expect(!PlateColor.isChange(weightG: 50_000))
+        // 45, 35, 25, 10 and 5 lb.
+        #expect(PlateColor(weightG: 20_412) == .blue)
+        #expect(!PlateColor.isChange(weightG: 20_412))
+        #expect(PlateColor(weightG: 15_876) == .yellow)
+        #expect(!PlateColor.isChange(weightG: 15_876))
+        #expect(PlateColor(weightG: 11_340) == .green)
+        #expect(!PlateColor.isChange(weightG: 11_340))
+        #expect(PlateColor(weightG: 4_536) == .white)
+        #expect(PlateColor.isChange(weightG: 4_536))
+        #expect(PlateColor(weightG: 2_268) == .red)
+        #expect(PlateColor.isChange(weightG: 2_268))
+    }
+
     @Test("Adds up pounds exactly")
     func pounds() {
         let unit = WeightUnit.lb
