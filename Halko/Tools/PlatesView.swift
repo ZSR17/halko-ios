@@ -7,6 +7,7 @@ struct PlatesView: View {
     var openingTargetG: Int?
     @AppStorage(PlateSettings.storageKey) private var stored = Data()
     @Environment(\.locale) private var locale
+    @Environment(\.units) private var units
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @FocusState private var focus: ToolField?
     @ScaledMetric(relativeTo: .body) private var answerHeight = 170.0
@@ -20,7 +21,7 @@ struct PlatesView: View {
     }
 
     private var text: SetsText {
-        SetsText(locale: locale)
+        SetsText(units: units)
     }
 
     private var fields: FieldText {

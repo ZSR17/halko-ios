@@ -41,6 +41,16 @@
         }
       }
     },
+    "Distance" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Distance"
+          }
+        }
+      }
+    },
     "Edit the plate" : {
       "localizations" : {
         "fr" : {
@@ -61,6 +71,16 @@
         }
       }
     },
+    "Halko will be in this language the next time it opens, on the iPhone and on the watch." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Halko passera dans cette langue à sa prochaine ouverture, sur l’iPhone et la montre."
+          }
+        }
+      }
+    },
     "Just the bar" : {
       "localizations" : {
         "fr" : {
@@ -71,12 +91,42 @@
         }
       }
     },
+    "Language" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Langue"
+          }
+        }
+      }
+    },
+    "Language and units" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Langue et unités"
+          }
+        }
+      }
+    },
     "Not enough plates" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pas assez de disques"
+          }
+        }
+      }
+    },
+    "Same as the iPhone" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comme l’iPhone"
           }
         }
       }
@@ -2963,6 +3013,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Échauffement : %@"
+          }
+        }
+      }
+    },
+    "Weight" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poids"
           }
         }
       }

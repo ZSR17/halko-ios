@@ -98,10 +98,11 @@ targets:
     platform: watchOS
     sources:
       - HalkoWatch
-      # As on the iPhone: how sets are written, the sample data of the interface tests, what a session reads, the
-      # session shared with the other device, the workout of Health, the access to Health and notifications, the
-      # notification of the end of a rest.
+      # As on the iPhone: how sets are written, in the units chosen, the sample data of the interface tests, what a
+      # session reads, the session shared with the other device, the workout of Health, the access to Health and
+      # notifications, the notification of the end of a rest.
       - Halko/SetsText.swift
+      - Halko/ChosenUnits.swift
       - Halko/ColumnTitle.swift
       - Halko/DemoData.swift
       - Halko/Session/LiveTable.swift

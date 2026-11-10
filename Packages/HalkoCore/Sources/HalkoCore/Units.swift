@@ -45,3 +45,24 @@ public enum DistanceUnit: String, Codable, Sendable, CaseIterable {
         locale.measurementSystem == .metric ? .km : .mi
     }
 }
+
+// The units chosen in the settings, each one apart; one not chosen is that of the region.
+public struct Units: Equatable, Sendable {
+    public static let weightKey = "units.weight"
+    public static let distanceKey = "units.distance"
+
+    public var weight: WeightUnit
+    public var distance: DistanceUnit
+
+    public init(weight: WeightUnit, distance: DistanceUnit) {
+        self.weight = weight
+        self.distance = distance
+    }
+
+    public init(defaults: UserDefaults, locale: Locale) {
+        self.init(
+            weight: defaults.string(forKey: Self.weightKey).flatMap(WeightUnit.init(rawValue:)) ?? .preferred(for: locale),
+            distance: defaults.string(forKey: Self.distanceKey).flatMap(DistanceUnit.init(rawValue:)) ?? .preferred(for: locale)
+        )
+    }
+}

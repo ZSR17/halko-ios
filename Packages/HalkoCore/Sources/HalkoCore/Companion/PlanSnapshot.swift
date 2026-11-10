@@ -76,6 +76,6 @@ public enum CompanionMessage {
     public static let thumbnailsKey = "thumbnails"
     // In a message, the application context or a user info: a `LiveMessage`.
     public static let liveKey = "live"
-    // In a user info to the watch: the `SetTimerSettings` chosen on the iPhone.
-    public static let setTimerKey = "setTimer"
+    // In a user info to the watch: the `SharedSettings` chosen on the iPhone.
+    public static let settingsKey = "settings"
 }

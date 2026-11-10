@@ -14,14 +14,14 @@ struct SessionSummaryView: View {
     @Environment(LiveSessionStore.self) private var store
     @Environment(WorkoutRecorder.self) private var recorder
     @Environment(\.modelContext) private var context
-    @Environment(\.locale) private var locale
+    @Environment(\.units) private var units
     @State private var summary: SessionSummary?
     @State private var names: [String: String] = [:]
     @State private var rings: HKActivitySummary?
     @ScaledMetric(relativeTo: .body) private var ringsSide = 96.0
 
     var body: some View {
-        let text = SetsText(locale: locale)
+        let text = SetsText(units: units)
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 header

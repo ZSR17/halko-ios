@@ -19,6 +19,7 @@ struct PastSessionView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
     @Environment(\.locale) private var locale
+    @Environment(\.units) private var units
     @State private var details: Details?
     @State private var confirmingDelete = false
 
@@ -29,7 +30,7 @@ struct PastSessionView: View {
     }
 
     var body: some View {
-        let sets = SetsText(locale: locale)
+        let sets = SetsText(units: units)
         ScrollView {
             if let details {
                 VStack(alignment: .leading, spacing: 18) {

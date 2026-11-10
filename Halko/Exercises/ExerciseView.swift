@@ -14,7 +14,7 @@ struct ExerciseView: View {
     @State private var sheet: ExerciseSheet?
     @State private var history: SessionHistory?
     @Environment(\.modelContext) private var context
-    @Environment(\.locale) private var locale
+    @Environment(\.units) private var units
     @Environment(\.dismiss) private var dismiss
 
     init(exercise: Exercise) {
@@ -47,11 +47,11 @@ struct ExerciseView: View {
                 if !muscles.isEmpty {
                     WorkedMusclesCard(muscles: muscles)
                 }
-                RecordTiles(records: ExerciseRecords(sets: sets, type: exercise.exerciseType), type: exercise.exerciseType, text: SetsText(locale: locale))
+                RecordTiles(records: ExerciseRecords(sets: sets, type: exercise.exerciseType), type: exercise.exerciseType, text: SetsText(units: units))
                 if let history, history.exercises.contains(where: { $0.id == exercise.id }) {
                     VStack(alignment: .leading, spacing: 8) {
                         Heading("Progress")
-                        ExerciseProgressPanel(exercise: exercise, history: history, text: HistoryText(sets: SetsText(locale: locale)))
+                        ExerciseProgressPanel(exercise: exercise, history: history, text: HistoryText(sets: SetsText(units: units)))
                     }
                 }
                 if !instructions.isEmpty {

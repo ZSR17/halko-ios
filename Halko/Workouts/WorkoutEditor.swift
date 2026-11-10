@@ -24,6 +24,7 @@ struct WorkoutEditor: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @Environment(\.locale) private var locale
+    @Environment(\.units) private var units
 
     // `items`: its exercises, in order.
     init(workout: Workout?, items: [WorkoutItem], adding: Exercise? = nil) {
@@ -39,7 +40,7 @@ struct WorkoutEditor: View {
     }
 
     private var fields: FieldText {
-        FieldText(weightUnit: .preferred(for: locale), distanceUnit: .preferred(for: locale), locale: locale)
+        FieldText(weightUnit: units.weight, distanceUnit: units.distance, locale: locale)
     }
 
     var body: some View {

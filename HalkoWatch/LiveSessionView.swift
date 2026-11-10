@@ -15,6 +15,7 @@ struct LiveSessionView: View {
     @Environment(WorkoutRecorder.self) private var recorder
     @Environment(\.modelContext) private var context
     @Environment(\.locale) private var locale
+    @Environment(\.units) private var units
     @Query private var sessions: [Session]
     @Query private var sets: [SetLog]
     @Query private var exercises: [Exercise]
@@ -128,8 +129,8 @@ struct LiveSessionView: View {
             previous: previous,
             edits: state.edits.merging(typing) { _, typed in typed },
             exercises: Dictionary(exercises.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first }),
-            fields: FieldText(weightUnit: .preferred(for: locale), distanceUnit: .preferred(for: locale), locale: locale),
-            text: SetsText(locale: locale)
+            fields: FieldText(weightUnit: units.weight, distanceUnit: units.distance, locale: locale),
+            text: SetsText(units: units)
         )
     }
 

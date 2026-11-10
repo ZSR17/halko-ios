@@ -6,9 +6,9 @@ struct SetsText {
     let weightUnit: WeightUnit
     let distanceUnit: DistanceUnit
 
-    init(locale: Locale) {
-        weightUnit = .preferred(for: locale)
-        distanceUnit = .preferred(for: locale)
+    init(units: Units) {
+        weightUnit = units.weight
+        distanceUnit = units.distance
     }
 
     // The working sets: their number and values when alike, else the values of each; then, with `pauses`, the

@@ -35,15 +35,8 @@ struct RootView: View {
             }
             Tab("Settings", systemImage: "slider.horizontal.3") {
                 NavigationStack {
-                    List {
-                        Section("Session") {
-                            NavigationLink("Set timer") {
-                                SetTimerSettingsView()
-                            }
-                        }
-                    }
-                    .navigationTitle("Settings")
-                    .toolbarTitleDisplayMode(.inlineLarge)
+                    SettingsView()
+                        .toolbarTitleDisplayMode(.inlineLarge)
                 }
             }
         }

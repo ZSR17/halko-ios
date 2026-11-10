@@ -12,7 +12,8 @@ import WatchConnectivity
 final class WatchLink: NSObject {
     nonisolated private static let logger = Logger(subsystem: "com.zsr.halko", category: "watch")
     // The plan last handed to the watch: only a changed one is sent.
-    private static let sentSetTimerKey = "sentSetTimerSettings"
+    // The settings last handed to the watch: only changed ones are sent.
+    private static let sentSettingsKey = "sentSharedSettings"
     private static let sentPlanKey = "watchPlanDigest"
     // The sessions changed after this date are still to hand over; without one, the whole history: the watch shows last
     // time's values and the records from it.
@@ -42,24 +43,23 @@ final class WatchLink: NSObject {
         }
         NotificationCenter.default.addObserver(forName: UserDefaults.didChangeNotification, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated {
-                self?.sendSetTimerSettings()
+                self?.sendSettings()
             }
         }
     }
 
     // Delivered even later, the last one last; only when they changed.
-    private func sendSetTimerSettings() {
+    private func sendSettings() {
         let session = WCSession.default
         guard session.activationState == .activated, session.isPaired, session.isWatchAppInstalled else { return }
+        let settings = SharedSettings.values(in: defaults)
         do {
-            let encoder = JSONEncoder()
-            encoder.outputFormatting = .sortedKeys
-            let settings = try encoder.encode(SetTimerSettings(defaults: defaults))
-            guard defaults.data(forKey: Self.sentSetTimerKey) != settings else { return }
-            defaults.set(settings, forKey: Self.sentSetTimerKey)
-            session.transferUserInfo([CompanionMessage.setTimerKey: settings])
+            let digest = try JSONSerialization.data(withJSONObject: settings, options: .sortedKeys)
+            guard defaults.data(forKey: Self.sentSettingsKey) != digest else { return }
+            defaults.set(digest, forKey: Self.sentSettingsKey)
+            session.transferUserInfo([CompanionMessage.settingsKey: settings])
         } catch {
-            Self.logger.error("Cannot send the timer's settings to the watch: \(String(describing: error))")
+            Self.logger.error("Cannot send the settings to the watch: \(String(describing: error))")
         }
     }
 
@@ -186,7 +186,7 @@ extension WatchLink: WCSessionDelegate {
             }
             self.sendPlan()
             self.sendSessions()
-            self.sendSetTimerSettings()
+            self.sendSettings()
         }
     }
 

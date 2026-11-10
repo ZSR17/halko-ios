@@ -13,12 +13,12 @@ struct HistoryView: View {
 
     @Query(filter: #Predicate<Session> { !$0.removed && $0.endedAt != nil }) private var sessions: [Session]
     @Environment(\.modelContext) private var context
-    @Environment(\.locale) private var locale
+    @Environment(\.units) private var units
     @State private var history: SessionHistory?
     @State private var page = Page.sessions
 
     var body: some View {
-        let text = HistoryText(sets: SetsText(locale: locale))
+        let text = HistoryText(sets: SetsText(units: units))
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
                 if let history {
