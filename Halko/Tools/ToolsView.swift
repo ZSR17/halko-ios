@@ -78,6 +78,9 @@ struct ToolStepper: View {
     let change: (Double) -> Void
     @State private var text = ""
     @State private var selection: TextSelection?
+    // The value last given: a button held down repeats the action it had when pressed, so it starts from here and not
+    // from that old `value`.
+    @State private var latest: Double?
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     // Room for "100.5 kg", the same for every value, so that the buttons of a page line up.
     @ScaledMetric(relativeTo: .body) private var boxWidth = 100.0
@@ -117,6 +120,7 @@ struct ToolStepper: View {
             text = fields.text(value, of: field)
         }
         .onChange(of: value) { _, value in
+            latest = value
             if !isFocused {
                 text = fields.text(value, of: field)
             }
@@ -169,7 +173,9 @@ struct ToolStepper: View {
 
     private func button(_ symbol: String, by amount: Double) -> some View {
         Button {
-            change(min(max(value + amount, range.lowerBound), range.upperBound))
+            let changed = min(max((latest ?? value) + amount, range.lowerBound), range.upperBound)
+            latest = changed
+            change(changed)
         } label: {
             Image(systemName: symbol)
                 .font(.body.weight(.semibold))
