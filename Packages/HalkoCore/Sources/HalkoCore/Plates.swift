@@ -28,6 +28,27 @@ public struct PlateSettings: Codable, Equatable, Sendable {
         self.targetG = targetG
         self.plates = plates
     }
+
+    // Two of them, one on each side, or two more of a weight already there.
+    public mutating func add(weightG: Int) {
+        guard weightG > 0 else { return }
+        if let index = plates.firstIndex(where: { $0.weightG == weightG }) {
+            plates[index].count += 2
+        } else {
+            plates.append(Plate(weightG: weightG, count: 2))
+        }
+    }
+
+    // A plate typed wrong: given the weight it should have had. Moved onto a weight already there, its plates join those.
+    public mutating func correct(id: String, weightG: Int) {
+        guard weightG > 0, let index = plates.firstIndex(where: { $0.id == id }) else { return }
+        if let other = plates.firstIndex(where: { $0.weightG == weightG && $0.id != id }) {
+            plates[other].count += plates[index].count
+            plates.remove(at: index)
+        } else {
+            plates[index].weightG = weightG
+        }
+    }
 }
 
 public struct PlateLoad: Equatable, Sendable {

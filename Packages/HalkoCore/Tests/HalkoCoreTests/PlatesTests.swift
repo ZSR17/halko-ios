@@ -55,6 +55,27 @@ struct PlatesTests {
         #expect(load(30_000, plates: [Plate(weightG: 5_000, count: 1)]) == .closest(below: PlateLoad(totalG: 20_000, perSideG: 0, perSide: []), above: nil))
     }
 
+    @Test("Adds plates two by two, onto their weight when it is there")
+    func adding() {
+        var settings = PlateSettings()
+        settings.add(weightG: 20_000)
+        settings.add(weightG: 20_000)
+        settings.add(weightG: 0)
+        #expect(settings.plates.map(\.weightG) == [20_000])
+        #expect(settings.plates.map(\.count) == [4])
+    }
+
+    @Test("Corrects the weight of a plate, joining it to the plates of that weight")
+    func correcting() {
+        var settings = PlateSettings(plates: [Plate(id: "a", weightG: 20_000, count: 2), Plate(id: "b", weightG: 25_000, count: 4)])
+        settings.correct(id: "a", weightG: 15_000)
+        #expect(settings.plates == [Plate(id: "a", weightG: 15_000, count: 2), Plate(id: "b", weightG: 25_000, count: 4)])
+        settings.correct(id: "a", weightG: 25_000)
+        #expect(settings.plates == [Plate(id: "b", weightG: 25_000, count: 6)])
+        settings.correct(id: "b", weightG: 0)
+        #expect(settings.plates == [Plate(id: "b", weightG: 25_000, count: 6)])
+    }
+
     @Test("Adds up pounds exactly")
     func pounds() {
         let unit = WeightUnit.lb

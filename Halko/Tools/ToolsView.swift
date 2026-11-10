@@ -73,6 +73,8 @@ struct ToolStepper: View {
     let fields: FieldText
     let focus: FocusState<ToolField?>.Binding
     let id: ToolField
+    // Makes the title a button, with this label: a plate's weight opens it to be corrected.
+    var edit: (label: Text, action: () -> Void)?
     let change: (Double) -> Void
     @State private var text = ""
     @State private var selection: TextSelection?
@@ -87,8 +89,20 @@ struct ToolStepper: View {
     var body: some View {
         let layout = dynamicTypeSize.isAccessibilitySize ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8)) : AnyLayout(HStackLayout(spacing: 8))
         layout {
-            title
-                .frame(maxWidth: .infinity, alignment: .leading)
+            Group {
+                if let edit {
+                    Button(action: edit.action) {
+                        title
+                            .frame(minHeight: 44)
+                            .contentShape(.rect)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(edit.label)
+                } else {
+                    title
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
             HStack(spacing: 6) {
                 button("minus", by: -step)
                     .accessibilityLabel(less)
@@ -166,6 +180,8 @@ struct ToolStepper: View {
                 .contentShape(.rect)
         }
         .buttonStyle(.plain)
+        // Held down, it goes on changing the value.
+        .buttonRepeatBehavior(.enabled)
     }
 }
 

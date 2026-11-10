@@ -121,24 +121,29 @@ struct OneRepMaxView: View {
                     .foregroundStyle(Color(.secondaryText))
             }
             Section {
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack(alignment: .firstTextBaseline) {
-                        Text("Estimated 1RM")
-                            .foregroundStyle(Color(.secondaryText))
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        Text(verbatim: oneRepMax(estimate))
-                            .font(.largeTitle.bold())
-                            .monospacedDigit()
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.6)
+                // Opens the plates for that weight, like a line of the table.
+                NavigationLink {
+                    PlatesView(openingTargetG: text.weightUnit.rounded(Double(estimate), step: 0.1))
+                } label: {
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack(alignment: .firstTextBaseline) {
+                            Text("Estimated 1RM")
+                                .foregroundStyle(Color(.secondaryText))
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            Text(verbatim: oneRepMax(estimate))
+                                .font(.largeTitle.bold())
+                                .monospacedDigit()
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.6)
+                        }
+                        if reserve > 0 {
+                            Text("Counted as \(toFailure) reps to failure (\(reps) done + \(reserve) in reserve)")
+                                .font(.footnote)
+                                .foregroundStyle(Color(.secondaryText))
+                        }
                     }
-                    if reserve > 0 {
-                        Text("Counted as \(toFailure) reps to failure (\(reps) done + \(reserve) in reserve)")
-                            .font(.footnote)
-                            .foregroundStyle(Color(.secondaryText))
-                    }
+                    .accessibilityElement(children: .combine)
                 }
-                .accessibilityElement(children: .combine)
             }
             Section {
                 ForEach(Self.percentages, id: \.self) { percent in
