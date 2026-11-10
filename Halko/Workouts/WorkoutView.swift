@@ -176,7 +176,7 @@ struct WorkoutView: View {
 private struct WorkoutContent: View {
     let items: [WorkoutItem]
     @Query private var exercises: [Exercise]
-    @Environment(\.locale) private var locale
+    @Environment(\.units) private var units
 
     init(items: [WorkoutItem]) {
         self.items = items
@@ -192,7 +192,7 @@ private struct WorkoutContent: View {
             }
             LazyVStack(alignment: .leading, spacing: 0) {
                 ForEach(ItemBlock.blocks(items)) { block in
-                    ItemBlockView(block: block, exercises: byID, text: SetsText(locale: locale))
+                    ItemBlockView(block: block, exercises: byID, text: SetsText(units: units))
                     Divider()
                 }
             }

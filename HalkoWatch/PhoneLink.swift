@@ -143,12 +143,8 @@ extension PhoneLink: WCSessionDelegate {
     }
 
     nonisolated func session(_ session: WCSession, didReceiveUserInfo userInfo: [String: Any]) {
-        if let data = userInfo[CompanionMessage.setTimerKey] as? Data {
-            do {
-                try JSONDecoder().decode(SetTimerSettings.self, from: data).save(to: .standard)
-            } catch {
-                Self.logger.error("Cannot read the timer's settings: \(String(describing: error))")
-            }
+        if let settings = userInfo[CompanionMessage.settingsKey] as? [String: Any] {
+            SharedSettings.save(settings, to: .standard)
         }
         guard let liveMessage = userInfo[CompanionMessage.liveKey] as? Data else { return }
         Task { @MainActor in

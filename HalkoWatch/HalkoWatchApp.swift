@@ -55,6 +55,7 @@ struct HalkoWatchApp: App {
     var body: some Scene {
         WindowGroup {
             RootView()
+                .modifier(ChosenUnits())
                 .environment(thumbnails)
                 .environment(liveSession)
                 .environment(permissions)

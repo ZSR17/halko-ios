@@ -65,7 +65,7 @@ private struct WorkoutContent: View {
     let items: [WorkoutItem]
     let start: () -> Void
     @Query private var exercises: [Exercise]
-    @Environment(\.locale) private var locale
+    @Environment(\.units) private var units
 
     init(items: [WorkoutItem], start: @escaping () -> Void) {
         self.items = items
@@ -75,7 +75,7 @@ private struct WorkoutContent: View {
 
     var body: some View {
         let byID = Dictionary(exercises.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
-        let text = SetsText(locale: locale)
+        let text = SetsText(units: units)
         let rows = items.map { item in
             let exercise = byID[item.exerciseID]
             let sets = PlannedSets(item.targets, type: exercise?.exerciseType ?? .weightReps, equipment: exercise?.equipment ?? [], unit: text.weightUnit)

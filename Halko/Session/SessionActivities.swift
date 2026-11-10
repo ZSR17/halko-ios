@@ -48,10 +48,10 @@ final class SessionActivities {
                 case .skipRest: state.endRest()
                 case .lengthenRest: state.lengthenRest()
                 case .validateSet:
-                    guard let glance = try context.glance(of: state, unit: .preferred(for: .current)) else { return }
+                    guard let glance = try context.glance(of: state, unit: Units(defaults: .standard, locale: .current).weight) else { return }
                     try context.logSet(&state, step: state.cursor, values: glance.values, startedFrom: glance.startedFrom)
                 case .startTimer:
-                    guard let glance = try context.glance(of: state, unit: .preferred(for: .current)) else { return }
+                    guard let glance = try context.glance(of: state, unit: Units(defaults: .standard, locale: .current).weight) else { return }
                     state.startTimer(
                         stepKey: LivePlan.key(state.plan[glance.item].itemID, glance.set),
                         values: glance.values,
@@ -199,19 +199,19 @@ final class SessionActivities {
         do {
             guard let session = try context.fetch(FetchDescriptor(predicate: #Predicate<Session> { $0.id == id })).first,
                   !session.removed, session.endedAt == nil else { return nil }
-            let locale = Locale.current
+            let units = Units(defaults: .standard, locale: .current)
             var content = SessionActivityAttributes.ContentState(
                 restEndsAt: state.restEndsAt,
                 restTotalS: state.restTotalS,
                 heartRate: heartRate
             )
-            if let glance = try context.glance(of: state, unit: .preferred(for: locale)) {
+            if let glance = try context.glance(of: state, unit: units.weight) {
                 let exerciseID = glance.exerciseID
                 let exercise = try context.fetch(FetchDescriptor(predicate: #Predicate<Exercise> { $0.id == exerciseID })).first
                 content.exercise = exercise?.localizedName ?? String(localized: "Exercise")
                 content.set = glance.isWarmup ? String(localized: "Warm-up") : String(localized: "Set \(glance.workingNumber)")
                 let target = SetTarget(kind: .normal, reps: glance.values.reps, weightG: glance.values.weightG, durationS: glance.values.durationS, distanceM: glance.values.distanceM)
-                content.values = SetsText(locale: locale).set(target, type: glance.exerciseType, unit: true)
+                content.values = SetsText(units: units).set(target, type: glance.exerciseType, unit: true)
                 let metrics = glance.exerciseType.metrics
                 content.usesTimer = metrics.contains(.duration) && !metrics.contains(.distance)
             }

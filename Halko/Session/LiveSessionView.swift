@@ -19,6 +19,7 @@ struct LiveSessionView: View {
     @Environment(WorkoutRecorder.self) private var recorder
     @Environment(\.modelContext) private var context
     @Environment(\.locale) private var locale
+    @Environment(\.units) private var units
     @Query private var sessions: [Session]
     @Query private var sets: [SetLog]
     @Query private var exercises: [Exercise]
@@ -141,8 +142,8 @@ struct LiveSessionView: View {
             previous: previous,
             edits: state.edits.merging(typing) { _, typed in typed },
             exercises: Dictionary(exercises.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first }),
-            fields: FieldText(weightUnit: .preferred(for: locale), distanceUnit: .preferred(for: locale), locale: locale),
-            text: SetsText(locale: locale)
+            fields: FieldText(weightUnit: units.weight, distanceUnit: units.distance, locale: locale),
+            text: SetsText(units: units)
         )
     }
 
@@ -153,7 +154,7 @@ struct LiveSessionView: View {
             undo: undo,
             correct: correct,
             edit: { key, values in typing[key] = values },
-            addSet: { item in change { try context.addSet(&$0, item: item, unit: .preferred(for: locale)) } },
+            addSet: { item in change { try context.addSet(&$0, item: item, unit: units.weight) } },
             deleteSet: deleteSet,
             deleteExercise: { item in change { try context.deleteExercise(&$0, item: item) } }
         )
@@ -268,7 +269,7 @@ struct LiveSessionView: View {
 
     // A set validated by mistake: to do again, with the values it had.
     private func undo(_ item: Int, _ set: Int) {
-        change { try context.unlogSet(&$0, item: item, set: set, unit: .preferred(for: locale)) }
+        change { try context.unlogSet(&$0, item: item, set: set, unit: units.weight) }
     }
 
     // A set done, changed in its boxes: kept at once, without a new rest.

@@ -11,7 +11,7 @@ struct SessionSummaryView: View {
     let session: Session
     let done: () -> Void
     @Environment(\.modelContext) private var context
-    @Environment(\.locale) private var locale
+    @Environment(\.units) private var units
     @State private var summary: SessionSummary?
     @State private var recordNames: [String] = []
 
@@ -67,7 +67,7 @@ struct SessionSummaryView: View {
         let seconds = Int(summary.duration.rounded())
         let duration = Duration.seconds(seconds).formatted(.time(pattern: seconds >= 3600 ? .hourMinuteSecond : .minuteSecond))
         let sets = String(localized: "\(summary.setCount) sets")
-        return [duration, sets, SetsText(locale: locale).volume(summary.volumeG)].joined(separator: " · ")
+        return [duration, sets, SetsText(units: units).volume(summary.volumeG)].joined(separator: " · ")
     }
 
     private func load() {

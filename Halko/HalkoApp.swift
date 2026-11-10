@@ -78,6 +78,7 @@ struct HalkoApp: App {
     var body: some Scene {
         WindowGroup {
             RootView()
+                .modifier(ChosenUnits())
                 .environment(liveSession)
                 .environment(permissions)
                 .environment(recorder)

@@ -16,11 +16,12 @@ struct OneRepMaxView: View {
     @AppStorage("oneRepMaxExercise") private var exerciseID: String?
     @Environment(\.modelContext) private var context
     @Environment(\.locale) private var locale
+    @Environment(\.units) private var units
     @FocusState private var focus: ToolField?
     @State private var lifted: [LiftedExercise] = []
 
     private var text: SetsText {
-        SetsText(locale: locale)
+        SetsText(units: units)
     }
 
     private var fields: FieldText {
