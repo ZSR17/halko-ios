@@ -18,22 +18,30 @@ struct SettingsView: View {
                         language.name
                     }
                 }
-                LabeledContent("Weight") {
+                HStack {
+                    Text("Weight")
+                    Spacer(minLength: 8)
                     Picker("Weight", selection: Binding { weight ?? units.weight } set: { weight = $0 }) {
                         ForEach(WeightUnit.allCases, id: \.self) { unit in
                             Text(verbatim: unit.rawValue)
+                                .tag(unit)
                         }
                     }
                     .pickerStyle(.segmented)
+                    .labelsHidden()
                     .fixedSize()
                 }
-                LabeledContent("Distance") {
+                HStack {
+                    Text("Distance")
+                    Spacer(minLength: 8)
                     Picker("Distance", selection: Binding { distance ?? units.distance } set: { distance = $0 }) {
                         ForEach(DistanceUnit.allCases, id: \.self) { unit in
                             Text(verbatim: unit.rawValue)
+                                .tag(unit)
                         }
                     }
                     .pickerStyle(.segmented)
+                    .labelsHidden()
                     .fixedSize()
                 }
             } header: {
@@ -70,7 +78,7 @@ private struct LanguageView: View {
                     } label: {
                         HStack {
                             choice.name
-                                .foregroundStyle(.primary)
+                                .foregroundStyle(Color.primary)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                             if choice == language {
                                 Image(systemName: "checkmark")

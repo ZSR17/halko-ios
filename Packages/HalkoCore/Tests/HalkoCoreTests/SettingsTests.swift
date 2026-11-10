@@ -3,10 +3,11 @@ import Testing
 @testable import HalkoCore
 
 struct SettingsTests {
-    private func defaults() throws -> UserDefaults {
-        let name = "SettingsTests-\(UUID().uuidString)"
-        let defaults = try #require(UserDefaults(suiteName: name))
-        defaults.removePersistentDomain(forName: name)
+    private let name = "SettingsTests-\(UUID().uuidString)"
+
+    private func defaults(_ suffix: String = "") throws -> UserDefaults {
+        let defaults = try #require(UserDefaults(suiteName: name + suffix))
+        defaults.removePersistentDomain(forName: name + suffix)
         return defaults
     }
 
@@ -31,13 +32,14 @@ struct SettingsTests {
         #expect(defaults.stringArray(forKey: AppLanguage.systemKey) == ["fr"])
         AppLanguage.system.save(to: defaults)
         #expect(AppLanguage(defaults: defaults) == .system)
-        #expect(defaults.object(forKey: AppLanguage.systemKey) == nil)
+        // Only in the app's own settings: read alone, the system's would show through.
+        #expect(defaults.persistentDomain(forName: name)?[AppLanguage.systemKey] == nil)
     }
 
     @Test("Copies the settings to the watch, those left out going back to their defaults")
     func shared() throws {
-        let phone = try defaults()
-        let watch = try defaults()
+        let phone = try defaults("-phone")
+        let watch = try defaults("-watch")
         watch.set(true, forKey: SetTimerSettings.stopsAtTargetKey)
         phone.set("lb", forKey: Units.weightKey)
         AppLanguage.en.save(to: phone)
