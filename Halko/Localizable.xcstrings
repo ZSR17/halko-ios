@@ -3899,6 +3899,16 @@
         }
       }
     },
+    "Counted as %lld reps to failure (%lld done + %lld in reserve)" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compté comme %lld répétitions jusqu’à l’échec (%lld faites + %lld en réserve)"
+          }
+        }
+      }
+    },
     "Tap a line to see the plates to put on the bar." : {
       "localizations" : {
         "fr" : {

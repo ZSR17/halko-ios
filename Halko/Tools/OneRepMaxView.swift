@@ -137,6 +137,11 @@ struct OneRepMaxView: View {
                     }
                     .accessibilityElement(children: .combine)
                 }
+            } footer: {
+                if reserve > 0 {
+                    Text("Counted as \(toFailure) reps to failure (\(reps) done + \(reserve) in reserve)")
+                        .foregroundStyle(Color(.secondaryText))
+                }
             }
             Section {
                 ForEach(Self.percentages, id: \.self) { percent in
