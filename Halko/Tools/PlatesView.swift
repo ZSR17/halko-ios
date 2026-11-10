@@ -9,6 +9,7 @@ struct PlatesView: View {
     @Environment(\.locale) private var locale
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @FocusState private var focus: ToolField?
+    @ScaledMetric(relativeTo: .body) private var answerHeight = 170.0
     @State private var adding = false
     @State private var newWeight = ""
     @State private var correcting = false
@@ -71,7 +72,9 @@ struct PlatesView: View {
                 }
             }
             Section {
+                // The same height for the bar and for the two closest weights, so that nothing below moves.
                 answer
+                    .frame(maxWidth: .infinity, minHeight: answerHeight)
             }
             Section {
                 ForEach(settings.plates.sorted { $0.weightG > $1.weightG }) { plate in
@@ -249,9 +252,12 @@ private struct ClosestChoice: View {
                     Text(verbatim: text.toolWeight(load.totalG))
                         .font(.title2.bold())
                         .monospacedDigit()
+                    // Two lines kept for it, used or not, so that a long one doesn't make the choices taller.
                     Text(verbatim: perSide(load))
                         .font(.footnote)
                         .foregroundStyle(Color(.secondaryText))
+                        .lineLimit(2, reservesSpace: true)
+                        .minimumScaleFactor(0.8)
                     Text("Choose")
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(.tint)

@@ -136,11 +136,13 @@ struct OneRepMaxView: View {
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.6)
                         }
-                        if reserve > 0 {
-                            Text("Counted as \(toFailure) reps to failure (\(reps) done + \(reserve) in reserve)")
-                                .font(.footnote)
-                                .foregroundStyle(Color(.secondaryText))
-                        }
+                        // Its two lines are kept without reps in reserve, so that the estimate doesn't move.
+                        Text("Counted as \(toFailure) reps to failure (\(reps) done + \(reserve) in reserve)")
+                            .font(.footnote)
+                            .foregroundStyle(Color(.secondaryText))
+                            .lineLimit(2, reservesSpace: true)
+                            .opacity(reserve > 0 ? 1 : 0)
+                            .accessibilityHidden(reserve == 0)
                     }
                     .accessibilityElement(children: .combine)
                 }
