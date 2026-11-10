@@ -78,4 +78,6 @@ public enum CompanionMessage {
     public static let liveKey = "live"
     // In a user info to the watch: the `SharedSettings` chosen on the iPhone.
     public static let settingsKey = "settings"
+    // In a message to the watch: a `RestAlertSettings.WatchHaptic` to feel, while choosing it.
+    public static let hapticKey = "haptic"
 }

@@ -134,8 +134,9 @@ struct LiveSessionView: View {
         )
     }
 
-    // The end of the rest: a vibration while the app runs (a workout of Health keeps it running with the wrist down);
-    // without one, a notification takes over when the watch puts the app to sleep.
+    // The end of the rest: the vibration chosen while the app runs (a workout of Health keeps it running with the wrist
+    // down), taps before it for the countdown chosen; without that workout, a notification takes over when the watch
+    // puts the app to sleep. Nothing when the iPhone alone was chosen to tell it.
     private func waitForTheEndOfRest(next: String?) async {
         if let timerEnd = state.setTimer?.targetEnd {
             await RestAlert.schedule(recorder.isRecording ? nil : RestAlert.Request(end: timerEnd, body: next ?? "", title: String(localized: "Target reached")))
@@ -144,22 +145,33 @@ struct LiveSessionView: View {
         let end = state.restEndsAt
         await RestAlert.schedule(recorder.isRecording ? nil : end.map { RestAlert.Request(end: $0, body: next ?? "") })
         guard let end else { return }
+        let alert = RestAlertSettings(defaults: .standard)
+        let vibrates = alert.alertsOnWatch(watchRecords: recorder.isRecording) && alert.vibration
+        for tap in vibrates ? alert.countdown(before: end) : [] {
+            try? await Task.sleep(for: .seconds(tap.timeIntervalSinceNow))
+            guard !Task.isCancelled else { return }
+            WKInterfaceDevice.current().play(.click)
+        }
         try? await Task.sleep(for: .seconds(max(0, end.timeIntervalSinceNow)))
         guard !Task.isCancelled else { return }
         // Not for a rest long over, when the app comes back.
-        if end.timeIntervalSinceNow > -10 {
-            WKInterfaceDevice.current().play(.notification)
+        if vibrates, end.timeIntervalSinceNow > -10 {
+            WKInterfaceDevice.current().play(alert.watchHaptic.type)
         }
         store.restOver()
     }
 
-    // A tap on the wrist when holding starts and at the target, and the stop on its own.
+    // A tap on the wrist when holding starts and the vibration chosen at the target, as for a rest; and the stop on its
+    // own.
     private func followTimer() async {
         guard let timer = state.setTimer else { return }
         while let next = timer.nextChange(after: .now) {
             try? await Task.sleep(for: .seconds(next.timeIntervalSinceNow))
             guard !Task.isCancelled else { return }
-            WKInterfaceDevice.current().play(next == timer.targetEnd ? .notification : .start)
+            let alert = RestAlertSettings(defaults: .standard)
+            if alert.alertsOnWatch(watchRecords: recorder.isRecording), alert.vibration {
+                WKInterfaceDevice.current().play(next == timer.targetEnd ? alert.watchHaptic.type : .start)
+            }
         }
         if timer.isDue(at: .now) {
             stopTimer()
@@ -1045,5 +1057,16 @@ private struct MetricsPage: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(label)
         .accessibilityValue(Text(verbatim: shown))
+    }
+}
+
+extension RestAlertSettings.WatchHaptic {
+    var type: WKHapticType {
+        switch self {
+        case .notification: .notification
+        case .strong: .failure
+        case .rising: .directionUp
+        case .light: .click
+        }
     }
 }

@@ -51,4 +51,42 @@ struct SettingsTests {
         #expect(watch.stringArray(forKey: AppLanguage.systemKey) == ["en"])
         #expect(watch.object(forKey: SetTimerSettings.stopsAtTargetKey) == nil)
     }
+
+    @Test("Tells the end of a rest on the watch on the wrist, on the iPhone otherwise, or on both")
+    func restAlertPlace() {
+        var settings = RestAlertSettings()
+        #expect(settings.alertsOnWatch(watchRecords: true) && !settings.alertsOnPhone(watchRecords: true))
+        #expect(!settings.alertsOnWatch(watchRecords: false) && settings.alertsOnPhone(watchRecords: false))
+        settings.place = .iPhone
+        #expect(!settings.alertsOnWatch(watchRecords: true) && settings.alertsOnPhone(watchRecords: true))
+        settings.place = .both
+        #expect(settings.alertsOnWatch(watchRecords: true) && settings.alertsOnPhone(watchRecords: true))
+    }
+
+    @Test("Beeps the last three seconds, or once ten seconds before, only those still to come")
+    func restCountdown() {
+        let end = Date(timeIntervalSince1970: 1_000)
+        var settings = RestAlertSettings()
+        #expect(settings.countdown(before: end, now: end - 60) == [end - 3, end - 2, end - 1])
+        #expect(settings.countdown(before: end, now: end - 2.5) == [end - 2, end - 1])
+        settings.countdown = .ten
+        #expect(settings.countdown(before: end, now: end - 60) == [end - 10])
+        settings.countdown = .none
+        #expect(settings.countdown(before: end, now: end - 60).isEmpty)
+    }
+
+    @Test("Reads the rest's alert from the settings, with its defaults")
+    func restAlertSettings() throws {
+        let defaults = try defaults()
+        #expect(RestAlertSettings(defaults: defaults) == RestAlertSettings())
+        defaults.set("both", forKey: RestAlertSettings.placeKey)
+        defaults.set(false, forKey: RestAlertSettings.soundKey)
+        defaults.set("chime", forKey: RestAlertSettings.toneKey)
+        defaults.set(0.5, forKey: RestAlertSettings.volumeKey)
+        defaults.set("ten", forKey: RestAlertSettings.countdownKey)
+        let settings = RestAlertSettings(defaults: defaults)
+        #expect(settings.place == .both && !settings.sound && settings.tone == .chime && settings.volume == 0.5)
+        #expect(settings.countdown == .ten && settings.vibration && settings.watchHaptic == .notification)
+        #expect(SharedSettings.keys.contains(RestAlertSettings.toneKey))
+    }
 }

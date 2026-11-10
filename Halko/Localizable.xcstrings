@@ -11,6 +11,16 @@
         }
       }
     },
+    "Beep" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bip"
+          }
+        }
+      }
+    },
     "Begin holding" : {
       "localizations" : {
         "fr" : {
@@ -31,12 +41,32 @@
         }
       }
     },
+    "Both" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les deux"
+          }
+        }
+      }
+    },
     "Cancel the timer" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Annuler le chrono"
+          }
+        }
+      }
+    },
+    "Chime" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Carillon"
           }
         }
       }
@@ -71,12 +101,32 @@
         }
       }
     },
+    "Gong" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gong"
+          }
+        }
+      }
+    },
     "Halko will be in this language the next time it opens, on the iPhone and on the watch." : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Halko passera dans cette langue à sa prochaine ouverture, sur l’iPhone et la montre."
+          }
+        }
+      }
+    },
+    "iPhone" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iPhone"
           }
         }
       }
@@ -111,6 +161,26 @@
         }
       }
     },
+    "Light" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Légère"
+          }
+        }
+      }
+    },
+    "None" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun"
+          }
+        }
+      }
+    },
     "Not enough plates" : {
       "localizations" : {
         "fr" : {
@@ -121,12 +191,112 @@
         }
       }
     },
+    "Notification" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notification"
+          }
+        }
+      }
+    },
+    "On the watch" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sur la montre"
+          }
+        }
+      }
+    },
+    "Rest end" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fin de repos"
+          }
+        }
+      }
+    },
+    "Ringtone" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sonnerie"
+          }
+        }
+      }
+    },
+    "Rising" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Montante"
+          }
+        }
+      }
+    },
     "Same as the iPhone" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Comme l’iPhone"
+          }
+        }
+      }
+    },
+    "Short beeps, or taps when the sound is off." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Des bips courts, ou des tapotements si le son est coupé."
+          }
+        }
+      }
+    },
+    "Signal before the end" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Signal avant la fin"
+          }
+        }
+      }
+    },
+    "silent" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "sans alerte"
+          }
+        }
+      }
+    },
+    "Sound" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Son"
+          }
+        }
+      }
+    },
+    "sound" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "son"
           }
         }
       }
@@ -207,6 +377,36 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tenu"
+          }
+        }
+      }
+    },
+    "Strong" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Forte"
+          }
+        }
+      }
+    },
+    "The iPhone" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’iPhone"
+          }
+        }
+      }
+    },
+    "The watch, when it is on the wrist" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La montre, si elle est au poignet"
           }
         }
       }
@@ -377,6 +577,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mise en place"
+          }
+        }
+      }
+    },
+    "Try the alert" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Essayer l’alerte"
           }
         }
       }
@@ -2957,12 +3167,42 @@
         }
       }
     },
+    "Vibration" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vibration"
+          }
+        }
+      }
+    },
+    "vibration" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "vibration"
+          }
+        }
+      }
+    },
     "Video %lld" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vidéo %lld"
+          }
+        }
+      }
+    },
+    "Volume" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volume"
           }
         }
       }
@@ -3017,6 +3257,26 @@
         }
       }
     },
+    "Watch" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Montre"
+          }
+        }
+      }
+    },
+    "Watch and iPhone" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Montre et iPhone"
+          }
+        }
+      }
+    },
     "Weight" : {
       "localizations" : {
         "fr" : {
@@ -3053,6 +3313,36 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Poids du corps lesté"
+          }
+        }
+      }
+    },
+    "Where to alert" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Où alerter"
+          }
+        }
+      }
+    },
+    "Whistle" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sifflet"
+          }
+        }
+      }
+    },
+    "Without the watch on the wrist, the iPhone alerts." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sans montre au poignet, c’est l’iPhone qui alerte."
           }
         }
       }
