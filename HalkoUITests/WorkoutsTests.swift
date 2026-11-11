@@ -113,7 +113,8 @@ extension XCUIApplication {
     // The audit reports the texts of cards as keeping their size or being clipped at larger sizes, though they
     // grow and wrap (the largest-text screenshots show it): those two are not audited. It also measures the contrast
     // of the cards scrolling under the fade of the bars or under the session's bottom block, and of the drawing of the
-    // body behind the muscles VoiceOver reads on it (`muscle-…`) and of the loaded bar above its text (`plates-load`). Its hit region (44 pt to touch) is for what can be
+    // body behind the muscles VoiceOver reads on it (`muscle-…`), of the loaded bar above its text (`plates-load`) and of
+    // the small screens drawing each look in the settings (`appearance-…`). Its hit region (44 pt to touch) is for what can be
     // touched: a text alone, whose element SwiftUI keeps as large as its letters, is not checked. The keyboard is the
     // system's: its keys are not checked. Every other issue fails the test, at once.
     @MainActor
@@ -154,6 +155,7 @@ extension XCUIApplication {
                         }
                         return issue.auditType == .contrast
                             && (issue.element?.identifier.hasPrefix("muscle-") == true
+                                || issue.element?.identifier.hasPrefix("appearance-") == true
                                 || issue.element?.identifier == "plates-load"
                                 || bars.contains { $0.intersects(frame) })
                     }

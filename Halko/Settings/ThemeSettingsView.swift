@@ -159,6 +159,8 @@ private struct AppearanceCard: View {
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(chosen ? .isSelected : [])
+        // A drawing of the look, not text on a background: not measured for contrast by the tests.
+        .accessibilityIdentifier("appearance-\(appearance.rawValue)")
     }
 
     private var background: AnyShapeStyle {
