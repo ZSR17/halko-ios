@@ -243,6 +243,14 @@ final class LiveLink {
 extension LiveLink: WorkoutPeer {
     func recordingChanged() {
         changed()
+        #if os(iOS)
+        // The iPhone may now have to tell the end of the rests, with the app in the background.
+        if let onReceived {
+            Task {
+                await onReceived()
+            }
+        }
+        #endif
     }
 
     // Said again: what was sent before it opened may have gone nowhere.

@@ -70,6 +70,8 @@ struct HalkoApp: App {
             live = nil
             watch = nil
         }
+        // The workout left running when the app stopped, at once: relaunched in the background, no view may come.
+        recorder.recover(sessionID: liveSession.state?.sessionID)
         _liveSession = State(initialValue: liveSession)
         _permissions = State(initialValue: permissions)
         _recorder = State(initialValue: recorder)
@@ -83,7 +85,6 @@ struct HalkoApp: App {
                 .environment(permissions)
                 .environment(recorder)
                 .task {
-                    recorder.recover(sessionID: liveSession.state?.sessionID)
                     await ExerciseLibrary.install(in: container)
                 }
                 // Outside the app: the Live Activity and the end of the rest.
