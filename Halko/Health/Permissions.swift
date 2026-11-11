@@ -9,10 +9,18 @@ import UserNotifications
 @MainActor
 @Observable
 final class Permissions {
+    // What the system says of one access, written in full in the settings.
+    enum Access {
+        case allowed, refused, notAsked
+    }
+
     private static let logger = Logger(subsystem: "com.zsr.halko", category: "health")
     private static let askedKey = "permissionsAsked"
 
     private(set) var asked: Bool
+    // Of saving the workouts; Health never tells whether reading was allowed.
+    private(set) var healthAccess = Access.notAsked
+    private(set) var notificationAccess = Access.notAsked
     // Without them (the interface tests' sample data), nothing is asked of the system nor kept.
     private let health: HKHealthStore?
     private let defaults: UserDefaults?
@@ -46,6 +54,14 @@ final class Permissions {
 
     // Health first, then notifications.
     func request() async {
+        await requestHealth()
+        await requestNotifications()
+        asked = true
+        defaults?.set(true, forKey: Self.askedKey)
+    }
+
+    // One of them, from the settings, before any workout.
+    func requestHealth() async {
         if let health {
             do {
                 try await health.requestAuthorization(toShare: HealthTypes.share, read: HealthTypes.read)
@@ -53,6 +69,10 @@ final class Permissions {
                 Self.logger.error("Cannot ask for Health: \(String(describing: error))")
             }
         }
+        await refresh()
+    }
+
+    func requestNotifications() async {
         if defaults != nil {
             do {
                 _ = try await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound])
@@ -60,7 +80,25 @@ final class Permissions {
                 Self.logger.error("Cannot ask for notifications: \(String(describing: error))")
             }
         }
-        asked = true
-        defaults?.set(true, forKey: Self.askedKey)
+        await refresh()
+    }
+
+    // Read again from the system, where they can change at any time.
+    func refresh() async {
+        if let health {
+            healthAccess = switch health.authorizationStatus(for: HKObjectType.workoutType()) {
+            case .sharingAuthorized: .allowed
+            case .sharingDenied: .refused
+            default: .notAsked
+            }
+        }
+        guard defaults != nil else { return }
+        let settings = await UNUserNotificationCenter.current().notificationSettings()
+        notificationAccess = switch settings.authorizationStatus {
+        case .notDetermined: .notAsked
+        case .denied: .refused
+        // Authorized, quietly or for a while.
+        default: .allowed
+        }
     }
 }

@@ -264,11 +264,16 @@ final class WorkoutRecorder {
         #endif
     }
 
+    // Unless the sessions are not to be saved in Health: then dropped, as a session discarded.
     private func saveOwnWorkout(at date: Date) {
         guard let session, let sessionID else { return }
         let builder = Handoff(value: session.associatedWorkoutBuilder())
         detach()
         session.end()
+        guard HealthSaving.isOn(in: .standard) else {
+            builder.value.discardWorkout()
+            return
+        }
         builder.value.endCollection(withEnd: date) { @Sendable _, error in
             if let error {
                 Self.logger.error("Cannot end the workout: \(String(describing: error))")

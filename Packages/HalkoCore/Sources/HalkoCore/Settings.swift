@@ -27,6 +27,16 @@ public enum AppLanguage: String, CaseIterable, Sendable {
     }
 }
 
+// Whether a session is saved in Health at its end. Its workout runs during it all the same: the heart rate, and the
+// app kept running for the end of a rest.
+public enum HealthSaving {
+    public static let key = "health.saveWorkouts"
+
+    public static func isOn(in defaults: UserDefaults) -> Bool {
+        defaults.object(forKey: key) as? Bool ?? true
+    }
+}
+
 // The settings chosen on the iPhone that the watch keeps a copy of: their keys in the defaults, with their values.
 public enum SharedSettings {
     public static let keys = [
@@ -36,6 +46,7 @@ public enum SharedSettings {
         SetTimerSettings.stopsAtTargetKey,
         SetTimerSettings.getsInPositionKey,
         SetTimerSettings.positionKey,
+        HealthSaving.key,
     ] + RestAlertSettings.keys
 
     // The values set; a key left out is at its default.
