@@ -44,7 +44,7 @@ struct FirstWorkoutView: View {
             } label: {
                 Text("Continue")
                     .font(.headline)
-                    .foregroundStyle(Color(.onAccent))
+                    .foregroundStyle(.onTint)
                     .frame(maxWidth: .infinity, minHeight: 44)
             }
             .buttonStyle(.borderedProminent)

@@ -216,6 +216,7 @@ private struct ChipRow<Content: View>: View {
 // An exercise of the list: its picture, its name, its primary muscles and its equipment; with `chosen`, a mark
 // telling whether it is chosen.
 struct ExerciseListRow: View {
+    @Environment(\.accent) private var accent
     let entry: ExerciseEntry
     var chosen: Bool?
 
@@ -234,7 +235,7 @@ struct ExerciseListRow: View {
             if let chosen {
                 Image(systemName: chosen ? "checkmark.circle.fill" : "circle")
                     .font(.title2)
-                    .foregroundStyle(chosen ? Color.accentColor : Color(.secondaryText))
+                    .foregroundStyle(chosen ? accent : Color(.secondaryText))
                     .accessibilityHidden(true)
             }
         }
@@ -253,13 +254,14 @@ struct ExerciseListRow: View {
 
 // "your version" on an exercise of the library the user changed, "custom" on one they made.
 struct ExerciseBadge: View {
+    @Environment(\.accent) private var accent
     let exercise: Exercise
 
     var body: some View {
         if exercise.source == .custom {
             Tag(Text("custom"), color: Color(.secondaryText))
         } else if exercise.customized {
-            Tag(Text("your version"), color: .accentColor)
+            Tag(Text("your version"), color: accent)
         }
     }
 }

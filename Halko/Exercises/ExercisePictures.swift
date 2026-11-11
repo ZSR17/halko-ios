@@ -6,6 +6,7 @@ import UIKit
 // side when motion is reduced; or its video, played when the user asks. A picture only: the steps say the movement
 // in words.
 struct ExercisePictures: View {
+    @Environment(\.accent) private var accent
     let mediaIDs: [String]
     @State private var pictures: [UIImage] = []
     @State private var player: AVPlayer?
@@ -65,7 +66,7 @@ struct ExercisePictures: View {
                         HStack(spacing: 6) {
                             ForEach(pictures, id: \.self) { picture in
                                 Circle()
-                                    .fill(picture == shown ? Color.accentColor : Color(.secondaryText))
+                                    .fill(picture == shown ? accent : Color(.secondaryText))
                                     .frame(width: 8, height: 8)
                             }
                         }

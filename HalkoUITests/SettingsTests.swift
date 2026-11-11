@@ -88,4 +88,35 @@ final class SettingsTests: XCTestCase {
         try app.auditScreen()
         snap("Settings › Permissions")
     }
+
+    @MainActor
+    func testThemeAndColor() throws {
+        let app = launch(language: "en", locale: "en_GB")
+        app.tabBars.buttons["Settings"].tap()
+        let row = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Theme and color")).firstMatch
+        app.reveal(row)
+        XCTAssertTrue(row.label.contains("Auto"))
+        row.tap()
+        XCTAssertTrue(app.navigationBars["Theme and color"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Auto"].isSelected)
+        XCTAssertTrue(app.buttons["Lime"].isSelected)
+        try app.auditScreen()
+        snap("Settings › Theme and color")
+
+        // Dark at once, in another color, read in its dark shade.
+        app.buttons["Dark"].tap()
+        XCTAssertTrue(app.buttons["Dark"].isSelected)
+        app.buttons["Purple"].tap()
+        XCTAssertTrue(app.buttons["Purple"].isSelected)
+        XCTAssertFalse(app.buttons["Lime"].isSelected)
+        try app.auditScreen()
+        snap("Settings › Theme and color, dark purple")
+
+        // The whole app in it.
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        XCTAssertTrue(app.element(containing: "Dark").waitForExistence(timeout: 5))
+        app.tabBars.buttons["Workouts"].tap()
+        XCTAssertTrue(app.element(containing: "Full body express").waitForExistence(timeout: 5))
+        snap("Workouts, dark purple")
+    }
 }

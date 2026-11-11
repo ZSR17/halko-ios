@@ -1,8 +1,8 @@
 import HalkoCore
 import SwiftUI
 
-// The Settings tab: the language and units, how a session works, Health and the notifications. What the watch needs of
-// it goes to the watch.
+// The Settings tab: the language and units, how a session works, Health and the notifications, the look of the app.
+// What the watch needs of it goes to the watch.
 struct SettingsView: View {
     @AppStorage(AppLanguage.key) private var language = AppLanguage.system
     @AppStorage(Units.weightKey) private var weight: WeightUnit?
@@ -11,6 +11,7 @@ struct SettingsView: View {
     @AppStorage(RestAlertSettings.soundKey) private var alertSound = true
     @AppStorage(RestAlertSettings.vibrationKey) private var alertVibration = true
     @AppStorage(HealthSaving.key) private var savesInHealth = true
+    @AppStorage(Appearance.key) private var appearance = Appearance.auto
     @Environment(Permissions.self) private var permissions
     @Environment(\.units) private var units
     @Environment(\.scenePhase) private var scenePhase
@@ -86,6 +87,18 @@ struct SettingsView: View {
                 }
             } header: {
                 Text("Health and notifications")
+                    .foregroundStyle(Color(.secondaryText))
+            }
+            Section {
+                NavigationLink {
+                    ThemeSettingsView()
+                } label: {
+                    LabeledContent("Theme and color") {
+                        appearance.name
+                    }
+                }
+            } header: {
+                Text("Appearance and data")
                     .foregroundStyle(Color(.secondaryText))
             }
         }

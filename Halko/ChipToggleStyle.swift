@@ -8,10 +8,10 @@ struct ChipToggleStyle: ToggleStyle {
         } label: {
             configuration.label
                 .font(.subheadline.weight(.medium))
-                .foregroundStyle(configuration.isOn ? Color(.onAccent) : Color.primary)
+                .foregroundStyle(configuration.isOn ? AnyShapeStyle(.onTint) : AnyShapeStyle(.primary))
                 .padding(.horizontal, 14)
                 .frame(minHeight: 44)
-                .background(configuration.isOn ? Color.accentColor : Color(.secondarySystemFill), in: .capsule)
+                .background(configuration.isOn ? AnyShapeStyle(.tint) : AnyShapeStyle(Color(.secondarySystemFill)), in: .capsule)
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(configuration.isOn ? .isSelected : [])
