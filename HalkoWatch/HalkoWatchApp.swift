@@ -45,6 +45,11 @@ struct HalkoWatchApp: App {
         WatchAppDelegate.workoutAsked = {
             live.startAsked()
         }
+        // Relaunched by watchOS after the app stopped during a workout: no view may come to do it.
+        WatchAppDelegate.workoutLeftRunning = {
+            recorder.recover(sessionID: store.state?.sessionID)
+        }
+        recorder.recover(sessionID: store.state?.sessionID)
         _liveSession = State(initialValue: store)
         _permissions = State(initialValue: Permissions(health: health, defaults: .standard))
         _recorder = State(initialValue: recorder)
@@ -61,7 +66,6 @@ struct HalkoWatchApp: App {
                 .environment(permissions)
                 .environment(recorder)
                 .task {
-                    recorder.recover(sessionID: liveSession.state?.sessionID)
                     await ExerciseLibrary.install(in: container)
                 }
                 // A session of the iPhone found with the watch asleep: its workout could not start then.
@@ -75,12 +79,18 @@ struct HalkoWatchApp: App {
     }
 }
 
-// The iPhone asks the watch to start the workout of the session it has just started.
+// The iPhone asks the watch to start the workout of the session it has just started; watchOS brings back the one left
+// running when the app stopped.
 final class WatchAppDelegate: NSObject, WKApplicationDelegate {
     static var workoutAsked: (() -> Void)?
+    static var workoutLeftRunning: (() -> Void)?
 
     func handle(_ workoutConfiguration: HKWorkoutConfiguration) {
         Self.workoutAsked?()
+    }
+
+    func handleActiveWorkoutRecovery() {
+        Self.workoutLeftRunning?()
     }
 }
 

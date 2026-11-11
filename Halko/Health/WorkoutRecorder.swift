@@ -36,6 +36,8 @@ final class WorkoutRecorder {
     private static let openedWatchDelay = Duration.seconds(60)
     // How long a workout started for a session not heard of yet waits for it.
     private static let unnamedDelay = Duration.seconds(30)
+    // How long the iPhone waits for the watch's workout to come back once it lost it, before telling the session itself.
+    private static let lostWatchDelay = Duration.seconds(30)
 
     // The last heart rate measured, in beats per minute.
     private(set) var heartRate: Double?
@@ -65,6 +67,8 @@ final class WorkoutRecorder {
     // The session whose workout the watch was asked to start, and what the iPhone does if it does not.
     @ObservationIgnored private var waitingForWatch: String?
     @ObservationIgnored private var watchFallback: Task<Void, Never>?
+    // The watch's mirrored workout is gone (battery, out of reach): the iPhone takes over if it does not come back.
+    @ObservationIgnored private var watchLost: Task<Void, Never>?
     // The workout left running by the app when it stopped may come back: none is started meanwhile.
     @ObservationIgnored private var isRecovering = false
 
@@ -149,7 +153,7 @@ final class WorkoutRecorder {
 
     // After the app was stopped during a session: the workout of Health goes on with it.
     func recover(sessionID: String?) {
-        guard let health, let sessionID, session == nil else { return }
+        guard let health, let sessionID, session == nil, !isRecovering else { return }
         isRecovering = true
         health.recoverActiveWorkoutSession { @Sendable session, error in
             if let error {
@@ -191,6 +195,10 @@ final class WorkoutRecorder {
     // What the other device says of the session being done here. On the iPhone, a workout on the watch takes over: the
     // part done here is saved, and the watch's workout carries on from now.
     func otherDevice(records: Bool) {
+        if records {
+            watchLost?.cancel()
+            watchLost = nil
+        }
         guard records != otherDeviceRecords else { return }
         otherDeviceRecords = records
         #if os(iOS)
@@ -242,8 +250,23 @@ final class WorkoutRecorder {
                 self?.mirrored = found.value.0
                 self?.mirroredRelay = found.value.1
                 self?.heardBack = false
+                self?.watchLost?.cancel()
+                self?.watchLost = nil
                 self?.peer?.channelOpened()
             }
+        }
+    }
+
+    // The watch's workout gone without a word: unless it comes back, the iPhone tells the end of the rests.
+    private func lostWatch() {
+        guard otherDeviceRecords, watchLost == nil else { return }
+        watchLost = Task { [weak self] in
+            try? await Task.sleep(for: Self.lostWatchDelay)
+            guard !Task.isCancelled, let self, self.mirrored == nil, self.otherDeviceRecords else { return }
+            Self.logger.error("The watch's workout is gone: the iPhone tells the session")
+            self.watchLost = nil
+            self.otherDeviceRecords = false
+            self.peer?.recordingChanged()
         }
     }
 
@@ -400,6 +423,17 @@ final class WorkoutRecorder {
         peer?.recordingChanged()
     }
 
+    // Found again if the workout still runs: a new mirrored session then.
+    private func mirroredGone(_ session: ObjectIdentifier) {
+        guard let mirrored, ObjectIdentifier(mirrored) == session else { return }
+        self.mirrored = nil
+        mirroredRelay = nil
+        heardBack = false
+        #if os(iOS)
+        lostWatch()
+        #endif
+    }
+
     private var relayEvents: Relay.Events {
         Relay.Events { [weak self] heartRate, kilocalories in
             self?.heartRate = heartRate ?? self?.heartRate
@@ -411,11 +445,16 @@ final class WorkoutRecorder {
                 self?.peer?.received(message)
             }
         } disconnected: { [weak self] session in
-            // Found again if the workout still runs: a new mirrored session then.
-            if let mirrored = self?.mirrored, ObjectIdentifier(mirrored) == session {
-                self?.mirrored = nil
-                self?.mirroredRelay = nil
-                self?.heardBack = false
+            self?.mirroredGone(session)
+        } ended: { [weak self] session, date in
+            guard let self else { return }
+            // Ended by the system (another workout started, the battery), not by the session: what was measured is
+            // saved, and the other device, or a new workout when the app comes back, takes over.
+            if let own = self.session, ObjectIdentifier(own) == session {
+                Self.logger.error("The workout ended on its own")
+                self.saveOwnWorkout(at: date)
+            } else {
+                self.mirroredGone(session)
             }
         } failed: { [weak self] session in
             // It could not start (from the background, without having been asked by the iPhone): tried again later.
@@ -444,6 +483,7 @@ private nonisolated final class Relay: NSObject, HKWorkoutSessionDelegate, HKLiv
         let measured: @MainActor @Sendable (_ heartRate: Double?, _ kilocalories: Double?) -> Void
         let received: @MainActor @Sendable ([Data]) -> Void
         let disconnected: @MainActor @Sendable (ObjectIdentifier) -> Void
+        let ended: @MainActor @Sendable (ObjectIdentifier, Date) -> Void
         let failed: @MainActor @Sendable (ObjectIdentifier) -> Void
     }
 
@@ -456,6 +496,12 @@ private nonisolated final class Relay: NSObject, HKWorkoutSessionDelegate, HKLiv
 
     func workoutSession(_ workoutSession: HKWorkoutSession, didChangeTo toState: HKWorkoutSessionState, from fromState: HKWorkoutSessionState, date: Date) {
         Self.logger.debug("Workout state \(fromState.rawValue) → \(toState.rawValue)")
+        guard toState == .ended || toState == .stopped else { return }
+        let session = ObjectIdentifier(workoutSession)
+        let ended = events.ended
+        Task { @MainActor in
+            ended(session, date)
+        }
     }
 
     func workoutSession(_ workoutSession: HKWorkoutSession, didFailWithError error: any Error) {
