@@ -148,11 +148,11 @@ struct LiveSessionView: View {
         let alert = RestAlertSettings(defaults: .standard)
         let vibrates = alert.alertsOnWatch(watchRecords: recorder.isRecording) && alert.vibration
         for tap in vibrates ? alert.countdown(before: end) : [] {
-            try? await Task.sleep(for: .seconds(tap.timeIntervalSinceNow))
+            try? await Task.sleep(until: tap)
             guard !Task.isCancelled else { return }
             WKInterfaceDevice.current().play(.click)
         }
-        try? await Task.sleep(for: .seconds(max(0, end.timeIntervalSinceNow)))
+        try? await Task.sleep(until: end)
         guard !Task.isCancelled else { return }
         // Not for a rest long over, when the app comes back.
         if vibrates, end.timeIntervalSinceNow > -10 {
@@ -166,7 +166,7 @@ struct LiveSessionView: View {
     private func followTimer() async {
         guard let timer = state.setTimer else { return }
         while let next = timer.nextChange(after: .now) {
-            try? await Task.sleep(for: .seconds(next.timeIntervalSinceNow))
+            try? await Task.sleep(until: next)
             guard !Task.isCancelled else { return }
             let alert = RestAlertSettings(defaults: .standard)
             if alert.alertsOnWatch(watchRecords: recorder.isRecording), alert.vibration {
@@ -853,7 +853,7 @@ private struct TimerPage: View {
         .task(id: timer) {
             phase = .now
             while let next = timer.nextChange(after: .now) {
-                try? await Task.sleep(for: .seconds(next.timeIntervalSinceNow))
+                try? await Task.sleep(until: next)
                 guard !Task.isCancelled else { return }
                 phase = .now
             }
