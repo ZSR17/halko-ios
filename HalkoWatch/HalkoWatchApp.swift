@@ -43,7 +43,7 @@ struct HalkoWatchApp: App {
         let recorder = WorkoutRecorder(health: health)
         let live = LiveLink(container: container, store: store, recorder: recorder)
         WatchAppDelegate.workoutAsked = {
-            live.startWorkout()
+            live.startAsked()
         }
         _liveSession = State(initialValue: store)
         _permissions = State(initialValue: Permissions(health: health, defaults: .standard))

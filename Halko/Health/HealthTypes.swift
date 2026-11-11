@@ -1,10 +1,11 @@
 import HealthKit
 
-// The only types of Health that Halko uses: the workout it writes with what is measured during it, and what it shows
-// (the heart rate and the calories of the session; on the iPhone, today's rings).
+// The only types of Health that Halko uses: the workout it writes with what is measured during it (the calories at
+// rest too, for its total), and what it shows (the heart rate and the calories of the session; on the iPhone, today's
+// rings).
 enum HealthTypes {
     static var share: Set<HKSampleType> {
-        [HKObjectType.workoutType(), HKQuantityType(.activeEnergyBurned), HKQuantityType(.heartRate)]
+        [HKObjectType.workoutType(), HKQuantityType(.activeEnergyBurned), HKQuantityType(.basalEnergyBurned), HKQuantityType(.heartRate)]
     }
 
     static var read: Set<HKObjectType> {

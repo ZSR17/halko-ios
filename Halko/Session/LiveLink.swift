@@ -176,11 +176,26 @@ final class LiveLink {
     }
 
     #if os(watchOS)
+    // The iPhone asks for the workout of the session it has just started: started at once, as watchOS expects of an app
+    // woken for it, even when the session has not come yet.
+    func startAsked() {
+        if store.state == nil {
+            recorder.start(sessionID: nil, at: .now)
+        } else {
+            startWorkout()
+        }
+    }
+
     // The workout of the session goes on the watch, which measures it best: from the start of the session when the
     // iPhone has just started it and was waiting, or from now, taking over from the iPhone's.
     func startWorkout() {
-        guard let state = store.state, !recorder.isRecording else { return }
+        guard let state = store.state else { return }
         let id = state.sessionID
+        // Started at the iPhone's request before the session was heard of: it is this one's.
+        guard !recorder.isRecording else {
+            recorder.belongs(to: id)
+            return
+        }
         let startedAt = (try? context.fetch(FetchDescriptor(predicate: #Predicate<Session> { $0.id == id })).first)?.startedAt
         let now = Date.now
         let fromStart = !recorder.otherDeviceRecords && startedAt.map { now.timeIntervalSince($0) < 30 } == true
