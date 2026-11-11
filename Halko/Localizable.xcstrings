@@ -11,6 +11,46 @@
         }
       }
     },
+    "All allowed" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tout est autorisé"
+          }
+        }
+      }
+    },
+    "Allow" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autoriser"
+          }
+        }
+      }
+    },
+    "Allow in Settings" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autoriser dans Réglages"
+          }
+        }
+      }
+    },
+    "Allowed" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autorisé"
+          }
+        }
+      }
+    },
     "Beep" : {
       "localizations" : {
         "fr" : {
@@ -57,6 +97,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Annuler le chrono"
+          }
+        }
+      }
+    },
+    "Change in Health" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modifier dans Santé"
+          }
+        }
+      }
+    },
+    "Change in Settings" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modifier dans Réglages"
           }
         }
       }
@@ -111,6 +171,26 @@
         }
       }
     },
+    "Health and notifications" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Santé et notifications"
+          }
+        }
+      }
+    },
+    "Health › Sharing › Apps › Halko. What Halko reads in Health stays on your iPhone." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Santé › Partage › Apps › Halko. Ce que Halko lit dans Santé reste sur ton iPhone."
+          }
+        }
+      }
+    },
     "iPhone" : {
       "localizations" : {
         "fr" : {
@@ -161,6 +241,16 @@
         }
       }
     },
+    "Not asked yet" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pas encore demandé"
+          }
+        }
+      }
+    },
     "Not enough plates" : {
       "localizations" : {
         "fr" : {
@@ -181,6 +271,16 @@
         }
       }
     },
+    "Notifications" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notifications"
+          }
+        }
+      }
+    },
     "On the watch" : {
       "localizations" : {
         "fr" : {
@@ -191,12 +291,52 @@
         }
       }
     },
+    "Only used if Halko no longer runs during a session. Without them, the end of a rest still sounds." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Servent seulement si Halko ne tourne plus pendant une séance. Sans elles, la fin de repos sonne quand même."
+          }
+        }
+      }
+    },
+    "Permissions" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autorisations"
+          }
+        }
+      }
+    },
+    "Refused" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Refusé"
+          }
+        }
+      }
+    },
     "Rest end" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fin de repos"
+          }
+        }
+      }
+    },
+    "Rest end as a fallback" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fin de repos en secours"
           }
         }
       }
@@ -231,6 +371,26 @@
         }
       }
     },
+    "Save in Health" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrer dans Santé"
+          }
+        }
+      }
+    },
+    "Save the workouts" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrer les séances"
+          }
+        }
+      }
+    },
     "Short beeps, or taps when the sound is off." : {
       "localizations" : {
         "fr" : {
@@ -257,6 +417,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "sans alerte"
+          }
+        }
+      }
+    },
+    "Some refused" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Certaines refusées"
           }
         }
       }
@@ -557,6 +727,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mise en place"
+          }
+        }
+      }
+    },
+    "To allow" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "À autoriser"
           }
         }
       }

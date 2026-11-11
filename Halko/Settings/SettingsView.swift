@@ -1,7 +1,8 @@
 import HalkoCore
 import SwiftUI
 
-// The Settings tab: the language and units, then how a session works. What the watch needs of it goes to the watch.
+// The Settings tab: the language and units, how a session works, Health and the notifications. What the watch needs of
+// it goes to the watch.
 struct SettingsView: View {
     @AppStorage(AppLanguage.key) private var language = AppLanguage.system
     @AppStorage(Units.weightKey) private var weight: WeightUnit?
@@ -9,7 +10,10 @@ struct SettingsView: View {
     @AppStorage(RestAlertSettings.placeKey) private var alertPlace = RestAlertSettings.Place.watch
     @AppStorage(RestAlertSettings.soundKey) private var alertSound = true
     @AppStorage(RestAlertSettings.vibrationKey) private var alertVibration = true
+    @AppStorage(HealthSaving.key) private var savesInHealth = true
+    @Environment(Permissions.self) private var permissions
     @Environment(\.units) private var units
+    @Environment(\.scenePhase) private var scenePhase
     // The two units side by side, wide enough to touch each one easily, growing with the text as far as the row allows.
     @ScaledMetric(relativeTo: .body) private var unitsWidth = 150.0
 
@@ -71,8 +75,35 @@ struct SettingsView: View {
                 Text("Session")
                     .foregroundStyle(Color(.secondaryText))
             }
+            Section {
+                Toggle("Save in Health", isOn: $savesInHealth)
+                NavigationLink {
+                    PermissionsView()
+                } label: {
+                    LabeledContent("Permissions") {
+                        permissionsSummary
+                    }
+                }
+            } header: {
+                Text("Health and notifications")
+                    .foregroundStyle(Color(.secondaryText))
+            }
         }
         .navigationTitle("Settings")
+        .task(id: scenePhase) {
+            await permissions.refresh()
+        }
+    }
+
+    private var permissionsSummary: Text {
+        let accesses = [permissions.healthAccess, permissions.notificationAccess]
+        if accesses.contains(.refused) {
+            return Text("Some refused")
+        }
+        if accesses.contains(.notAsked) {
+            return Text("To allow")
+        }
+        return Text("All allowed")
     }
 
     // "Watch · sound, vibration".

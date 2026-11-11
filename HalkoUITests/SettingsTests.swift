@@ -64,4 +64,28 @@ final class SettingsTests: XCTestCase {
         app.navigationBars.buttons.element(boundBy: 0).tap()
         XCTAssertTrue(app.element(containing: "Watch and iPhone · vibration").waitForExistence(timeout: 5))
     }
+
+    @MainActor
+    func testHealthAndPermissions() throws {
+        let app = launch(language: "en", locale: "en_GB")
+        app.tabBars.buttons["Settings"].tap()
+
+        // Saved in Health unless turned off; on the switch itself, its label alone does not turn it.
+        let saves = app.switches["Save in Health"]
+        app.reveal(saves)
+        XCTAssertEqual(saves.value as? String, "1")
+        saves.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.5)).tap()
+        XCTAssertEqual(saves.value as? String, "0")
+
+        // Never asked here (the sample data asks nothing of the system): each one can be.
+        let row = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Permissions")).firstMatch
+        app.reveal(row)
+        XCTAssertTrue(row.label.contains("To allow"))
+        row.tap()
+        XCTAssertTrue(app.navigationBars["Permissions"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.element(containing: "Not asked yet").exists)
+        XCTAssertEqual(app.buttons.matching(identifier: "Allow").count, 2)
+        try app.auditScreen()
+        snap("Settings › Permissions")
+    }
 }

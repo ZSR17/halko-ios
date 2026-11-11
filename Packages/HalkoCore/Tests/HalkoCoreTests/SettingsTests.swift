@@ -52,6 +52,15 @@ struct SettingsTests {
         #expect(watch.object(forKey: SetTimerSettings.stopsAtTargetKey) == nil)
     }
 
+    @Test("Saves the sessions in Health unless told not to, on the watch too")
+    func healthSaving() throws {
+        let defaults = try defaults()
+        #expect(HealthSaving.isOn(in: defaults))
+        defaults.set(false, forKey: HealthSaving.key)
+        #expect(!HealthSaving.isOn(in: defaults))
+        #expect(SharedSettings.keys.contains(HealthSaving.key))
+    }
+
     @Test("Tells the end of a rest on the watch on the wrist, on the iPhone otherwise, or on both")
     func restAlertPlace() {
         var settings = RestAlertSettings()
