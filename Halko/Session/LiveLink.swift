@@ -241,8 +241,8 @@ extension LiveLink: WorkoutPeer {
         if let measuresSentAt, Date.now.timeIntervalSince(measuresSentAt) < Self.measuresInterval { return }
         measuresSentAt = .now
         do {
-            let data = try LiveMessage.measures(heartRate: measures.heartRate, kilocalories: measures.kilocalories).encoded()
-            _ = recorder.sendToOtherDevice(data) {}
+            // By WatchConnectivity too when the workout's channel is closed: the other device shows them all the same.
+            send(try LiveMessage.measures(heartRate: measures.heartRate, kilocalories: measures.kilocalories).encoded())
         } catch {
             Self.logger.error("Cannot tell the other device what is measured: \(String(describing: error))")
         }
