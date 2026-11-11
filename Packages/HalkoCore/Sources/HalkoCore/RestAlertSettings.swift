@@ -10,12 +10,12 @@ public struct RestAlertSettings: Equatable, Sendable {
     }
 
     public enum Tone: String, CaseIterable, Sendable {
-        case halko, gong, whistle, beep, chime
+        case halko, gong, whistle, beep
     }
 
     // The ones watchOS lets an app play.
     public enum WatchHaptic: String, CaseIterable, Sendable {
-        case notification, strong, rising, light
+        case strong, rising, notification
     }
 
     public enum Countdown: String, CaseIterable, Sendable {
@@ -41,8 +41,8 @@ public struct RestAlertSettings: Equatable, Sendable {
     // Of the media volume, from 0 to 1.
     public var volume = 1.0
     public var vibration = true
-    public var watchHaptic = WatchHaptic.notification
-    public var countdown = Countdown.threeTwoOne
+    public var watchHaptic = WatchHaptic.strong
+    public var countdown = Countdown.none
 
     public init() {}
 

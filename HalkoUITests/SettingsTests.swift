@@ -46,10 +46,10 @@ final class SettingsTests: XCTestCase {
         // The iPhone too, and another sound, heard when touched.
         app.buttons["Both"].tap()
         app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Ringtone")).firstMatch.tap()
-        let chime = app.buttons["Chime"]
-        XCTAssertTrue(chime.waitForExistence(timeout: 5))
-        chime.tap()
-        XCTAssertTrue(chime.isSelected)
+        let gong = app.buttons["Gong"]
+        XCTAssertTrue(gong.waitForExistence(timeout: 5))
+        gong.tap()
+        XCTAssertTrue(gong.isSelected)
         try app.auditScreen()
         snap("Settings › Rest end › Ringtone")
         app.navigationBars.buttons.element(boundBy: 0).tap()

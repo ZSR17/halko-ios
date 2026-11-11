@@ -1063,10 +1063,9 @@ private struct MetricsPage: View {
 extension RestAlertSettings.WatchHaptic {
     var type: WKHapticType {
         switch self {
-        case .notification: .notification
         case .strong: .failure
         case .rising: .directionUp
-        case .light: .click
+        case .notification: .notification
         }
     }
 }
