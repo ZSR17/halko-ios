@@ -35,11 +35,7 @@ final class Permissions {
     func checkAnswered() async {
         guard !asked, let defaults else { return }
         if let health {
-            let status = await withCheckedContinuation { continuation in
-                health.getRequestStatusForAuthorization(toShare: HealthTypes.share, read: HealthTypes.read) { @Sendable status, _ in
-                    continuation.resume(returning: status)
-                }
-            }
+            let status = await Self.requestStatus(of: health)
             guard status == .unnecessary else { return }
         }
         let notifications = await withCheckedContinuation { continuation in
@@ -86,10 +82,12 @@ final class Permissions {
     // Read again from the system, where they can change at any time.
     func refresh() async {
         if let health {
-            healthAccess = switch health.authorizationStatus(for: HKObjectType.workoutType()) {
-            case .sharingAuthorized: .allowed
-            case .sharingDenied: .refused
-            default: .notAsked
+            // Something new to ask (a type Halko did not use before) counts as never asked: it is asked here.
+            let status = await Self.requestStatus(of: health)
+            healthAccess = switch (status, health.authorizationStatus(for: HKObjectType.workoutType())) {
+            case (.shouldRequest, _), (_, .notDetermined): .notAsked
+            case (_, .sharingAuthorized): .allowed
+            default: .refused
             }
         }
         guard defaults != nil else { return }
@@ -99,6 +97,15 @@ final class Permissions {
         case .denied: .refused
         // Authorized, quietly or for a while.
         default: .allowed
+        }
+    }
+
+    // Whether the system still has something to ask.
+    private static func requestStatus(of health: HKHealthStore) async -> HKAuthorizationRequestStatus {
+        await withCheckedContinuation { continuation in
+            health.getRequestStatusForAuthorization(toShare: HealthTypes.share, read: HealthTypes.read) { @Sendable status, _ in
+                continuation.resume(returning: status)
+            }
         }
     }
 }

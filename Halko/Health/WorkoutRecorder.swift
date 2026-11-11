@@ -30,8 +30,12 @@ final class WorkoutRecorder {
     // The Halko session a workout of Health belongs to, in its metadata.
     static let sessionIDKey = "HalkoSessionID"
     private nonisolated static let logger = Logger(subsystem: "com.zsr.halko", category: "health")
-    // How long the iPhone leaves the watch to start the workout before doing it itself, from the start of the session.
+    // How long the iPhone leaves the watch to start the workout before doing it itself, from the start of the session:
+    // without an answer, or once the watch said it opened (it has the session to hear of first).
     private static let watchDelay = Duration.seconds(10)
+    private static let openedWatchDelay = Duration.seconds(60)
+    // How long a workout started for a session not heard of yet waits for it.
+    private static let unnamedDelay = Duration.seconds(30)
 
     // The last heart rate measured, in beats per minute.
     private(set) var heartRate: Double?
@@ -46,6 +50,7 @@ final class WorkoutRecorder {
     @ObservationIgnored weak var peer: (any WorkoutPeer)?
     // The workout running on this device.
     @ObservationIgnored private var session: HKWorkoutSession?
+    // Nil for a workout started before its session was heard of.
     @ObservationIgnored private var sessionID: String?
     // The delegate of the session and of its builder, which they do not keep.
     @ObservationIgnored private var relay: Relay?
@@ -57,8 +62,9 @@ final class WorkoutRecorder {
     // The other device's workout, mirrored here.
     @ObservationIgnored private var mirrored: HKWorkoutSession?
     @ObservationIgnored private var mirroredRelay: Relay?
-    // The session whose workout the watch was asked to start.
+    // The session whose workout the watch was asked to start, and what the iPhone does if it does not.
     @ObservationIgnored private var waitingForWatch: String?
+    @ObservationIgnored private var watchFallback: Task<Void, Never>?
     // The workout left running by the app when it stopped may come back: none is started meanwhile.
     @ObservationIgnored private var isRecovering = false
 
@@ -88,7 +94,9 @@ final class WorkoutRecorder {
         return configuration
     }
 
-    func start(sessionID: String, at date: Date) {
+    // `sessionID` nil: asked by the iPhone, which tells the session a moment later; the workout starts at once all the
+    // same, as watchOS expects, and goes if no session comes.
+    func start(sessionID: String?, at date: Date) {
         guard let health, session == nil, !isRecovering,
               health.authorizationStatus(for: HKObjectType.workoutType()) == .sharingAuthorized else { return }
         let configuration = Self.configuration
@@ -104,13 +112,38 @@ final class WorkoutRecorder {
                     Self.logger.error("Cannot start the workout: \(String(describing: error))")
                 }
             }
-            builder.addMetadata([Self.sessionIDKey: sessionID]) { @Sendable _, error in
-                if let error {
-                    Self.logger.error("Cannot name the workout: \(String(describing: error))")
-                }
+            if let sessionID {
+                name(builder, sessionID)
+            } else {
+                dropIfUnnamed(session)
             }
         } catch {
             Self.logger.error("Cannot start the workout: \(String(describing: error))")
+        }
+    }
+
+    // The session of a workout started before it was heard of.
+    func belongs(to sessionID: String) {
+        guard let session, self.sessionID == nil else { return }
+        self.sessionID = sessionID
+        name(session.associatedWorkoutBuilder(), sessionID)
+    }
+
+    private func name(_ builder: HKLiveWorkoutBuilder, _ sessionID: String) {
+        builder.addMetadata([Self.sessionIDKey: sessionID]) { @Sendable _, error in
+            if let error {
+                Self.logger.error("Cannot name the workout: \(String(describing: error))")
+            }
+        }
+    }
+
+    private func dropIfUnnamed(_ session: HKWorkoutSession) {
+        let started = ObjectIdentifier(session)
+        Task { [weak self] in
+            try? await Task.sleep(for: Self.unnamedDelay)
+            guard let self, let own = self.session, ObjectIdentifier(own) == started, self.sessionID == nil else { return }
+            Self.logger.error("No session for the workout started: discarded")
+            self.discard()
         }
     }
 
@@ -227,14 +260,25 @@ final class WorkoutRecorder {
             if let error {
                 Self.logger.debug("The watch did not start: \(String(describing: error))")
             }
-            guard !started else { return }
             Task { @MainActor [weak self] in
-                self?.watchDidNotAnswer(sessionID: sessionID, startedAt: date)
+                if started {
+                    // Its workout runs already: two at once for one session would measure badly. Here only if the
+                    // watch never says it records.
+                    self?.waitForWatch(sessionID: sessionID, startedAt: date, for: Self.openedWatchDelay)
+                } else {
+                    self?.watchDidNotAnswer(sessionID: sessionID, startedAt: date)
+                }
             }
         }
         // Whatever becomes of that request, which may not answer with the watch out of reach.
-        Task { [weak self] in
-            try? await Task.sleep(for: Self.watchDelay)
+        waitForWatch(sessionID: sessionID, startedAt: date, for: Self.watchDelay)
+    }
+
+    private func waitForWatch(sessionID: String, startedAt date: Date, for delay: Duration) {
+        watchFallback?.cancel()
+        watchFallback = Task { [weak self] in
+            try? await Task.sleep(for: delay)
+            guard !Task.isCancelled else { return }
             self?.watchDidNotAnswer(sessionID: sessionID, startedAt: date)
         }
     }
@@ -242,6 +286,8 @@ final class WorkoutRecorder {
     private func watchDidNotAnswer(sessionID: String, startedAt date: Date) {
         guard waitingForWatch == sessionID else { return }
         waitingForWatch = nil
+        watchFallback?.cancel()
+        watchFallback = nil
         start(sessionID: sessionID, at: date)
     }
     #endif
@@ -264,13 +310,14 @@ final class WorkoutRecorder {
         #endif
     }
 
-    // Unless the sessions are not to be saved in Health: then dropped, as a session discarded.
     private func saveOwnWorkout(at date: Date) {
-        guard let session, let sessionID else { return }
+        guard let session else { return }
+        let sessionID = self.sessionID
         let builder = Handoff(value: session.associatedWorkoutBuilder())
         detach()
         session.end()
-        guard HealthSaving.isOn(in: .standard) else {
+        // Its session never came, or the sessions stay out of Health.
+        guard let sessionID, HealthSaving.isOn(in: .standard) else {
             builder.value.discardWorkout()
             return
         }
@@ -315,17 +362,22 @@ final class WorkoutRecorder {
         guard let health, self.session == nil else { return }
         let builder = session.associatedWorkoutBuilder()
         // Another session's workout, left running: not this one's to save.
-        if let owner = builder.metadata[Self.sessionIDKey] as? String, owner != sessionID {
+        let owner = builder.metadata[Self.sessionIDKey] as? String
+        if let owner, owner != sessionID {
             session.end()
             builder.discardWorkout()
             return
+        }
+        // Started before its session was heard of.
+        if owner == nil {
+            name(builder, sessionID)
         }
         builder.dataSource = HKLiveWorkoutDataSource(healthStore: health, workoutConfiguration: session.workoutConfiguration)
         attach(session, sessionID: sessionID)
         mirror(session)
     }
 
-    private func attach(_ session: HKWorkoutSession, sessionID: String) {
+    private func attach(_ session: HKWorkoutSession, sessionID: String?) {
         let relay = Relay(events: relayEvents)
         session.delegate = relay
         session.associatedWorkoutBuilder().delegate = relay
