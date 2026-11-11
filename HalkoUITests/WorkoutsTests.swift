@@ -126,6 +126,8 @@ extension XCUIApplication {
         let bars = [navigationBars.firstMatch.frame, tabBars.firstMatch.frame].map { $0.insetBy(dx: 0, dy: -60) } + [bottomEdge]
             // And under the block fixed at the bottom of the session, with its shadow.
             + descendants(matching: .any).matching(identifier: "bottom-panel").allElementsBoundByIndex.map { $0.frame.insetBy(dx: 0, dy: -24) }
+        // The small screens drawing each look in the settings, whose names the audit measures over the drawing.
+        let looks = descendants(matching: .any).matching(NSPredicate(format: "identifier BEGINSWITH %@", "appearance-")).allElementsBoundByIndex.map(\.frame)
         // One kind of check at a time: the audit of a large screen in one go runs out of time on a slow runner, and
         // Xcode does not let one give it more. Each is tried twice more if it still does. With the largest text sizes,
         // no contrast: measured on every pixel of the huge text it runs out of time every time, and the colors are the
@@ -155,7 +157,7 @@ extension XCUIApplication {
                         }
                         return issue.auditType == .contrast
                             && (issue.element?.identifier.hasPrefix("muscle-") == true
-                                || issue.element?.identifier.hasPrefix("appearance-") == true
+                                || looks.contains { $0.intersects(frame) }
                                 || issue.element?.identifier == "plates-load"
                                 || bars.contains { $0.intersects(frame) })
                     }
