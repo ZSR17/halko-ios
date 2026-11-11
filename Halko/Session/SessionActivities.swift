@@ -152,11 +152,11 @@ final class SessionActivities {
         let taps = here && !alert.sound && alert.vibration ? alert.countdown(before: end) : []
         let task = Task { [weak self] in
             for tap in taps {
-                try? await Task.sleep(for: .seconds(tap.timeIntervalSinceNow))
+                try? await Task.sleep(until: tap)
                 guard !Task.isCancelled else { return }
                 AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
             }
-            try? await Task.sleep(for: .seconds(end.timeIntervalSinceNow))
+            try? await Task.sleep(until: end)
             guard !Task.isCancelled else { return }
             await self?.restEnded(at: end)
         }
@@ -180,7 +180,7 @@ final class SessionActivities {
         timerWatch = nil
         guard let next else { return }
         let task = Task { [weak self] in
-            try? await Task.sleep(for: .seconds(next.timeIntervalSinceNow))
+            try? await Task.sleep(until: next)
             guard !Task.isCancelled else { return }
             await self?.timerChanged()
         }

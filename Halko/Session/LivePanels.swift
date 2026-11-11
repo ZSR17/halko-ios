@@ -109,7 +109,7 @@ struct TimerPanel: View {
         .task(id: timer) {
             phase = .now
             while let next = timer.nextChange(after: .now) {
-                try? await Task.sleep(for: .seconds(next.timeIntervalSinceNow))
+                try? await Task.sleep(until: next)
                 guard !Task.isCancelled else { return }
                 phase = .now
             }
