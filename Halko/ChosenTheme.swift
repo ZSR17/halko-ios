@@ -2,10 +2,26 @@ import HalkoCore
 import SwiftUI
 import UIKit
 
+// The color of the app, and that of a text on it, readable from any thread like the styles that use them: by the names
+// of their assets.
+private nonisolated struct AccentKey: EnvironmentKey {
+    static let defaultValue = Color("AccentColor")
+}
+
+private nonisolated struct OnAccentKey: EnvironmentKey {
+    static let defaultValue = Color("OnAccent")
+}
+
 extension EnvironmentValues {
-    // The color of the app, and that of a text on it.
-    @Entry var accent = Color(.accent)
-    @Entry var onAccent = Color(.onAccent)
+    nonisolated var accent: Color {
+        get { self[AccentKey.self] }
+        set { self[AccentKey.self] = newValue }
+    }
+
+    nonisolated var onAccent: Color {
+        get { self[OnAccentKey.self] }
+        set { self[OnAccentKey.self] = newValue }
+    }
 }
 
 // A text on the color of the app.
@@ -23,11 +39,11 @@ extension ThemeColor {
     // In the shade of the look it is shown in, light or dark, with the contrast increased or not. The system asks for it
     // on any thread.
     nonisolated var color: Color {
-        self == .lime ? Color(.accent) : Self.adaptive { shade(dark: $0, highContrast: $1) }
+        self == .lime ? AccentKey.defaultValue : Self.adaptive { shade(dark: $0, highContrast: $1) }
     }
 
     nonisolated var onColor: Color {
-        self == .lime ? Color(.onAccent) : Self.adaptive { shade(dark: $0, highContrast: $1).text }
+        self == .lime ? OnAccentKey.defaultValue : Self.adaptive { shade(dark: $0, highContrast: $1).text }
     }
 
     private nonisolated static func adaptive(_ shade: @escaping @Sendable (Bool, Bool) -> RGB) -> Color {
