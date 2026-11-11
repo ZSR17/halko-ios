@@ -6,6 +6,9 @@ struct SettingsView: View {
     @AppStorage(AppLanguage.key) private var language = AppLanguage.system
     @AppStorage(Units.weightKey) private var weight: WeightUnit?
     @AppStorage(Units.distanceKey) private var distance: DistanceUnit?
+    @AppStorage(RestAlertSettings.placeKey) private var alertPlace = RestAlertSettings.Place.watch
+    @AppStorage(RestAlertSettings.soundKey) private var alertSound = true
+    @AppStorage(RestAlertSettings.vibrationKey) private var alertVibration = true
     @Environment(\.units) private var units
     // The two units side by side, wide enough to touch each one easily, growing with the text as far as the row allows.
     @ScaledMetric(relativeTo: .body) private var unitsWidth = 150.0
@@ -54,6 +57,13 @@ struct SettingsView: View {
                     .foregroundStyle(Color(.secondaryText))
             }
             Section {
+                NavigationLink {
+                    RestAlertSettingsView()
+                } label: {
+                    LabeledContent("Rest end") {
+                        Text(verbatim: restAlert)
+                    }
+                }
                 NavigationLink("Set timer") {
                     SetTimerSettingsView()
                 }
@@ -63,6 +73,12 @@ struct SettingsView: View {
             }
         }
         .navigationTitle("Settings")
+    }
+
+    // "Watch · sound, vibration".
+    private var restAlert: String {
+        let told = [alertSound ? String(localized: "sound") : nil, alertVibration ? String(localized: "vibration") : nil].compactMap(\.self)
+        return "\(alertPlace.shortName) · \(told.isEmpty ? String(localized: "silent") : told.joined(separator: ", "))"
     }
 }
 
@@ -77,22 +93,9 @@ private struct LanguageView: View {
         List {
             Section {
                 ForEach(AppLanguage.allCases, id: \.self) { choice in
-                    Button {
+                    CheckRow(label: choice.name, checked: choice == language) {
                         choice.save(to: .standard)
-                    } label: {
-                        HStack {
-                            choice.name
-                                .foregroundStyle(Color.primary)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                            if choice == language {
-                                Image(systemName: "checkmark")
-                                    .font(.body.weight(.semibold))
-                                    .foregroundStyle(.tint)
-                                    .accessibilityHidden(true)
-                            }
-                        }
                     }
-                    .accessibilityAddTraits(choice == language ? .isSelected : [])
                 }
             } footer: {
                 if language != Self.running {

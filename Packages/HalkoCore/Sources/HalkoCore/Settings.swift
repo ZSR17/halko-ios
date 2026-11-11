@@ -36,7 +36,7 @@ public enum SharedSettings {
         SetTimerSettings.stopsAtTargetKey,
         SetTimerSettings.getsInPositionKey,
         SetTimerSettings.positionKey,
-    ]
+    ] + RestAlertSettings.keys
 
     // The values set; a key left out is at its default.
     public static func values(in defaults: UserDefaults) -> [String: Any] {

@@ -3,6 +3,7 @@ import HalkoCore
 import os
 import SwiftData
 import WatchConnectivity
+import WatchKit
 
 // The watch's side of the link with the iPhone app: keeps the workouts it sends and the pictures of their exercises,
 // and the two apps give each other the sessions done. The watch never waits on it: the iPhone may be away, and what
@@ -126,6 +127,14 @@ extension PhoneLink: WCSessionDelegate {
         guard activationState == .activated else { return }
         Task { @MainActor in
             self.linked()
+        }
+    }
+
+    // A vibration tried from the iPhone's settings.
+    nonisolated func session(_ session: WCSession, didReceiveMessage message: [String: Any]) {
+        guard let haptic = (message[CompanionMessage.hapticKey] as? String).flatMap(RestAlertSettings.WatchHaptic.init(rawValue:)) else { return }
+        Task { @MainActor in
+            WKInterfaceDevice.current().play(haptic.type)
         }
     }
 

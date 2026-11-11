@@ -163,11 +163,12 @@ enum DemoData {
             Plate(weightG: 5_000, count: 4),
             Plate(weightG: 2_500, count: 2),
         ])), forKey: PlateSettings.storageKey)
-        // No exercise left chosen, nor language or units, by a test tried again.
+        // No exercise left chosen, nor language, units or alert of a rest, by a test tried again.
         UserDefaults.standard.removeObject(forKey: "oneRepMaxExercise")
         AppLanguage.system.save(to: .standard)
-        UserDefaults.standard.removeObject(forKey: Units.weightKey)
-        UserDefaults.standard.removeObject(forKey: Units.distanceKey)
+        for key in [Units.weightKey, Units.distanceKey] + RestAlertSettings.keys {
+            UserDefaults.standard.removeObject(forKey: key)
+        }
         return container
     }
 }

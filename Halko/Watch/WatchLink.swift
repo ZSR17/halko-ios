@@ -48,6 +48,15 @@ final class WatchLink: NSObject {
         }
     }
 
+    // A vibration of the watch felt at once, while choosing it; false when the watch app is not open to feel it.
+    @discardableResult
+    static func play(_ haptic: RestAlertSettings.WatchHaptic) -> Bool {
+        let session = WCSession.default
+        guard WCSession.isSupported(), session.activationState == .activated, session.isReachable else { return false }
+        session.sendMessage([CompanionMessage.hapticKey: haptic.rawValue], replyHandler: nil, errorHandler: nil)
+        return true
+    }
+
     // Delivered even later, the last one last; only when they changed.
     private func sendSettings() {
         let session = WCSession.default

@@ -30,4 +30,38 @@ final class SettingsTests: XCTestCase {
         XCTAssertTrue(app.element(containing: "lb").exists)
         XCTAssertFalse(app.element(containing: "kg").exists)
     }
+
+    @MainActor
+    func testRestAlert() throws {
+        let app = launch(language: "en", locale: "en_GB")
+        app.tabBars.buttons["Settings"].tap()
+        let row = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Rest end")).firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout: 5))
+        XCTAssertTrue(row.label.contains("Watch"))
+        row.tap()
+        XCTAssertTrue(app.navigationBars["Rest end"].waitForExistence(timeout: 5))
+        try app.auditScreen()
+        snap("Settings › Rest end")
+
+        // The iPhone too, and another sound, heard when touched.
+        app.buttons["Both"].tap()
+        app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Ringtone")).firstMatch.tap()
+        let chime = app.buttons["Chime"]
+        XCTAssertTrue(chime.waitForExistence(timeout: 5))
+        chime.tap()
+        XCTAssertTrue(chime.isSelected)
+        try app.auditScreen()
+        snap("Settings › Rest end › Ringtone")
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+
+        // Without the sound, its choices go; the countdown stays.
+        // On the switch itself: its label alone does not turn it.
+        app.switches["Sound"].coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.5)).tap()
+        XCTAssertFalse(app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Ringtone")).firstMatch.exists)
+        app.reveal(app.buttons["10 s"])
+        app.buttons["10 s"].tap()
+        XCTAssertTrue(app.buttons["10 s"].isSelected)
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        XCTAssertTrue(app.element(containing: "Watch and iPhone · vibration").waitForExistence(timeout: 5))
+    }
 }
