@@ -145,7 +145,6 @@ extension RestAlertSettings.Tone {
         case .gong: "RestGong"
         case .whistle: "RestWhistle"
         case .beep: "RestBeep"
-        case .chime: "RestChime"
         }
     }
 }

@@ -11,8 +11,8 @@ struct RestAlertSettingsView: View {
     @AppStorage(RestAlertSettings.toneKey) private var tone = RestAlertSettings.Tone.halko
     @AppStorage(RestAlertSettings.volumeKey) private var volume = 1.0
     @AppStorage(RestAlertSettings.vibrationKey) private var vibration = true
-    @AppStorage(RestAlertSettings.watchHapticKey) private var watchHaptic = RestAlertSettings.WatchHaptic.notification
-    @AppStorage(RestAlertSettings.countdownKey) private var countdown = RestAlertSettings.Countdown.threeTwoOne
+    @AppStorage(RestAlertSettings.watchHapticKey) private var watchHaptic = RestAlertSettings.WatchHaptic.strong
+    @AppStorage(RestAlertSettings.countdownKey) private var countdown = RestAlertSettings.Countdown.none
     @State private var preview = TonePreview()
 
     var body: some View {
@@ -237,7 +237,6 @@ extension RestAlertSettings.Tone {
         case .gong: Text("Gong")
         case .whistle: Text("Whistle")
         case .beep: Text("Beep")
-        case .chime: Text("Chime")
         }
     }
 }
@@ -245,10 +244,9 @@ extension RestAlertSettings.Tone {
 extension RestAlertSettings.WatchHaptic {
     var name: Text {
         switch self {
-        case .notification: Text("Notification")
         case .strong: Text("Strong")
         case .rising: Text("Rising")
-        case .light: Text("Light")
+        case .notification: Text("Notification")
         }
     }
 }

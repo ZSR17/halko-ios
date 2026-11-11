@@ -61,16 +61,6 @@
         }
       }
     },
-    "Chime" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Carillon"
-          }
-        }
-      }
-    },
     "Distance" : {
       "localizations" : {
         "fr" : {
@@ -157,16 +147,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Langue et unités"
-          }
-        }
-      }
-    },
-    "Light" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Légère"
           }
         }
       }
