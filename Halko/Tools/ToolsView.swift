@@ -35,7 +35,7 @@ private struct ToolRow: View {
         HStack(spacing: 14) {
             Image(systemName: symbol)
                 .font(.title3)
-                .foregroundStyle(Color(.onAccent))
+                .foregroundStyle(.onTint)
                 .frame(width: iconSide, height: iconSide)
                 .background(.tint, in: .rect(cornerRadius: 14))
                 .accessibilityHidden(true)

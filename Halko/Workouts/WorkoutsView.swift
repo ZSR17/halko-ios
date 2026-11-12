@@ -144,7 +144,7 @@ private struct NoWorkouts: View {
                 // The text in the color made to be read on the accent color, in light and dark appearance.
                 Button(action: create) {
                     Text("New workout")
-                        .foregroundStyle(Color(.onAccent))
+                        .foregroundStyle(.onTint)
                 }
                 .buttonStyle(.borderedProminent)
             }

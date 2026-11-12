@@ -76,7 +76,7 @@ struct ExerciseView: View {
                 // The text in the color made to be read on the accent color, in light and dark appearance.
                 Label("Add to a workout", systemImage: "plus")
                     .font(.headline)
-                    .foregroundStyle(Color(.onAccent))
+                    .foregroundStyle(.onTint)
                     .frame(maxWidth: .infinity, minHeight: 44)
             }
             .buttonStyle(.borderedProminent)

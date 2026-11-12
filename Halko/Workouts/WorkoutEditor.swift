@@ -254,6 +254,7 @@ private struct Moving: Equatable {
 // The exercises being edited, between the links of the supersets. Holding a handle folds them all into compact rows:
 // the one held follows the finger, its place shows dashed, and they unfold where it is let go.
 private struct EditorItems: View {
+    @Environment(\.accent) private var accent
     @Binding var draft: WorkoutDraft
     let fields: FieldText
     let focus: FocusState<EditorField?>.Binding
@@ -378,7 +379,7 @@ private struct EditorItems: View {
     private func grip(_ what: Moving, label: Text) -> some View {
         Image(systemName: "line.3.horizontal")
             .font(.body.weight(.semibold))
-            .foregroundStyle(moving?.grabbed == what.grabbed ? Color.accentColor : Color(.secondaryText))
+            .foregroundStyle(moving?.grabbed == what.grabbed ? accent : Color(.secondaryText))
             .frame(minWidth: 44, minHeight: 44)
             .contentShape(.rect)
             .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .named(Self.space)).onChanged { value in

@@ -80,6 +80,7 @@ struct SetOrRestPanel: View {
 // The timer of the set to do: getting in position, the time held, the pause between two sides. As high as the panel of
 // the set and of the rest, laid out hidden under it. The screen stays on, the iPhone probably on the floor.
 struct TimerPanel: View {
+    @Environment(\.accent) private var accent
     let table: LiveTable
     let actions: LiveActions
     let step: LiveStep
@@ -97,7 +98,7 @@ struct TimerPanel: View {
         let display = SetTimerDisplay(timer: timer, date: phase)
         Panel(tint: display.isPause ? Color(.rest) : nil, bottomPadding: bottomPadding) {
             ZStack(alignment: .topLeading) {
-                content(display, tint: display.isPause ? Color(.rest) : Color.accentColor)
+                content(display, tint: display.isPause ? Color(.rest) : accent)
                 SetContent(table: table, actions: actions, step: step)
                     .hidden()
                     .accessibilityHidden(true)
@@ -247,7 +248,7 @@ struct TimerPanel: View {
                     Text(verbatim: display.stopTitle)
                 }
             }
-            .foregroundStyle(display.isPause ? Color(.onRest) : Color(.onAccent))
+            .foregroundStyle(display.isPause ? AnyShapeStyle(Color(.onRest)) : AnyShapeStyle(.onTint))
             .lineLimit(1)
             .minimumScaleFactor(0.8)
             .frame(maxWidth: .infinity, minHeight: 44)
@@ -307,7 +308,7 @@ private struct SetContent: View {
                 Button(action: actions.validate) {
                     Text(verbatim: validateTitle)
                         .font(.headline)
-                        .foregroundStyle(Color(.onAccent))
+                        .foregroundStyle(.onTint)
                         .frame(maxWidth: .infinity, minHeight: 44)
                 }
                 .buttonStyle(.borderedProminent)
@@ -333,7 +334,7 @@ private struct SetContent: View {
         Button(action: actions.startTimer) {
             Text("Start the timer")
                 .font(.headline)
-                .foregroundStyle(Color(.onAccent))
+                .foregroundStyle(.onTint)
                 .lineLimit(1)
                 .frame(maxWidth: .infinity, minHeight: 44)
         }
@@ -537,7 +538,7 @@ struct AllDonePanel: View {
             Button(action: finish) {
                 Text("Finish the session")
                     .font(.headline)
-                    .foregroundStyle(Color(.onAccent))
+                    .foregroundStyle(.onTint)
                     .frame(maxWidth: .infinity, minHeight: 44)
             }
             .buttonStyle(.borderedProminent)

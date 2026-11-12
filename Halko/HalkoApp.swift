@@ -81,6 +81,7 @@ struct HalkoApp: App {
         WindowGroup {
             RootView()
                 .modifier(ChosenUnits())
+                .modifier(ChosenTheme())
                 .environment(liveSession)
                 .environment(permissions)
                 .environment(recorder)

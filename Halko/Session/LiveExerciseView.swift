@@ -224,6 +224,7 @@ struct LiveExerciseView: View {
 // A set of an exercise of the session. Every value can be changed at any time with a tap: those of the current set are
 // in boxes, those of a set done are corrected at once, those of a set to come are kept for when it is done.
 private struct LiveSetRow: View {
+    @Environment(\.accent) private var accent
     let item: Int
     let set: Int
     let table: LiveTable
@@ -291,7 +292,7 @@ private struct LiveSetRow: View {
         let warmup = table.plan.target(item, set: set).kind == .warmup
         return table.number(item, set: set)
             .font(.body.weight(isCurrent ? .bold : .semibold))
-            .foregroundStyle(warmup ? Color(.warmup) : isCurrent ? Color.accentColor : .primary)
+            .foregroundStyle(warmup ? Color(.warmup) : isCurrent ? accent : .primary)
             .frame(minWidth: 44, minHeight: 44)
             .accessibilityLabel(Text(verbatim: table.spokenNumber(item, set: set)))
             .accessibilityValue(isCurrent ? Text("Current set") : isDone ? Text("Done") : Text(verbatim: ""))
@@ -341,7 +342,7 @@ private struct LiveSetRow: View {
             } label: {
                 Image(systemName: "checkmark")
                     .font(.footnote.weight(.bold))
-                    .foregroundStyle(Color(.onAccent))
+                    .foregroundStyle(.onTint)
                     .frame(width: 32, height: 32)
                     .background(.tint, in: .circle)
                     .frame(width: 44, height: 44)
@@ -354,7 +355,7 @@ private struct LiveSetRow: View {
                 actions.validate()
             } label: {
                 Circle()
-                    .strokeBorder(Color.accentColor, lineWidth: 2)
+                    .strokeBorder(accent, lineWidth: 2)
                     .frame(width: 32, height: 32)
                     .frame(width: 44, height: 44)
                     .contentShape(.rect)

@@ -37,7 +37,7 @@ struct SessionBanner: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-        .foregroundStyle(Color(.onAccent))
+        .foregroundStyle(.onTint)
         .background(.tint, in: .rect(cornerRadius: 16))
         .accessibilityElement(children: .combine)
     }

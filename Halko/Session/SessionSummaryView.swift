@@ -44,7 +44,7 @@ struct SessionSummaryView: View {
             } label: {
                 Text("Done")
                     .font(.headline)
-                    .foregroundStyle(Color(.onAccent))
+                    .foregroundStyle(.onTint)
                     .frame(maxWidth: .infinity, minHeight: 44)
             }
             .buttonStyle(.borderedProminent)
@@ -67,7 +67,7 @@ struct SessionSummaryView: View {
         HStack(spacing: 12) {
             Image(systemName: "checkmark")
                 .font(.title3.weight(.bold))
-                .foregroundStyle(Color(.onAccent))
+                .foregroundStyle(.onTint)
                 .frame(width: 44, height: 44)
                 .background(.tint, in: .circle)
                 .accessibilityHidden(true)

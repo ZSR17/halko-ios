@@ -40,7 +40,7 @@ struct WorkoutCard: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 Text("Start")
                     .font(.headline)
-                    .foregroundStyle(Color(.onAccent))
+                    .foregroundStyle(.onTint)
                     .padding(.horizontal, 18)
                     .frame(minHeight: 44)
                     .background(.tint, in: .capsule)
