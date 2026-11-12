@@ -79,6 +79,22 @@ struct BackupTests {
         #expect(try new.dataCounts().workouts == 1)
     }
 
+    @Test("Everything back from a file after erasing, dated now so that the watch takes it back")
+    func importAfterErase() throws {
+        try session(finish: true, at: start)
+        let backup = try old.backup(plates: nil, at: start + 1000)
+        try old.eraseAll(at: start + 2000)
+
+        #expect(try old.restore(backup, at: start + 3000) == ImportResult(added: 1, alreadyThere: 0))
+        #expect(try old.dataCounts() == DataCounts(sessions: 1, workouts: 1, exercises: 1))
+        #expect(try old.fetchCount(FetchDescriptor<SetLog>(predicate: #Predicate { !$0.removed })) == 1)
+        let snapshot = try old.planSnapshot()
+        #expect(snapshot.workouts.allSatisfy { !$0.deleted && $0.updatedAt == (start + 3000).epochMilliseconds })
+        let id = original.id
+        let changed = try #require(try old.fetch(FetchDescriptor(predicate: #Predicate<Exercise> { $0.id == id })).first)
+        #expect(changed.name == "Mine" && changed.customized)
+    }
+
     @Test("A file of a later version is refused")
     func newerFormat() throws {
         var backup = try old.backup(plates: nil)
