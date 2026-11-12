@@ -59,10 +59,17 @@ public struct DataCounts: Equatable, Sendable {
     public var exercises: Int
 }
 
-// The sessions of a file imported: those new to the device, and those it had already.
+// What a file imported brought: for each kind, the rows new to the device, and those it had already.
 public struct ImportResult: Equatable, Sendable {
-    public var added: Int
-    public var alreadyThere: Int
+    public struct Tally: Equatable, Sendable {
+        public var added: Int
+        public var alreadyThere: Int
+    }
+
+    public var sessions: Tally
+    public var workouts: Tally
+    // The user's own, not the library's changed.
+    public var exercises: Tally
 }
 
 extension ModelContext {
@@ -97,8 +104,11 @@ extension ModelContext {
     // version, as in the sync. A row the device has deleted comes back, and a library exercise the file has changed
     // takes the change: the file was asked for. Deleted rows in the file are not applied.
     public func restore(_ backup: Backup, at date: Date = .now) throws -> ImportResult {
-        let ids = backup.sessions.filter { !$0.deleted }.map(\.id)
-        let known = try fetch(FetchDescriptor(predicate: Session.withIDs(ids))).filter { !$0.removed }.count
+        let result = ImportResult(
+            sessions: try tally(backup.sessions.filter { !$0.deleted }.map(\.id), of: Session.self),
+            workouts: try tally(backup.workouts.filter { !$0.deleted }.map(\.id), of: Workout.self),
+            exercises: try tally(backup.exercises.filter { !$0.deleted && $0.source == .custom }.map(\.id), of: Exercise.self)
+        )
         try bringIn(backup.folders.filter { !$0.deleted }, to: Folder.self, at: date)
         try bringIn(backup.workouts.filter { !$0.deleted }, to: Workout.self, at: date)
         try bringIn(backup.items.filter { !$0.deleted }, to: WorkoutItem.self, at: date)
@@ -110,7 +120,13 @@ extension ModelContext {
         if hasChanges {
             try save()
         }
-        return ImportResult(added: ids.count - known, alreadyThere: known)
+        return result
+    }
+
+    // Of these rows, those the device has, not deleted, and the others.
+    private func tally<Model: SyncedModel>(_ ids: [String], of _: Model.Type) throws -> ImportResult.Tally {
+        let known = try fetch(FetchDescriptor(predicate: Model.withIDs(ids))).filter { !$0.removed }.count
+        return ImportResult.Tally(added: ids.count - known, alreadyThere: known)
     }
 
     // As in the sync, then the file's version over a deleted row, or where `replaces`: dated now, so that the watch

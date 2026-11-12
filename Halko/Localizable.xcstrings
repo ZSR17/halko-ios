@@ -651,12 +651,12 @@
         }
       }
     },
-    "Sessions added: %lld. Already there: %lld." : {
+    "Sessions: %lld added, %lld already there." : {
       "localizations" : {
-        "en" : {
+        "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%#@added@ %#@there@"
+            "value" : "Séances : %#@added@, %#@there@."
           },
           "substitutions" : {
             "added" : {
@@ -667,13 +667,13 @@
                   "one" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "Session added: %arg."
+                      "value" : "%arg ajoutée"
                     }
                   },
                   "other" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "Sessions added: %arg."
+                      "value" : "%arg ajoutées"
                     }
                   }
                 }
@@ -687,24 +687,28 @@
                   "one" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "Already there: %arg."
+                      "value" : "%arg déjà présente"
                     }
                   },
                   "other" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "Already there: %arg."
+                      "value" : "%arg déjà présentes"
                     }
                   }
                 }
               }
             }
           }
-        },
+        }
+      }
+    },
+    "Workouts: %lld added, %lld already there." : {
+      "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%#@added@ %#@there@"
+            "value" : "Programmes : %#@added@, %#@there@."
           },
           "substitutions" : {
             "added" : {
@@ -715,13 +719,13 @@
                   "one" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "Séance ajoutée : %arg."
+                      "value" : "%arg ajouté"
                     }
                   },
                   "other" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "Séances ajoutées : %arg."
+                      "value" : "%arg ajoutés"
                     }
                   }
                 }
@@ -735,13 +739,65 @@
                   "one" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "Déjà présente : %arg."
+                      "value" : "%arg déjà présent"
                     }
                   },
                   "other" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "Déjà présentes : %arg."
+                      "value" : "%arg déjà présents"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Custom exercises: %lld added, %lld already there." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exercices perso : %#@added@, %#@there@."
+          },
+          "substitutions" : {
+            "added" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg ajouté"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg ajoutés"
+                    }
+                  }
+                }
+              }
+            },
+            "there" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg déjà présent"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg déjà présents"
                     }
                   }
                 }
