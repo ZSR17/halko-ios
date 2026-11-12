@@ -11,10 +11,11 @@ struct DataSettingsView: View {
     private static let logger = Logger(subsystem: "com.zsr.halko", category: "data")
 
     @Environment(\.modelContext) private var context
-    @Environment(LiveSessionStore.self) private var liveSession
     @AppStorage(PlateSettings.storageKey) private var plates = Data()
     @State private var counts: DataCounts?
     @State private var size: Int64?
+    // A session not finished yet, which erasing would leave behind.
+    @State private var inProgress = false
     @State private var exported: ExportedFile?
     @State private var importing = false
     @State private var imported: ImportResult?
@@ -54,13 +55,17 @@ struct DataSettingsView: View {
                     .foregroundStyle(Color(.secondaryText))
             }
             Section {
-                Button("Erase all", role: .destructive) {
+                Button(role: .destructive) {
                     erasing = true
+                } label: {
+                    // In a darker red than the system's on light, lighter on dark, for a contrast of 4.5:1.
+                    Text("Erase all")
+                        .foregroundStyle(inProgress ? Color(.secondaryText) : Color(.destructiveText))
+                        .frame(maxWidth: .infinity)
                 }
-                .frame(maxWidth: .infinity)
-                .disabled(liveSession.state != nil)
+                .disabled(inProgress)
             } footer: {
-                if liveSession.state != nil {
+                if inProgress {
                     Text("Finish the session in progress to erase everything.")
                         .foregroundStyle(Color(.secondaryText))
                 }
@@ -103,6 +108,7 @@ struct DataSettingsView: View {
 
     private func refresh() {
         counts = try? context.dataCounts()
+        inProgress = ((try? context.fetchCount(FetchDescriptor<Session>(predicate: #Predicate { !$0.removed && $0.endedAt == nil }))) ?? 0) > 0
         // The database with its journal.
         if let url = context.container.configurations.first?.url {
             size = ["", "-wal", "-shm"]
