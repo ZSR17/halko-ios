@@ -104,20 +104,19 @@ final class WatchSessionTests: XCTestCase {
         snap("Watch A – Exercices")
 
         current.tap()
-        let add = app.buttons["Ajouter une série"]
-        XCTAssertTrue(add.waitForExistence(timeout: 5))
+        // « Add a set », under the sets, is made once scrolled to.
+        let done = app.buttons.matching(NSPredicate(format: "label CONTAINS 'Faite'")).firstMatch
+        XCTAssertTrue(done.waitForExistence(timeout: 5))
         try app.performAccessibilityAudit()
         snap("Watch B – Un exercice")
 
-        let done = app.buttons.matching(NSPredicate(format: "label CONTAINS 'Faite'")).firstMatch
-        XCTAssertTrue(done.exists)
         done.tap()
         let save = app.buttons["Enregistrer"]
         XCTAssertTrue(save.waitForExistence(timeout: 5))
         try app.performAccessibilityAudit()
         snap("Watch D – Corriger une série faite")
         save.tap()
-        XCTAssertTrue(add.waitForExistence(timeout: 5))
+        XCTAssertTrue(done.waitForExistence(timeout: 5))
 
         // A set to do after the one in progress.
         let later = app.buttons.matching(NSPredicate(format: "label CONTAINS 'Échauffement 3'")).firstMatch
