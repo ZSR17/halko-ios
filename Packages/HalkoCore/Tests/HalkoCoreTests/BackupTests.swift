@@ -48,6 +48,12 @@ struct BackupTests {
         return state
     }
 
+    // One session, one workout and one exercise of the user's, each new or there already.
+    func imported(added: Int, alreadyThere: Int) -> ImportResult {
+        let tally = ImportResult.Tally(added: added, alreadyThere: alreadyThere)
+        return ImportResult(sessions: tally, workouts: tally, exercises: tally)
+    }
+
     @Test("A file brings everything to another device once, the session in progress left out")
     func exportAndImport() throws {
         try session(finish: true, at: start)
@@ -60,11 +66,11 @@ struct BackupTests {
         #expect(backup.sessions.count == 1)
         #expect(backup.sets.count == 1)
         #expect(Set(backup.exercises.map(\.id)) == ["bench", original.id])
-        #expect(try new.restore(backup) == ImportResult(added: 1, alreadyThere: 0))
+        #expect(try new.restore(backup) == imported(added: 1, alreadyThere: 0))
         #expect(try new.dataCounts() == DataCounts(sessions: 1, workouts: 1, exercises: 1))
 
         // Again: nothing twice.
-        #expect(try new.restore(backup) == ImportResult(added: 0, alreadyThere: 1))
+        #expect(try new.restore(backup) == imported(added: 0, alreadyThere: 1))
         #expect(try new.fetchCount(FetchDescriptor<SetLog>()) == 1)
     }
 
@@ -85,7 +91,7 @@ struct BackupTests {
         let backup = try old.backup(plates: nil, at: start + 1000)
         try old.eraseAll(at: start + 2000)
 
-        #expect(try old.restore(backup, at: start + 3000) == ImportResult(added: 1, alreadyThere: 0))
+        #expect(try old.restore(backup, at: start + 3000) == imported(added: 1, alreadyThere: 0))
         #expect(try old.dataCounts() == DataCounts(sessions: 1, workouts: 1, exercises: 1))
         #expect(try old.fetchCount(FetchDescriptor<SetLog>(predicate: #Predicate { !$0.removed })) == 1)
         let snapshot = try old.planSnapshot()

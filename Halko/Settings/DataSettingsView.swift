@@ -64,6 +64,13 @@ struct DataSettingsView: View {
                         .frame(maxWidth: .infinity)
                 }
                 .disabled(inProgress)
+                // Shown from the button.
+                .confirmationDialog("Erase everything on this iPhone and on the watch?", isPresented: $erasing, titleVisibility: .visible) {
+                    Button("Export first", action: export)
+                    Button("Erase all", role: .destructive, action: eraseAll)
+                } message: {
+                    Text("Sessions, workouts, your exercises and plates. Export first to keep a copy.")
+                }
             } footer: {
                 if inProgress {
                     Text("Finish the session in progress to erase everything.")
@@ -86,15 +93,13 @@ struct DataSettingsView: View {
                 load(url)
             }
         }
-        .confirmationDialog("Erase everything on this iPhone and on the watch?", isPresented: $erasing, titleVisibility: .visible) {
-            Button("Export first", action: export)
-            Button("Erase all", role: .destructive, action: eraseAll)
-        } message: {
-            Text("Sessions, workouts, your exercises and plates. Export first to keep a copy.")
-        }
         .alert("Imported", isPresented: Binding { imported != nil } set: { if !$0 { imported = nil } }, presenting: imported) { _ in
         } message: { result in
-            Text("Sessions added: \(result.added). Already there: \(result.alreadyThere).")
+            Text(verbatim: [
+                String(localized: "Sessions: \(result.sessions.added) added, \(result.sessions.alreadyThere) already there."),
+                String(localized: "Workouts: \(result.workouts.added) added, \(result.workouts.alreadyThere) already there."),
+                String(localized: "Custom exercises: \(result.exercises.added) added, \(result.exercises.alreadyThere) already there."),
+            ].joined(separator: "\n"))
         }
         .alert("This file can't be read", isPresented: $unreadable) {
         } message: {
