@@ -4,8 +4,9 @@ import SwiftData
 import SwiftUI
 import WatchKit
 
-// The session in progress: the set to do, which becomes the rest once validated, and swiped aside, what is measured.
-// Everything is written on the watch first; it needs neither the iPhone nor the network.
+// The session in progress: the set to do, which becomes the rest once validated; swiped aside, the exercises to change
+// the session on one side and what is measured on the other. Everything is written on the watch first; it needs
+// neither the iPhone nor the network.
 struct LiveSessionView: View {
     private static let logger = Logger(subsystem: "com.zsr.halko", category: "session")
 
@@ -25,6 +26,8 @@ struct LiveSessionView: View {
     @State private var previous: [String: [Int: SetValues]] = [:]
     @State private var finishing = false
     @State private var discarding = false
+    @State private var page = SessionPage.work
+    @State private var path: [ExerciseRoute] = []
 
     init(state: LiveState, finished: @escaping (Session) -> Void) {
         self.state = state
@@ -37,11 +40,20 @@ struct LiveSessionView: View {
 
     var body: some View {
         let table = self.table
-        TabView {
+        TabView(selection: $page) {
+            NavigationStack(path: $path) {
+                ExercisesPage(table: table)
+                    .navigationDestination(for: ExerciseRoute.self) { route in
+                        destination(route, table)
+                    }
+            }
+            .tag(SessionPage.exercises)
             work(table)
+                .tag(SessionPage.work)
             MetricsPage(table: table, session: sessions.first) {
                 finishing = true
             }
+            .tag(SessionPage.metrics)
         }
         .tabViewStyle(.page)
         .confirmationDialog("Finish the session?", isPresented: $finishing, titleVisibility: .visible) {
@@ -118,6 +130,48 @@ struct LiveSessionView: View {
             }
             // Another set starts from its first box.
             .id(table.plan.key(step))
+        }
+    }
+
+    @ViewBuilder
+    private func destination(_ route: ExerciseRoute, _ table: LiveTable) -> some View {
+        switch route {
+        case .exercise(let itemID):
+            if let item = table.plan.items.firstIndex(where: { $0.itemID == itemID }) {
+                ExerciseSetsPage(table: table, item: item) {
+                    change { try context.addSet(&$0, item: item, unit: units.weight) }
+                } deleteSet: { set in
+                    change { try context.deleteSet(&$0, item: item, set: set) }
+                } deleteExercise: {
+                    change { try context.deleteExercise(&$0, item: item) }
+                    path.removeLast()
+                }
+            }
+        case .set(let itemID, let set):
+            if let item = table.plan.items.firstIndex(where: { $0.itemID == itemID }),
+                let index = table.plan.stepIndex(item: item, set: set) {
+                let step = table.plan.steps[index]
+                let isDone = table.logged[table.plan.key(step)] != nil
+                SetEditPage(table: table, step: step, isDone: isDone) { values in
+                    confirm(step, at: index, values: values, isDone: isDone)
+                }
+            }
+        }
+    }
+
+    // A set done is corrected, without a new rest; one not done becomes the set to do, shown at once.
+    private func confirm(_ step: LiveStep, at index: Int, values: SetValues, isDone: Bool) {
+        if isDone {
+            change { try context.logSet(&$0, step: index, values: values) }
+            path.removeLast()
+        } else {
+            let key = state.livePlan.key(step)
+            change {
+                $0.edits[key] = values
+                $0.goTo(step: index)
+            }
+            path = []
+            page = .work
         }
     }
 
@@ -269,6 +323,11 @@ extension LiveTable {
             return String(localized: "Warm-up \(number) / \(total)")
         }
         return String(localized: "Set \(item.workingNumber(step.set)) / \(workingCount(step.item))")
+    }
+
+    // The sets of an exercise done, warm-ups included.
+    func setsDone(_ item: Int) -> Int {
+        (0..<plan.setCount(item)).count(where: { logged[LivePlan.key(plan.items[item].itemID, $0)] != nil })
     }
 
     // The working sets done.
@@ -477,14 +536,9 @@ private struct SetPage: View {
     let edit: (SetValues) -> Void
     let validate: () -> Void
     let startTimer: () -> Void
-    @State private var chosen: SetField?
-    @State private var crown = 0.0
     @State private var isWide = false
-    @FocusState private var crownHeld: Bool
 
     var body: some View {
-        let fields = table.metrics(step.item)
-        let field = chosen ?? fields[0]
         FullPage {
             VStack(spacing: 2) {
                 Text(verbatim: table.name(step.item))
@@ -497,27 +551,7 @@ private struct SetPage: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
                 Spacer(minLength: 2)
-                HStack(spacing: 6) {
-                    ForEach(fields, id: \.self) { box in
-                        ValueBox(
-                            title: table.columnTitle(box, item: step.item, long: true),
-                            unit: table.columnTitle(box, item: step.item, long: false),
-                            text: text(box),
-                            isChosen: box == field
-                        ) {
-                            chosen = box
-                            crownHeld = true
-                        } adjust: { direction in
-                            change(box, to: max(0, (table.draft(step)[box] ?? 0) + direction * table.fields.increment(of: box)))
-                        }
-                    }
-                }
-                .focusable()
-                .focused($crownHeld)
-                .focusEffectDisabled()
-                // In steps of the value: the crown's sensitivity is a rotation per whole number, and grams would take
-                // hundreds of them for a single step. Continuous, it shows no scroll bar; the ends are kept below.
-                .digitalCrownRotation($crown, from: 0, through: crownSteps(field), by: 1, sensitivity: .low, isContinuous: true)
+                CrownBoxes(table: table, item: step.item, values: table.draft(step), change: edit)
                 Spacer(minLength: 4)
                 if table.canUseTimer(step) {
                     HStack(spacing: 6) {
@@ -558,6 +592,56 @@ private struct SetPage: View {
         .onClockLine {
             SessionHeader(session: session)
         }
+        .onGeometryChange(for: Bool.self) { $0.size.width >= Self.wideScreen } action: { wide in
+            isWide = wide
+        }
+    }
+
+    // The largest watches have room for last time's values.
+    nonisolated private static let wideScreen: CGFloat = 195
+
+    private var subtitle: String {
+        let position = table.position(step)
+        guard isWide, let last = table.previous[table.plan.items[step.item].exerciseID]?[step.set] else { return position }
+        let values = table.setText(step.item, values: last)
+        return String(localized: "\(position) · prev. \(values)")
+    }
+}
+
+// A box for each value of a set, the one chosen set with the Digital Crown.
+private struct CrownBoxes: View {
+    let table: LiveTable
+    let item: Int
+    let values: SetValues
+    let change: (SetValues) -> Void
+    @State private var chosen: SetField?
+    @State private var crown = 0.0
+    @FocusState private var crownHeld: Bool
+
+    var body: some View {
+        let fields = table.metrics(item)
+        let field = chosen ?? fields[0]
+        HStack(spacing: 6) {
+            ForEach(fields, id: \.self) { box in
+                ValueBox(
+                    title: table.columnTitle(box, item: item, long: true),
+                    unit: table.columnTitle(box, item: item, long: false),
+                    text: text(box),
+                    isChosen: box == field
+                ) {
+                    chosen = box
+                    crownHeld = true
+                } adjust: { direction in
+                    change(box, to: max(0, (values[box] ?? 0) + direction * table.fields.increment(of: box)))
+                }
+            }
+        }
+        .focusable()
+        .focused($crownHeld)
+        .focusEffectDisabled()
+        // In steps of the value: the crown's sensitivity is a rotation per whole number, and grams would take
+        // hundreds of them for a single step. Continuous, it shows no scroll bar; the ends are kept below.
+        .digitalCrownRotation($crown, from: 0, through: crownSteps(field), by: 1, sensitivity: .low, isContinuous: true)
         .onChange(of: crownStep(of: field), initial: true) { _, value in
             // The value of another box or another set, not the one the crown is settling on.
             if abs(crown - value) >= 0.5 {
@@ -573,16 +657,10 @@ private struct SetPage: View {
                 change(field, to: value.rounded() * table.fields.increment(of: field))
             }
         }
-        .onGeometryChange(for: Bool.self) { $0.size.width >= Self.wideScreen } action: { wide in
-            isWide = wide
-        }
         .task {
             crownHeld = true
         }
     }
-
-    // The largest watches have room for last time's values.
-    nonisolated private static let wideScreen: CGFloat = 195
 
     // The highest value the crown reaches, in stored units.
     private static func limit(_ field: SetField) -> Double {
@@ -599,24 +677,206 @@ private struct SetPage: View {
     }
 
     private func crownStep(of field: SetField) -> Double {
-        (table.draft(step)[field] ?? 0) / table.fields.increment(of: field)
-    }
-
-    private var subtitle: String {
-        let position = table.position(step)
-        guard isWide, let last = table.previous[table.plan.items[step.item].exerciseID]?[step.set] else { return position }
-        let values = table.setText(step.item, values: last)
-        return String(localized: "\(position) · prev. \(values)")
+        (values[field] ?? 0) / table.fields.increment(of: field)
     }
 
     private func text(_ field: SetField) -> String {
-        table.draft(step)[field].map { table.fields.steadyText($0, of: field) } ?? "–"
+        values[field].map { table.fields.steadyText($0, of: field) } ?? "–"
     }
 
     private func change(_ field: SetField, to value: Double) {
-        var values = table.draft(step)
-        values[field] = value
-        edit(values)
+        var changed = values
+        changed[field] = value
+        change(changed)
+    }
+}
+
+// The pages of the session, swiped from one to the other.
+private enum SessionPage: Hashable {
+    case exercises
+    case work
+    case metrics
+}
+
+// From the page of the exercises: an exercise, then one of its sets.
+private enum ExerciseRoute: Hashable {
+    case exercise(itemID: String)
+    case set(itemID: String, set: Int)
+}
+
+// The exercises of the session, each with its sets done; the one in progress outlined.
+private struct ExercisesPage: View {
+    let table: LiveTable
+
+    var body: some View {
+        List {
+            ForEach(Array(table.plan.items.enumerated()), id: \.element.itemID) { item, planItem in
+                NavigationLink(value: ExerciseRoute.exercise(itemID: planItem.itemID)) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(verbatim: table.name(item))
+                            .font(.headline)
+                            .lineLimit(2)
+                        progress(item)
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .listRowBackground(table.step?.item == item ? Outlined() : nil)
+            }
+        }
+        .navigationTitle("Exercises")
+    }
+
+    private func progress(_ item: Int) -> some View {
+        let done = table.setsDone(item)
+        let count = table.plan.setCount(item)
+        return HStack(spacing: 4) {
+            if table.isFinished(item) {
+                Image(systemName: "checkmark")
+                    .foregroundStyle(.tint)
+                    .accessibilityHidden(true)
+                Text("\(done) / \(count) sets")
+            } else if table.step?.item == item {
+                Text("In progress · \(done) / \(count)")
+            } else {
+                Text(verbatim: "\(done.formatted()) / \(count.formatted())")
+            }
+        }
+    }
+}
+
+// The sets of an exercise: a tap to correct one done or to do one now, a swipe to delete one; and one more. As on the
+// iPhone, deleting its last set deletes the exercise, once asked; the session keeps one exercise.
+private struct ExerciseSetsPage: View {
+    let table: LiveTable
+    let item: Int
+    let addSet: () -> Void
+    let deleteSet: (Int) -> Void
+    let deleteExercise: () -> Void
+    @State private var confirmingLastSet = false
+
+    var body: some View {
+        List {
+            ForEach(table.setNumbers(item), id: \.self) { set in
+                NavigationLink(value: ExerciseRoute.set(itemID: table.plan.items[item].itemID, set: set)) {
+                    SetRow(table: table, item: item, set: set)
+                }
+                .listRowBackground(isCurrent(set) ? Outlined() : nil)
+                .swipeActions(edge: .trailing) {
+                    if table.state.canDeleteSet(of: item) || table.state.canDeleteExercise {
+                        Button("Delete set", systemImage: "trash", role: .destructive) {
+                            if table.state.canDeleteSet(of: item) {
+                                deleteSet(set)
+                            } else {
+                                confirmingLastSet = true
+                            }
+                        }
+                    }
+                }
+            }
+            Button(action: addSet) {
+                Label("Add a set", systemImage: "plus")
+                    .foregroundStyle(.tint)
+            }
+        }
+        .navigationTitle(Text(verbatim: table.name(item)))
+        .confirmationDialog("Delete “\(table.name(item))” from this session?", isPresented: $confirmingLastSet, titleVisibility: .visible) {
+            Button("Delete this exercise", role: .destructive, action: deleteExercise)
+        } message: {
+            Text("This is its last set: the exercise is deleted with it.")
+        }
+    }
+
+    private func isCurrent(_ set: Int) -> Bool {
+        table.step.map { $0.item == item && $0.set == set } ?? false
+    }
+}
+
+// A set of the exercise: its number, its values, and done or in progress.
+private struct SetRow: View {
+    let table: LiveTable
+    let item: Int
+    let set: Int
+
+    var body: some View {
+        let key = LivePlan.key(table.plan.items[item].itemID, set)
+        let isDone = table.logged[key] != nil
+        HStack(spacing: 8) {
+            table.number(item, set: set)
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .accessibilityLabel(Text(verbatim: table.spokenNumber(item, set: set)))
+            Text(verbatim: table.setText(item, values: table.values(item, set: set), unit: true))
+                .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            if isDone {
+                Image(systemName: "checkmark")
+                    .foregroundStyle(.tint)
+                    .accessibilityLabel(Text("Done"))
+            } else if table.step?.item == item && table.step?.set == set {
+                Text("in progress")
+                    .font(.footnote)
+                    .foregroundStyle(.tint)
+            }
+        }
+    }
+}
+
+// The row of the exercise or the set in progress.
+private struct Outlined: View {
+    var body: some View {
+        RoundedRectangle(cornerRadius: 12)
+            .strokeBorder(.tint, lineWidth: 2)
+            .background(.fill.tertiary, in: .rect(cornerRadius: 12))
+    }
+}
+
+// A set chosen in the exercises: one done, corrected and saved; one not done, done now. The same boxes as the set to
+// do.
+private struct SetEditPage: View {
+    let table: LiveTable
+    let step: LiveStep
+    let isDone: Bool
+    let confirm: (SetValues) -> Void
+    @State private var values: SetValues?
+
+    var body: some View {
+        let shown = values ?? table.values(step.item, set: step.set)
+        FullPage {
+            VStack(spacing: 2) {
+                Text(verbatim: table.name(step.item))
+                    .font(.headline)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                HStack(spacing: 4) {
+                    Text(verbatim: table.position(step))
+                    if isDone {
+                        Image(systemName: "checkmark")
+                            .foregroundStyle(.tint)
+                            .accessibilityLabel(Text("Done"))
+                    }
+                }
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+                Spacer(minLength: 2)
+                CrownBoxes(table: table, item: step.item, values: shown) { values = $0 }
+                Spacer(minLength: 4)
+                Button {
+                    confirm(shown)
+                } label: {
+                    Text(isDone ? "Save" : "Do now")
+                        .font(.headline)
+                        .foregroundStyle(Color(.onAccent))
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .buttonBorderShape(.capsule)
+            }
+        }
     }
 }
 

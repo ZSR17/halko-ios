@@ -75,6 +75,17 @@ public struct LiveState: Codable, Equatable, Sendable {
         restEndsAt = nil
     }
 
+    // A set chosen to do now, out of order: it is the set to do, the rest going on carries on, and the timer of another
+    // set stops. Once it is done, the sets after it come next.
+    public mutating func goTo(step index: Int) {
+        let plan = livePlan
+        guard plan.steps.indices.contains(index) else { return }
+        if setTimer?.stepKey != plan.key(plan.steps[index]) {
+            setTimer = nil
+        }
+        cursor = index
+    }
+
     // As in the workout editor, an exercise keeps one set at least; the session keeps one exercise.
     public func canDeleteSet(of item: Int) -> Bool {
         plan[item].targets.count > 1
