@@ -99,8 +99,7 @@ struct DataSettingsView: View {
                 String(localized: "Sessions: \(result.sessions.added) added, \(result.sessions.alreadyThere) already there."),
                 String(localized: "Workouts: \(result.workouts.added) added, \(result.workouts.alreadyThere) already there."),
                 String(localized: "Custom exercises: \(result.exercises.added) added, \(result.exercises.alreadyThere) already there."),
-            ].joined(separator: "
-"))
+            ].joined(separator: "\n"))
         }
         .alert("This file can't be read", isPresented: $unreadable) {
         } message: {
