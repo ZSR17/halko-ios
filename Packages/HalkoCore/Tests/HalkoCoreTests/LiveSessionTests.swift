@@ -79,6 +79,18 @@ struct LiveSessionTests {
         #expect(state.cursor == 2)
     }
 
+    @Test("A set chosen out of order is the one to do; the sets after it come next, those skipped later")
+    func goingTo() throws {
+        var state = try context.startSession(of: workout, now: start)
+        state.goTo(step: 2)
+        #expect(state.cursor == 2)
+        try context.logSet(&state, step: 2, values: SetValues(reps: 10, weightG: 12_000), now: start + 60)
+        // Nothing after it: back to the first set skipped.
+        #expect(state.cursor == 0)
+        state.goTo(step: 7)
+        #expect(state.cursor == 0)
+    }
+
     @Test("Undoing a set makes it the one to do and takes back what it added")
     func undoing() throws {
         var state = try context.startSession(of: workout, now: start)

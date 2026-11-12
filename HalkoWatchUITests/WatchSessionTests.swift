@@ -84,6 +84,51 @@ final class WatchSessionTests: XCTestCase {
         XCTAssertTrue(pushA(app).waitForExistence(timeout: 5))
     }
 
+    // The session changed from the page of the exercises: a set done corrected, a set done out of order.
+    @MainActor
+    func testEditing() throws {
+        let app = openPushA()
+        start(app)
+        let validate = app.buttons["Valider"]
+        XCTAssertTrue(validate.waitForExistence(timeout: 10))
+        validate.tap()
+        let skip = app.buttons["Passer"]
+        XCTAssertTrue(skip.waitForExistence(timeout: 5))
+        skip.tap()
+        XCTAssertTrue(validate.waitForExistence(timeout: 5))
+
+        app.swipeRight()
+        let current = app.buttons.matching(NSPredicate(format: "label CONTAINS 'En cours'")).firstMatch
+        XCTAssertTrue(current.waitForExistence(timeout: 5))
+        try app.performAccessibilityAudit()
+        snap("Watch A – Exercices")
+
+        current.tap()
+        // « Add a set », under the sets, is made once scrolled to.
+        let done = app.buttons.matching(NSPredicate(format: "label CONTAINS 'Faite'")).firstMatch
+        XCTAssertTrue(done.waitForExistence(timeout: 5))
+        try app.performAccessibilityAudit()
+        snap("Watch B – Un exercice")
+
+        done.tap()
+        let save = app.buttons["Enregistrer"]
+        XCTAssertTrue(save.waitForExistence(timeout: 5))
+        try app.performAccessibilityAudit()
+        snap("Watch D – Corriger une série faite")
+        save.tap()
+        XCTAssertTrue(done.waitForExistence(timeout: 5))
+
+        // A set to do after the one in progress.
+        let later = app.buttons.matching(NSPredicate(format: "label CONTAINS 'Échauffement 3'")).firstMatch
+        scrollTo(later, in: app)
+        later.tap()
+        let now = app.buttons["Faire maintenant"]
+        XCTAssertTrue(now.waitForExistence(timeout: 5))
+        snap("Watch E – Faire maintenant")
+        now.tap()
+        XCTAssertTrue(validate.waitForExistence(timeout: 5))
+    }
+
     // The plank of Quick with the timer: getting in position, holding, the rest.
     @MainActor
     func testSetTimer() throws {
