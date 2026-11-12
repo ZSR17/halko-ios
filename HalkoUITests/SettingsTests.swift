@@ -119,4 +119,25 @@ final class SettingsTests: XCTestCase {
         XCTAssertTrue(app.element(containing: "Full body express").waitForExistence(timeout: 5))
         snap("Workouts, dark purple")
     }
+
+    @MainActor
+    func testMyData() throws {
+        let app = launch(language: "en", locale: "en_GB")
+        app.tabBars.buttons["Settings"].tap()
+        let row = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "My data")).firstMatch
+        app.reveal(row)
+        row.tap()
+        XCTAssertTrue(app.navigationBars["My data"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.element(containing: "Sessions done").exists)
+        XCTAssertTrue(app.buttons["Export"].exists)
+        XCTAssertTrue(app.buttons["Import"].exists)
+        try app.auditScreen()
+        snap("Settings › My data")
+
+        // Not under the session in progress of the sample data.
+        let erase = app.buttons["Erase all"]
+        app.reveal(erase)
+        XCTAssertFalse(erase.isEnabled)
+        XCTAssertTrue(app.element(containing: "Finish the session in progress").exists)
+    }
 }

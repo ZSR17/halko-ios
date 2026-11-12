@@ -201,6 +201,86 @@
         }
       }
     },
+    "Erase all" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tout effacer"
+          }
+        }
+      }
+    },
+    "Erase everything on this iPhone and on the watch?" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tout effacer sur cet iPhone et sur la montre ?"
+          }
+        }
+      }
+    },
+    "Export" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exporter"
+          }
+        }
+      }
+    },
+    "Export first" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exporter d'abord"
+          }
+        }
+      }
+    },
+    "Export makes a Halko file with everything (sessions, workouts, exercises, plates), to keep in Files or to send. Import adds it to what is here: nothing is erased, and a session is never there twice." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exporter crée un fichier Halko avec tout (séances, programmes, exercices, disques), à garder dans Fichiers ou à envoyer. Importer l'ajoute à ce qui est là : rien n'est effacé, et une même séance n'est jamais en double."
+          }
+        }
+      }
+    },
+    "Export, import" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exporter, importer"
+          }
+        }
+      }
+    },
+    "File" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fichier"
+          }
+        }
+      }
+    },
+    "Finish the session in progress to erase everything." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Termine la séance en cours pour tout effacer."
+          }
+        }
+      }
+    },
     "Gong" : {
       "localizations" : {
         "fr" : {
@@ -241,12 +321,42 @@
         }
       }
     },
+    "Import" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importer"
+          }
+        }
+      }
+    },
+    "Imported" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importé"
+          }
+        }
+      }
+    },
     "iPhone" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "iPhone"
+          }
+        }
+      }
+    },
+    "It isn't a Halko file, or it comes from a later version of Halko." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce n'est pas un fichier Halko, ou il vient d'une version plus récente de Halko."
           }
         }
       }
@@ -297,6 +407,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Citron"
+          }
+        }
+      }
+    },
+    "My data" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mes données"
+          }
+        }
+      }
+    },
+    "My exercises" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exercices à moi"
           }
         }
       }
@@ -361,6 +491,16 @@
         }
       }
     },
+    "On this iPhone" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sur cet iPhone"
+          }
+        }
+      }
+    },
     "Only used if Halko no longer runs during a session. Without them, the end of a rest still sounds." : {
       "localizations" : {
         "fr" : {
@@ -407,6 +547,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rose"
+          }
+        }
+      }
+    },
+    "Planned workouts" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Programmes"
           }
         }
       }
@@ -501,6 +651,36 @@
         }
       }
     },
+    "Sessions added: %lld. Already there: %lld." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Séances ajoutées : %lld. Déjà là : %lld."
+          }
+        }
+      }
+    },
+    "Sessions done" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Séances faites"
+          }
+        }
+      }
+    },
+    "Sessions, workouts, your exercises and plates. Export first to keep a copy." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Séances, programmes, tes exercices et tes disques. Exporte d'abord pour en garder une copie."
+          }
+        }
+      }
+    },
     "Short beeps, or taps when the sound is off." : {
       "localizations" : {
         "fr" : {
@@ -527,6 +707,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "sans alerte"
+          }
+        }
+      }
+    },
+    "Size" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Taille"
           }
         }
       }
@@ -697,6 +887,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Thème et couleur"
+          }
+        }
+      }
+    },
+    "This file can't be read" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce fichier ne peut pas être lu"
           }
         }
       }

@@ -1,7 +1,7 @@
 import HalkoCore
 import SwiftUI
 
-// The Settings tab: the language and units, how a session works, Health and the notifications, the look of the app.
+// The Settings tab: the language and units, how a session works, Health and the notifications, the look of the app and its data.
 // What the watch needs of it goes to the watch.
 struct SettingsView: View {
     @AppStorage(AppLanguage.key) private var language = AppLanguage.system
@@ -95,6 +95,13 @@ struct SettingsView: View {
                 } label: {
                     LabeledContent("Theme and color") {
                         appearance.name
+                    }
+                }
+                NavigationLink {
+                    DataSettingsView()
+                } label: {
+                    LabeledContent("My data") {
+                        Text("Export, import")
                     }
                 }
             } header: {
