@@ -94,20 +94,41 @@ extension ModelContext {
     }
 
     // Added to what is there, nothing removed: a row the device has already is kept, or replaced by a more recent
-    // version, as in the sync. Deleted rows in the file are not applied.
-    public func restore(_ backup: Backup) throws -> ImportResult {
+    // version, as in the sync. A row the device has deleted comes back, and a library exercise the file has changed
+    // takes the change: the file was asked for. Deleted rows in the file are not applied.
+    public func restore(_ backup: Backup, at date: Date = .now) throws -> ImportResult {
         let ids = backup.sessions.filter { !$0.deleted }.map(\.id)
-        let known = try fetch(FetchDescriptor(predicate: Session.withIDs(ids))).count
-        try apply(backup.folders.filter { !$0.deleted }, to: Folder.self)
-        try apply(backup.workouts.filter { !$0.deleted }, to: Workout.self)
-        try apply(backup.items.filter { !$0.deleted }, to: WorkoutItem.self)
-        try apply(backup.exercises.filter { !$0.deleted }, to: Exercise.self)
-        try apply(backup.sessions.filter { !$0.deleted }, to: Session.self)
-        try apply(backup.sets.filter { !$0.deleted }, to: SetLog.self)
+        let known = try fetch(FetchDescriptor(predicate: Session.withIDs(ids))).filter { !$0.removed }.count
+        try bringIn(backup.folders.filter { !$0.deleted }, to: Folder.self, at: date)
+        try bringIn(backup.workouts.filter { !$0.deleted }, to: Workout.self, at: date)
+        try bringIn(backup.items.filter { !$0.deleted }, to: WorkoutItem.self, at: date)
+        try bringIn(backup.exercises.filter { !$0.deleted }, to: Exercise.self, at: date) { exercise, row in
+            row.customized && !exercise.customized
+        }
+        try bringIn(backup.sessions.filter { !$0.deleted }, to: Session.self, at: date)
+        try bringIn(backup.sets.filter { !$0.deleted }, to: SetLog.self, at: date)
         if hasChanges {
             try save()
         }
         return ImportResult(added: ids.count - known, alreadyThere: known)
+    }
+
+    // As in the sync, then the file's version over a deleted row, or where `replaces`: dated now, so that the watch
+    // takes it too.
+    private func bringIn<Model: SyncedModel>(
+        _ rows: [Model.Row], to type: Model.Type, at date: Date, replaces: (Model, Model.Row) -> Bool = { _, _ in false }
+    ) throws {
+        try apply(rows, to: type)
+        let stored = Dictionary(
+            try fetch(FetchDescriptor(predicate: Model.withIDs(rows.map(\.id)))).map { ($0.id, $0) },
+            uniquingKeysWith: { first, _ in first }
+        )
+        for row in rows {
+            if let model = stored[row.id], model.removed || replaces(model, row) {
+                model.update(from: row)
+                model.updatedAt = date
+            }
+        }
     }
 
     // Everything of the user's deleted, as rows marked deleted so that the watch deletes them too. The library's

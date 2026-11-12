@@ -653,10 +653,100 @@
     },
     "Sessions added: %lld. Already there: %lld." : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%#@added@ %#@there@"
+          },
+          "substitutions" : {
+            "added" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Session added: %arg."
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Sessions added: %arg."
+                    }
+                  }
+                }
+              }
+            },
+            "there" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Already there: %arg."
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Already there: %arg."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Séances ajoutées : %lld. Déjà là : %lld."
+            "value" : "%#@added@ %#@there@"
+          },
+          "substitutions" : {
+            "added" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Séance ajoutée : %arg."
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Séances ajoutées : %arg."
+                    }
+                  }
+                }
+              }
+            },
+            "there" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Déjà présente : %arg."
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Déjà présentes : %arg."
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }

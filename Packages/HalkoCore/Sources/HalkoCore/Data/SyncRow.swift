@@ -15,7 +15,8 @@ public protocol SyncedModel: PersistentModel {
     associatedtype Row: SyncRow
 
     var id: String { get }
-    var updatedAt: Date { get }
+    var updatedAt: Date { get set }
+    var removed: Bool { get }
     var row: Row { get }
 
     init(_ row: Row)
