@@ -73,3 +73,4 @@ final class HistoryTests: XCTestCase {
         snap("History, largest text")
     }
 }
+// diagnostic
