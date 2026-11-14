@@ -118,10 +118,10 @@ final class WatchSessionTests: XCTestCase {
         save.tap()
         XCTAssertTrue(done.waitForExistence(timeout: 5))
 
-        // The last warm-up, deleted from its page.
-        let last = app.buttons.matching(NSPredicate(format: "label CONTAINS 'Échauffement 4'")).firstMatch
-        scrollTo(last, in: app)
-        last.tap()
+        // A warm-up to do, deleted from its page: three are left.
+        let later = app.buttons.matching(NSPredicate(format: "label CONTAINS 'Échauffement 3'")).firstMatch
+        scrollTo(later, in: app)
+        later.tap()
         let delete = app.buttons["Supprimer la série"]
         XCTAssertTrue(delete.waitForExistence(timeout: 5))
         scrollTo(delete, in: app)
@@ -129,10 +129,9 @@ final class WatchSessionTests: XCTestCase {
         snap("Watch C – Supprimer une série")
         delete.tap()
         XCTAssertTrue(done.waitForExistence(timeout: 5))
-        XCTAssertFalse(last.exists)
+        XCTAssertFalse(app.buttons.matching(NSPredicate(format: "label CONTAINS 'Échauffement 4'")).firstMatch.exists)
 
         // A set to do after the one in progress.
-        let later = app.buttons.matching(NSPredicate(format: "label CONTAINS 'Échauffement 3'")).firstMatch
         scrollTo(later, in: app)
         later.tap()
         let now = app.buttons["Faire maintenant"]
