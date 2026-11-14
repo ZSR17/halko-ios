@@ -216,6 +216,8 @@ private struct ProgressChart: View {
     let points: [ProgressPoint]
     let measure: ProgressMeasure
     let text: HistoryText
+    // A whole date: a label starts at its mark, and a mark can fall just before the last session.
+    @ScaledMetric(relativeTo: .caption2) private var endPadding = 44.0
 
     var body: some View {
         Chart {
@@ -239,7 +241,7 @@ private struct ProgressChart: View {
         }
         .chartYScale(domain: .automatic(includesZero: false))
         // Room for the last date and the dot, at the end of the axis.
-        .chartXScale(range: .plotDimension(endPadding: 24))
+        .chartXScale(range: .plotDimension(endPadding: endPadding))
         .chartXAxis {
             AxisMarks(values: .automatic(desiredCount: 4)) { _ in
                 AxisValueLabel()
