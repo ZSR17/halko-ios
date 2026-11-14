@@ -116,7 +116,8 @@ extension XCUIApplication {
     // body behind the muscles VoiceOver reads on it (`muscle-…`), of the loaded bar above its text (`plates-load`) and of
     // the small screens drawing each look in the settings (`appearance-…`). Its hit region (44 pt to touch) is for what can be
     // touched: a text alone, whose element SwiftUI keeps as large as its letters, is not checked. The keyboard is the
-    // system's: its keys are not checked. Every other issue fails the test, at once.
+    // system's: its keys are not checked. The texts seen through the tab bar, whose elements it does not always find, are
+    // not detected again. Every other issue fails the test, at once.
     @MainActor
     func auditScreen() throws {
         // Under the fade of the screen's bottom edge too, where a sheet has no tab bar.
@@ -133,6 +134,10 @@ extension XCUIApplication {
         // no contrast: measured on every pixel of the huge text it runs out of time every time, and the colors are the
         // same as at the usual sizes, where it is checked.
         let wheels = pickerWheels.allElementsBoundByIndex.map(\.frame)
+        // Texts of the content seen through the glass of the tab bar, bent by it: the audit reads them on the screen
+        // without always finding their elements, which VoiceOver reads all the same.
+        let tabBar = tabBars.firstMatch.frame
+        let underTabBar = !tabBar.isEmpty && staticTexts.allElementsBoundByIndex.contains { tabBar.intersects($0.frame) }
         let largestText = launchArguments.contains("-UIPreferredContentSizeCategoryName")
         let kinds: [XCUIAccessibilityAuditType] = (largestText ? [] : [.contrast])
             + [.hitRegion, .sufficientElementDescription, .elementDetection, .trait]
@@ -148,6 +153,9 @@ extension XCUIApplication {
                         }
                         if issue.auditType == .hitRegion {
                             return issue.element?.elementType == .staticText
+                        }
+                        if issue.auditType == .elementDetection && issue.element == nil && underTabBar {
+                            return true
                         }
                         // The values of a wheel above and below the one chosen, and its units: the system's wheel
                         // gives VoiceOver only the value chosen, which it reads with its unit.
