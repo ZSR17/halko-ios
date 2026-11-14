@@ -84,7 +84,7 @@ final class WatchSessionTests: XCTestCase {
         XCTAssertTrue(pushA(app).waitForExistence(timeout: 5))
     }
 
-    // The session changed from the page of the exercises: a set done corrected, a set done out of order.
+    // The session changed from the page of the exercises: a set done corrected, one deleted, one done out of order.
     @MainActor
     func testEditing() throws {
         let app = openPushA()
@@ -117,6 +117,19 @@ final class WatchSessionTests: XCTestCase {
         snap("Watch D – Corriger une série faite")
         save.tap()
         XCTAssertTrue(done.waitForExistence(timeout: 5))
+
+        // The last warm-up, deleted from its page.
+        let last = app.buttons.matching(NSPredicate(format: "label CONTAINS 'Échauffement 4'")).firstMatch
+        scrollTo(last, in: app)
+        last.tap()
+        let delete = app.buttons["Supprimer la série"]
+        XCTAssertTrue(delete.waitForExistence(timeout: 5))
+        scrollTo(delete, in: app)
+        try app.performAccessibilityAudit()
+        snap("Watch C – Supprimer une série")
+        delete.tap()
+        XCTAssertTrue(done.waitForExistence(timeout: 5))
+        XCTAssertFalse(last.exists)
 
         // A set to do after the one in progress.
         let later = app.buttons.matching(NSPredicate(format: "label CONTAINS 'Échauffement 3'")).firstMatch

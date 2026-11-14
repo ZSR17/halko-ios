@@ -509,6 +509,7 @@ private struct RestContent: View {
         }
         .accessibilityLabel(Text("Remove 15 seconds"))
         .buttonStyle(.bordered)
+        .tint(.gray)
         Button(action: skip) {
             Text("Skip")
                 .foregroundStyle(Color(.onRest))
@@ -523,6 +524,7 @@ private struct RestContent: View {
         }
         .accessibilityLabel(Text("Add 15 seconds"))
         .buttonStyle(.bordered)
+        .tint(.gray)
     }
 }
 

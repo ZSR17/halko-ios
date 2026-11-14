@@ -140,11 +140,6 @@ struct LiveSessionView: View {
             if let item = table.plan.items.firstIndex(where: { $0.itemID == itemID }) {
                 ExerciseSetsPage(table: table, item: item) {
                     change { try context.addSet(&$0, item: item, unit: units.weight) }
-                } deleteSet: { set in
-                    change { try context.deleteSet(&$0, item: item, set: set) }
-                } deleteExercise: {
-                    change { try context.deleteExercise(&$0, item: item) }
-                    path.removeLast()
                 }
             }
         case .set(let itemID, let set):
@@ -154,6 +149,12 @@ struct LiveSessionView: View {
                 let isDone = table.logged[table.plan.key(step)] != nil
                 SetEditPage(table: table, step: step, isDone: isDone) { values in
                     confirm(step, at: index, values: values, isDone: isDone)
+                } deleteSet: {
+                    change { try context.deleteSet(&$0, item: item, set: set) }
+                    path.removeLast()
+                } deleteExercise: {
+                    change { try context.deleteExercise(&$0, item: item) }
+                    path = []
                 }
             }
         }
@@ -745,15 +746,12 @@ private struct ExercisesPage: View {
     }
 }
 
-// The sets of an exercise: a tap to correct one done or to do one now, a swipe to delete one; and one more. As on the
-// iPhone, deleting its last set deletes the exercise, once asked; the session keeps one exercise.
+// The sets of an exercise: a tap to correct one done, to do one now or to delete one; and one more. No swipe to
+// delete: swiping goes to the other pages of the session.
 private struct ExerciseSetsPage: View {
     let table: LiveTable
     let item: Int
     let addSet: () -> Void
-    let deleteSet: (Int) -> Void
-    let deleteExercise: () -> Void
-    @State private var confirmingLastSet = false
 
     var body: some View {
         List {
@@ -762,17 +760,6 @@ private struct ExerciseSetsPage: View {
                     SetRow(table: table, item: item, set: set)
                 }
                 .listRowBackground(isCurrent(set) ? Outlined() : nil)
-                .swipeActions(edge: .trailing) {
-                    if table.state.canDeleteSet(of: item) || table.state.canDeleteExercise {
-                        Button("Delete set", systemImage: "trash", role: .destructive) {
-                            if table.state.canDeleteSet(of: item) {
-                                deleteSet(set)
-                            } else {
-                                confirmingLastSet = true
-                            }
-                        }
-                    }
-                }
             }
             Button(action: addSet) {
                 Label("Add a set", systemImage: "plus")
@@ -780,11 +767,6 @@ private struct ExerciseSetsPage: View {
             }
         }
         .navigationTitle(Text(verbatim: table.name(item)))
-        .confirmationDialog("Delete “\(table.name(item))” from this session?", isPresented: $confirmingLastSet, titleVisibility: .visible) {
-            Button("Delete this exercise", role: .destructive, action: deleteExercise)
-        } message: {
-            Text("This is its last set: the exercise is deleted with it.")
-        }
     }
 
     private func isCurrent(_ set: Int) -> Bool {
@@ -834,13 +816,17 @@ private struct Outlined: View {
 }
 
 // A set chosen in the exercises: one done, corrected and saved; one not done, done now. The same boxes as the set to
-// do.
+// do. Under them, deleting it; as on the iPhone, deleting the last set deletes the exercise, once asked; the session
+// keeps one exercise.
 private struct SetEditPage: View {
     let table: LiveTable
     let step: LiveStep
     let isDone: Bool
     let confirm: (SetValues) -> Void
+    let deleteSet: () -> Void
+    let deleteExercise: () -> Void
     @State private var values: SetValues?
+    @State private var confirmingLastSet = false
 
     var body: some View {
         let shown = values ?? table.values(step.item, set: step.set)
@@ -875,8 +861,31 @@ private struct SetEditPage: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .buttonBorderShape(.capsule)
+                if canDeleteSet || table.state.canDeleteExercise {
+                    Button(role: .destructive) {
+                        if canDeleteSet {
+                            deleteSet()
+                        } else {
+                            confirmingLastSet = true
+                        }
+                    } label: {
+                        Label("Delete set", systemImage: "trash")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonBorderShape(.capsule)
+                    .padding(.top, 6)
+                }
             }
         }
+        .confirmationDialog("Delete “\(table.name(step.item))” from this session?", isPresented: $confirmingLastSet, titleVisibility: .visible) {
+            Button("Delete this exercise", role: .destructive, action: deleteExercise)
+        } message: {
+            Text("This is its last set: the exercise is deleted with it.")
+        }
+    }
+
+    private var canDeleteSet: Bool {
+        table.state.canDeleteSet(of: step.item)
     }
 }
 
