@@ -726,6 +726,7 @@ private struct ExercisesPage: View {
             }
         }
         .navigationTitle("Exercises")
+        .plainTitle()
     }
 
     private func progress(_ item: Int) -> some View {
@@ -767,6 +768,7 @@ private struct ExerciseSetsPage: View {
             }
         }
         .navigationTitle(Text(verbatim: table.name(item)))
+        .plainTitle()
     }
 
     private func isCurrent(_ set: Int) -> Bool {

@@ -92,6 +92,13 @@ struct ChosenColor: ViewModifier {
     }
 }
 
+extension View {
+    // The title of a page in the color of a text, as on the iPhone: the system gives it the app's.
+    func plainTitle() -> some View {
+        toolbarForegroundStyle(.primary, for: .navigationBar)
+    }
+}
+
 // The iPhone asks the watch to start the workout of the session it has just started; watchOS brings back the one left
 // running when the app stopped.
 final class WatchAppDelegate: NSObject, WKApplicationDelegate {
