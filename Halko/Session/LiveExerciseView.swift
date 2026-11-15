@@ -139,6 +139,8 @@ struct LiveExerciseView: View {
                     Button("Delete this exercise", systemImage: "trash", role: .destructive) {
                         confirmingDelete = true
                     }
+                    // Red as its text: the icons of a menu take the color of the theme.
+                    .tint(.red)
                 } label: {
                     Image(systemName: "ellipsis")
                         .font(.body.weight(.semibold))
