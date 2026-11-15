@@ -193,8 +193,13 @@ struct LiveSessionView: View {
                 finishing = true
             }
             .foregroundStyle(.red)
-            .finishDialog(isPresented: $finishing, setsDone: sets.count, of: table.plan.steps.count, save: finish) {
-                discarding = true
+            // Its buttons in the color of a text: sets are left, saving is not the action expected.
+            .background {
+                Color.clear
+                    .finishDialog(isPresented: $finishing, setsDone: sets.count, of: table.plan.steps.count, save: finish) {
+                        discarding = true
+                    }
+                    .tint(.primary)
             }
         }
     }
