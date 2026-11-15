@@ -2,8 +2,9 @@ import HalkoCore
 import SwiftData
 import SwiftUI
 
-// A planned workout: its name, number of exercises, when it was last done and the muscles it works most. The whole
-// card opens the workout's page, where it starts: its Start is not a button of its own.
+// A planned workout: its name, number of exercises, when it was last done and the muscles it works most. Its Start
+// starts the session; the rest of the card opens the workout's page. VoiceOver reads the card as one, Start among its
+// actions.
 struct WorkoutCard: View {
     let workout: Workout
     @Query private var items: [WorkoutItem]
@@ -38,12 +39,18 @@ struct WorkoutCard: View {
                         .foregroundStyle(Color(.secondaryText))
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                Text("Start")
-                    .font(.headline)
-                    .foregroundStyle(.onTint)
-                    .padding(.horizontal, 18)
-                    .frame(minHeight: 44)
-                    .background(.tint, in: .capsule)
+                // Nothing to start in a workout without exercises, as on its page.
+                if !items.isEmpty {
+                    StartWorkoutButton(workout: workout) {
+                        Text("Start")
+                            .font(.headline)
+                            .foregroundStyle(.onTint)
+                            .padding(.horizontal, 18)
+                            .frame(minHeight: 44)
+                            .background(.tint, in: .capsule)
+                    }
+                    .buttonStyle(.plain)
+                }
             }
             MainMuscles(items: items)
         }

@@ -19,6 +19,21 @@ final class WorkoutsTests: XCTestCase {
         snap("Workouts › Folder")
     }
 
+    // Start on a card starts the workout, without opening its page: here Push A is in progress, so it asks first.
+    @MainActor
+    func testStartFromTheCard() throws {
+        let app = launch(language: "en", locale: "en_GB")
+        let card = app.element(containing: "Full body express")
+        XCTAssertTrue(card.waitForExistence(timeout: 5))
+        // Start, at the top right of the card.
+        card.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.25)).tap()
+        XCTAssertTrue(app.alerts["A session is already in progress"].waitForExistence(timeout: 5))
+        snap("Workouts › Start from the card")
+        app.alerts.buttons["Cancel"].tap()
+        XCTAssertTrue(app.navigationBars["Workouts"].exists)
+        XCTAssertFalse(app.navigationBars["Full body express"].exists)
+    }
+
     @MainActor
     func testWorkoutsInFrench() throws {
         let app = launch(language: "fr", locale: "fr_FR")
