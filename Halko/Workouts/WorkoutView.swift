@@ -12,18 +12,8 @@ struct WorkoutView: View {
     @Query(filter: #Predicate<Folder> { !$0.removed }, sort: \Folder.position) private var folders: [Folder]
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
-    @Query(filter: #Predicate<Session> { !$0.removed && $0.endedAt == nil }, sort: \Session.startedAt, order: .reverse)
-    private var sessionsInProgress: [Session]
-    @Environment(LiveSessionStore.self) private var liveSession
-    @Environment(Permissions.self) private var permissions
-    @Environment(WorkoutRecorder.self) private var recorder
     @State private var confirmingDelete = false
     @State private var editing = false
-    // Another workout's session is in progress: one at a time.
-    @State private var otherSession: Session?
-    // « Before your first workout », then the session once it is closed.
-    @State private var preparing = false
-    @State private var prepared = false
 
     init(workout: Workout) {
         self.workout = workout
@@ -39,7 +29,7 @@ struct WorkoutView: View {
         .background(Color(.systemGroupedBackground))
         .safeAreaInset(edge: .bottom) {
             if !items.isEmpty {
-                Button(action: start) {
+                StartWorkoutButton(workout: workout) {
                     // The text in the color made to be read on the accent color, in light and dark appearance.
                     Text("Start the workout")
                         .font(.headline)
@@ -52,25 +42,6 @@ struct WorkoutView: View {
                 .padding(.horizontal, 21)
                 .padding(.bottom, 8)
             }
-        }
-        .sheet(isPresented: $preparing, onDismiss: startPrepared) {
-            FirstWorkoutView {
-                await permissions.request()
-                prepared = true
-                preparing = false
-            }
-        }
-        .alert(
-            "A session is already in progress",
-            isPresented: Binding { otherSession != nil } set: { if !$0 { otherSession = nil } },
-            presenting: otherSession
-        ) { session in
-            Button("Resume it") {
-                change { try liveSession.open(session, in: context) }
-            }
-            Button("Cancel", role: .cancel) {}
-        } message: { session in
-            Text("Finish “\(session.name)” before starting another one.")
         }
         .navigationTitle(workout.name)
         .navigationBarTitleDisplayMode(.large)
@@ -122,46 +93,6 @@ struct WorkoutView: View {
             workout.folderID
         } set: { folderID in
             change { try context.moveWorkout(workout, to: folderID) }
-        }
-    }
-
-    // Starts a session of the workout, or brings back the one in progress (one at a time, on any device).
-    private func start() {
-        if let session = sessionsInProgress.first {
-            if session.workoutID == workout.id {
-                change { try liveSession.open(session, in: context) }
-            } else {
-                otherSession = session
-            }
-            return
-        }
-        if permissions.asked {
-            begin()
-            return
-        }
-        Task {
-            await permissions.checkAnswered()
-            if !permissions.asked {
-                preparing = true
-            } else if liveSession.state == nil {
-                begin()
-            }
-        }
-    }
-
-    private func startPrepared() {
-        guard prepared else { return }
-        prepared = false
-        begin()
-    }
-
-    private func begin() {
-        let now = Date.now
-        change {
-            let state = try context.startSession(of: workout, now: now)
-            liveSession.set(state)
-            liveSession.isPresented = true
-            recorder.startWithWatch(sessionID: state.sessionID, at: now)
         }
     }
 
