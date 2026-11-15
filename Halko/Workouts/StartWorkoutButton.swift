@@ -3,11 +3,11 @@ import os
 import SwiftData
 import SwiftUI
 
+private let logger = Logger(subsystem: "com.zsr.halko", category: "workouts")
+
 // Starts a session of a workout, or brings back the one in progress (one at a time, on any device); « Before your
 // first workout » first, the first time. On the workout's page and on its card.
 struct StartWorkoutButton<Label: View>: View {
-    private static let logger = Logger(subsystem: "com.zsr.halko", category: "workouts")
-
     let workout: Workout
     let label: Label
     @Query(filter: #Predicate<Session> { !$0.removed && $0.endedAt == nil }, sort: \Session.startedAt, order: .reverse)
@@ -95,7 +95,7 @@ struct StartWorkoutButton<Label: View>: View {
         do {
             try write()
         } catch {
-            Self.logger.error("Cannot start the workout: \(String(describing: error))")
+            logger.error("Cannot start the workout: \(String(describing: error))")
         }
     }
 }
