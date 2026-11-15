@@ -4,7 +4,8 @@ import SwiftData
 import SwiftUI
 
 // The workouts page or a folder, its cards as rows to drag by their handles: the folders among themselves, the
-// workouts among themselves. VoiceOver moves them with Move up and Move down.
+// workouts among themselves. VoiceOver moves them with Move up and Move down. The headers in the darker grey of the app, for a
+// contrast of 4.5:1.
 struct ReorderList: View {
     private static let logger = Logger(subsystem: "com.zsr.halko", category: "workouts")
 

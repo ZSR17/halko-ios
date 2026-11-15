@@ -167,11 +167,13 @@ struct WorkoutActionsTests {
         }
 
         try context.order(folders: [mobility, ppl], workouts: [legs, core])
-        #expect([mobility.position, ppl.position, legs.position, core.position] == [0, 1, 2, 3])
+        let positions: [Int] = [mobility.position, ppl.position, legs.position, core.position]
+        #expect(positions == [0, 1, 2, 3])
         #expect(mobility.updatedAt > .distantPast && ppl.updatedAt > .distantPast)
         #expect(legs.updatedAt == .distantPast && core.updatedAt == .distantPast)
 
         try context.order(workouts: [core, legs])
-        #expect([core.position, legs.position] == [0, 1])
+        let reordered: [Int] = [core.position, legs.position]
+        #expect(reordered == [0, 1])
     }
 }
