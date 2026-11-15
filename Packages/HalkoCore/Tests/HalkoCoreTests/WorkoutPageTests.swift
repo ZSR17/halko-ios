@@ -118,7 +118,7 @@ struct WorkoutActionsTests {
         #expect(try context.fetchCount(FetchDescriptor<Workout>()) == 1)
     }
 
-    @Test("Moves a workout in and out of folders")
+    @Test("Moves a workout last in a folder, and out of folders last on the page")
     func move() throws {
         let folder = Folder(name: "PPL", position: 0)
         let push = Workout(name: "Push", position: 1)
@@ -127,12 +127,14 @@ struct WorkoutActionsTests {
             context.insert(model)
         }
 
+        try context.moveWorkout(legs, to: folder.id)
         try context.moveWorkout(push, to: folder.id)
         #expect(push.folderID == folder.id)
+        #expect(legs.position == 0)
         #expect(push.position == 1)
         try context.moveWorkout(push, to: nil)
         #expect(push.folderID == nil)
-        #expect(push.position == 3)
+        #expect(push.position == 2)
     }
 
     @Test("Creates, renames and deletes a folder, whose workouts go back to the workouts page")

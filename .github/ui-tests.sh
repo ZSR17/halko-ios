@@ -37,7 +37,7 @@ while IFS= read -r file; do
     # Its boxes and the swipe to delete a set, which the session uses too.
     Halko/Workouts/ValueField.swift) tests+=(WorkoutEditorTests AddToWorkoutTests LiveSessionTests) ;;
     # The tab and the page of a workout, which the editor and the session open from.
-    Halko/Workouts/*) tests+=(WorkoutsTests WorkoutEditorTests LiveSessionTests) ;;
+    Halko/Workouts/*) tests+=(WorkoutsTests FoldersTests WorkoutEditorTests LiveSessionTests) ;;
     Halko/History/*) tests+=(HistoryTests) ;;
     Halko/Tools/*) tests+=(ToolsTests) ;;
     # What the end of a session and the history show alike.

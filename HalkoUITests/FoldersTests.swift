@@ -42,37 +42,55 @@ final class FoldersTests: XCTestCase {
         XCTAssertFalse(app.element(containing: "Upper body").exists)
     }
 
+    // A workout touched and held, dragged over another to take its place, then let go on a folder to go in it, last.
     @MainActor
-    func testReorder() throws {
+    func testDrag() throws {
         let app = launch(language: "en", locale: "en_GB")
+        let fullBody = app.card("Full body express")
+        let core = app.card("Core 15 min")
+        XCTAssertTrue(core.waitForExistence(timeout: 5))
+        XCTAssertLessThan(fullBody.frame.minY, core.frame.minY)
 
-        app.navigationBars["Workouts"].buttons["Reorder"].tap()
-        XCTAssertTrue(app.element(containing: "Workouts in no folder").waitForExistence(timeout: 5))
-        XCTAssertTrue(app.element(containing: "Mobility").exists)
-        try app.auditScreen()
-        snap("Workouts › Reorder")
-        app.buttons["Done"].tap()
-        XCTAssertTrue(app.buttons["Reorder"].waitForExistence(timeout: 5))
+        core.press(forDuration: 1, thenDragTo: fullBody, withVelocity: .slow, thenHoldForDuration: 0.5)
+        wait(until: core.frame.minY < fullBody.frame.minY)
+        snap("Workouts, dragged")
 
-        // In a folder, from its menu.
-        app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "PPL program")).firstMatch.tap()
+        let program = app.card("PPL program")
+        fullBody.press(forDuration: 1, thenDragTo: program, withVelocity: .slow, thenHoldForDuration: 0.5)
+        wait(until: program.label.contains("4 workouts"))
+        XCTAssertFalse(fullBody.exists)
+
+        program.tap()
         XCTAssertTrue(app.navigationBars["PPL program"].waitForExistence(timeout: 5))
-        app.buttons["More actions"].tap()
-        app.buttons["Reorder"].tap()
-        XCTAssertTrue(app.element(containing: "Pull A").waitForExistence(timeout: 5))
-        snap("Folder › Reorder")
+        let legs = app.card("Legs")
+        XCTAssertTrue(fullBody.waitForExistence(timeout: 5))
+        XCTAssertLessThan(legs.frame.minY, fullBody.frame.minY)
+        snap("Folder, dropped in")
     }
 
     @MainActor
-    func testReorderInFrench() throws {
+    func testAddInFrench() throws {
         let app = launch(language: "fr", locale: "fr_FR")
 
-        app.navigationBars["Séances"].buttons["Réorganiser"].tap()
-        XCTAssertTrue(app.element(containing: "Séances hors dossier").waitForExistence(timeout: 5))
-        snap("Séances › Réorganiser")
-        app.buttons["OK"].tap()
         app.navigationBars["Séances"].buttons["Ajouter"].tap()
         XCTAssertTrue(app.buttons["Nouveau dossier"].waitForExistence(timeout: 5))
         snap("Séances › Ajouter")
+    }
+
+    // The cards move with an animation.
+    @MainActor
+    private func wait(until condition: @autoclosure () -> Bool) {
+        let deadline = Date.now.addingTimeInterval(5)
+        while !condition() && Date.now < deadline {
+            RunLoop.current.run(until: .now.addingTimeInterval(0.2))
+        }
+        XCTAssertTrue(condition())
+    }
+}
+
+private extension XCUIApplication {
+    // A card of a workout or of a folder, by the start of its label.
+    func card(_ label: String) -> XCUIElement {
+        buttons.matching(NSPredicate(format: "label BEGINSWITH %@", label)).firstMatch
     }
 }
