@@ -75,6 +75,8 @@ struct PastSessionView: View {
                     Button("Delete the session", systemImage: "trash", role: .destructive) {
                         confirmingDelete = true
                     }
+                    // Red as its text: the icons of a menu take the color of the theme.
+                    .tint(.red)
                 }
                 // Asked where the menu was.
                 .confirmationDialog("Delete this session?", isPresented: $confirmingDelete, titleVisibility: .hidden) {
