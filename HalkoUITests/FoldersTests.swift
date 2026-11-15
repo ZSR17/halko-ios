@@ -47,7 +47,8 @@ final class FoldersTests: XCTestCase {
         XCTAssertFalse(app.element(containing: "Upper body").exists)
     }
 
-    // A workout touched and held, dragged over another to take its place, then let go on a folder to go in it, last.
+    // Reorder from a card touched and held: a workout dragged over another to take its place, then let go on a folder
+    // to go in it, last; Done goes back to the page.
     @MainActor
     func testDrag() throws {
         let app = launch(language: "en", locale: "en_GB")
@@ -55,6 +56,13 @@ final class FoldersTests: XCTestCase {
         let core = app.card("Core 15 min")
         XCTAssertTrue(core.waitForExistence(timeout: 5))
         XCTAssertLessThan(fullBody.frame.minY, core.frame.minY)
+
+        core.press(forDuration: 1)
+        XCTAssertTrue(app.buttons["Reorder"].waitForExistence(timeout: 5))
+        app.buttons["Reorder"].tap()
+        XCTAssertTrue(app.buttons["Done"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.element(containing: "Touch and hold a card").exists)
+        snap("Workouts, reordering")
 
         core.press(forDuration: 1, thenDragTo: fullBody, withVelocity: .slow, thenHoldForDuration: 0.5)
         wait(until: core.frame.minY < fullBody.frame.minY)
@@ -65,6 +73,8 @@ final class FoldersTests: XCTestCase {
         wait(until: program.label.contains("4 workouts"))
         XCTAssertFalse(fullBody.exists)
 
+        app.buttons["Done"].tap()
+        XCTAssertTrue(app.navigationBars["Workouts"].buttons["Add"].waitForExistence(timeout: 5))
         program.tap()
         XCTAssertTrue(app.navigationBars["PPL program"].waitForExistence(timeout: 5))
         let legs = app.card("Legs")
@@ -120,8 +130,8 @@ final class FoldersTests: XCTestCase {
 }
 
 private extension XCUIApplication {
-    // A card of a workout or of a folder, by the start of its label.
+    // A card of a workout or of a folder, by the start of its label: a button, or, while reordering, a card only dragged.
     func card(_ label: String) -> XCUIElement {
-        buttons.matching(NSPredicate(format: "label BEGINSWITH %@", label)).firstMatch
+        descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH %@", label)).firstMatch
     }
 }

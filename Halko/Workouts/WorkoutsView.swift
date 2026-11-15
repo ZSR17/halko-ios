@@ -16,6 +16,8 @@ struct WorkoutsView: View {
     @State private var creating = false
     @State private var naming = false
     @State private var drag = CardDrag()
+    // Cards dragged to be moved, nothing else done.
+    @State private var reordering = false
     @Environment(LiveSessionStore.self) private var liveSession
     @Environment(\.modelContext) private var context
 
@@ -24,15 +26,25 @@ struct WorkoutsView: View {
             .navigationTitle("Workouts")
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
-                    Menu("Add", systemImage: "plus") {
-                        Button("New workout", systemImage: "dumbbell") {
-                            creating = true
+                    if reordering {
+                        Button("Done") {
+                            reordering = false
                         }
-                        Button("New folder", systemImage: "folder.badge.plus") {
-                            naming = true
+                    } else {
+                        Menu("Add", systemImage: "plus") {
+                            Button("New workout", systemImage: "dumbbell") {
+                                creating = true
+                            }
+                            Button("New folder", systemImage: "folder.badge.plus") {
+                                naming = true
+                            }
                         }
                     }
                 }
+            }
+            // Left with another tab.
+            .onDisappear {
+                reordering = false
             }
             .folderNameAlert("New folder", isPresented: $naming, action: "Create", message: "To arrange your workouts.") { name in
                 do {
@@ -76,15 +88,26 @@ struct WorkoutsView: View {
                     .buttonStyle(.plain)
                     .accessibilityHint(Text("Opens the session."))
                 }
+                if reordering {
+                    ReorderHint(inFolder: false)
+                }
                 if !folders.isEmpty {
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: folderWidth), spacing: 10)], spacing: 10) {
                         ForEach(shownFolders) { folder in
-                            NavigationLink(value: folder) {
-                                FolderCard(folder: folder, isTarget: drag.targetFolderID == folder.id)
+                            Group {
+                                if reordering {
+                                    FolderCard(folder: folder, isTarget: drag.targetFolderID == folder.id)
+                                        .draggableCard(.folder(folder.id), drag: drag, folders: folders, workouts: workouts)
+                                } else {
+                                    NavigationLink(value: folder) {
+                                        FolderCard(folder: folder, isTarget: false)
+                                    }
+                                    .buttonStyle(.plain)
+                                    .folderMenu(folder) {
+                                        reordering = true
+                                    }
+                                }
                             }
-                            .buttonStyle(.plain)
-                            .folderMenu(folder)
-                            .draggableCard(.folder(folder.id), drag: drag, folders: folders, workouts: workouts)
                             .moveActions(index: shownFolders.firstIndex(of: folder) ?? 0, count: shownFolders.count, horizontal: true) { offset in
                                 reorder(folders: moved(shownFolders, folder, by: offset), workouts: workouts)
                             }
@@ -94,7 +117,7 @@ struct WorkoutsView: View {
                 if !folders.isEmpty && !workouts.isEmpty {
                     Divider()
                 }
-                WorkoutCards(workouts: workouts, folders: folders, drag: drag)
+                WorkoutCards(workouts: workouts, folders: folders, drag: drag, reordering: $reordering)
             }
             .padding([.horizontal, .bottom])
         }
@@ -136,6 +159,7 @@ struct FolderView: View {
     @State private var renaming = false
     @State private var creating = false
     @State private var drag = CardDrag()
+    @State private var reordering = false
     @State private var confirmingDelete = false
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
@@ -148,8 +172,13 @@ struct FolderView: View {
 
     var body: some View {
         ScrollView {
-            WorkoutCards(workouts: workouts, folders: [], drag: drag)
-                .padding([.horizontal, .bottom])
+            VStack(alignment: .leading, spacing: 20) {
+                if reordering {
+                    ReorderHint(inFolder: true)
+                }
+                WorkoutCards(workouts: workouts, folders: [], drag: drag, reordering: $reordering)
+            }
+            .padding([.horizontal, .bottom])
         }
         .cardDrops(drag, folders: [], workouts: workouts)
         .background(Color(.systemGroupedBackground))
@@ -163,26 +192,17 @@ struct FolderView: View {
         .navigationSubtitle("\(workouts.count) workouts")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
-                Menu("More actions", systemImage: "ellipsis") {
-                    Button("Rename", systemImage: "pencil") {
-                        renaming = true
+                if reordering {
+                    Button("Done") {
+                        reordering = false
                     }
-                    Button("New workout here", systemImage: "dumbbell") {
-                        creating = true
-                    }
-                    Button("Delete the folder", systemImage: "trash", role: .destructive) {
-                        confirmingDelete = true
-                    }
-                    // Red as its text: the icons of a menu take the color of the theme.
-                    .tint(.red)
-                }
-                // Asked where the menu was.
-                .confirmationDialog("Delete the folder “\(folder.name)”?", isPresented: $confirmingDelete, titleVisibility: .visible) {
-                    Button("Delete the folder", role: .destructive, action: delete)
-                } message: {
-                    Text("Its \(workouts.count) workouts go back to Workouts. None is deleted.")
+                } else {
+                    actionsMenu
                 }
             }
+        }
+        .onDisappear {
+            reordering = false
         }
         .folderNameAlert("Rename the folder", isPresented: $renaming, action: "Rename", name: folder.name) { name in
             do {
@@ -196,6 +216,32 @@ struct FolderView: View {
         }
     }
 
+    private var actionsMenu: some View {
+        Menu("More actions", systemImage: "ellipsis") {
+            Button("Rename", systemImage: "pencil") {
+                renaming = true
+            }
+            Button("New workout here", systemImage: "dumbbell") {
+                creating = true
+            }
+            Button("Reorder", systemImage: "arrow.up.arrow.down") {
+                reordering = true
+            }
+            .disabled(workouts.count < 2)
+            Button("Delete the folder", systemImage: "trash", role: .destructive) {
+                confirmingDelete = true
+            }
+            // Red as its text: the icons of a menu take the color of the theme.
+            .tint(.red)
+        }
+        // Asked where the menu was.
+        .confirmationDialog("Delete the folder “\(folder.name)”?", isPresented: $confirmingDelete, titleVisibility: .visible) {
+            Button("Delete the folder", role: .destructive, action: delete)
+        } message: {
+            Text("Its \(workouts.count) workouts go back to Workouts. None is deleted.")
+        }
+    }
+
     private func delete() {
         do {
             try context.removeFolder(folder)
@@ -206,26 +252,35 @@ struct FolderView: View {
     }
 }
 
-// The workouts of the page, or of a folder (`folders` empty). VoiceOver moves one a place, into a folder of the page,
-// or out of its folder.
+// The workouts of the page, or of a folder (`folders` empty): opened and touched and held for their actions, or, while
+// reordering, only dragged. VoiceOver moves one a place, into a folder of the page, or out of its folder.
 private struct WorkoutCards: View {
     private static let logger = Logger(subsystem: "com.zsr.halko", category: "workouts")
 
     let workouts: [Workout]
     let folders: [Folder]
     let drag: CardDrag
+    @Binding var reordering: Bool
     @Environment(\.modelContext) private var context
 
     var body: some View {
         let shown = drag.workouts(workouts)
         LazyVStack(spacing: 10) {
             ForEach(shown) { workout in
-                NavigationLink(value: workout) {
-                    WorkoutCard(workout: workout)
+                Group {
+                    if reordering {
+                        WorkoutCard(workout: workout, reordering: true)
+                            .draggableCard(.workout(workout.id), drag: drag, folders: folders, workouts: workouts)
+                    } else {
+                        NavigationLink(value: workout) {
+                            WorkoutCard(workout: workout, reordering: false)
+                        }
+                        .buttonStyle(.plain)
+                        .workoutMenu(workout) {
+                            reordering = true
+                        }
+                    }
                 }
-                .buttonStyle(.plain)
-                .workoutMenu(workout)
-                .draggableCard(.workout(workout.id), drag: drag, folders: folders, workouts: workouts)
                 .moveActions(index: shown.firstIndex(of: workout) ?? 0, count: shown.count) { offset in
                     change { try context.order(folders: folders, workouts: moved(shown, workout, by: offset)) }
                 }
@@ -251,6 +306,19 @@ private struct WorkoutCards: View {
         } catch {
             Self.logger.error("Cannot move the workout: \(String(describing: error))")
         }
+    }
+}
+
+// What to do while reordering: shown above the cards.
+private struct ReorderHint: View {
+    let inFolder: Bool
+
+    var body: some View {
+        (inFolder
+            ? Text("Touch and hold a workout, then drag it to move it.")
+            : Text("Touch and hold a card, then drag it to move it, or let go of a workout on a folder to put it in."))
+            .font(.subheadline)
+            .foregroundStyle(Color(.secondaryText))
     }
 }
 
