@@ -55,6 +55,56 @@ extension ModelContext {
         try save()
     }
 
+    // A new folder, after every folder and workout of the workouts page.
+    @discardableResult
+    public func createFolder(named name: String) throws -> Folder {
+        let folder = Folder(name: name, position: try nextPosition())
+        insert(folder)
+        try save()
+        return folder
+    }
+
+    public func renameFolder(_ folder: Folder, to name: String) throws {
+        guard folder.name != name else { return }
+        folder.name = name
+        folder.updatedAt = .now
+        try save()
+    }
+
+    // Deleted; its workouts go back to the workouts page, last and in their order. None is deleted.
+    public func removeFolder(_ folder: Folder) throws {
+        let now = Date.now
+        let id: String? = folder.id
+        let workouts = try fetch(FetchDescriptor(
+            predicate: #Predicate<Workout> { !$0.removed && $0.folderID == id },
+            sortBy: [SortDescriptor(\.position)]
+        ))
+        let first = try nextPosition()
+        for (offset, workout) in workouts.enumerated() {
+            workout.folderID = nil
+            workout.position = first + offset
+            workout.updatedAt = now
+        }
+        folder.removed = true
+        folder.updatedAt = now
+        try save()
+    }
+
+    // The order of a page: on the workouts page, its folders then the workouts in none, which share one order; in a
+    // folder, its workouts. Only those whose place changed are changed.
+    public func order(folders: [Folder] = [], workouts: [Workout]) throws {
+        let now = Date.now
+        for (position, folder) in folders.enumerated() where folder.position != position {
+            folder.position = position
+            folder.updatedAt = now
+        }
+        for (offset, workout) in workouts.enumerated() where workout.position != folders.count + offset {
+            workout.position = folders.count + offset
+            workout.updatedAt = now
+        }
+        try save()
+    }
+
     // After every folder and workout: what comes next on the workouts page, where folders and the workouts in none
     // share one order.
     func nextPosition() throws -> Int {

@@ -269,8 +269,9 @@ extension ModelContext {
     }
 
     // A new workout from the draft, last on the workouts page, in no folder.
-    public func createWorkout(with draft: WorkoutDraft) throws -> Workout {
-        let workout = Workout(name: draft.savedName, position: try nextPosition())
+    // In the folder `folderID`, or in none.
+    public func createWorkout(with draft: WorkoutDraft, in folderID: String? = nil) throws -> Workout {
+        let workout = Workout(folderID: folderID, name: draft.savedName, position: try nextPosition())
         insert(workout)
         try saveWorkout(workout, with: draft)
         return workout

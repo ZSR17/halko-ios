@@ -161,12 +161,42 @@
         }
       }
     },
+    "Create" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Créer"
+          }
+        }
+      }
+    },
     "Dark" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sombre"
+          }
+        }
+      }
+    },
+    "Delete the folder" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer le dossier"
+          }
+        }
+      }
+    },
+    "Delete the folder “%@”?" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer le dossier « %@ » ?"
           }
         }
       }
@@ -281,6 +311,16 @@
         }
       }
     },
+    "Folders" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dossiers"
+          }
+        }
+      }
+    },
     "Gong" : {
       "localizations" : {
         "fr" : {
@@ -361,6 +401,46 @@
         }
       }
     },
+    "Its %lld workouts go back to Workouts. None is deleted." : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Its workout goes back to Workouts. It is not deleted."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Its %lld workouts go back to Workouts. None is deleted."
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Sa séance revient dans Séances. Elle n’est pas supprimée."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Ses %lld séances reviennent dans Séances. Aucune n’est supprimée."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "Just the bar" : {
       "localizations" : {
         "fr" : {
@@ -427,6 +507,36 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Exercices à moi"
+          }
+        }
+      }
+    },
+    "New folder" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nouveau dossier"
+          }
+        }
+      }
+    },
+    "New workout here" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nouvelle séance ici"
+          }
+        }
+      }
+    },
+    "No workouts in this folder" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune séance dans ce dossier"
           }
         }
       }
@@ -571,12 +681,52 @@
         }
       }
     },
+    "Put one here from its page: … › Move to folder." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mets-en une ici depuis sa page : … › Déplacer."
+          }
+        }
+      }
+    },
     "Refused" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Refusé"
+          }
+        }
+      }
+    },
+    "Rename" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Renommer"
+          }
+        }
+      }
+    },
+    "Rename the folder" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Renommer le dossier"
+          }
+        }
+      }
+    },
+    "Reorder" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réorganiser"
           }
         }
       }
@@ -699,6 +849,26 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "To arrange your workouts." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pour ranger tes séances."
+          }
+        }
+      }
+    },
+    "Workouts in no folder" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Séances hors dossier"
           }
         }
       }
