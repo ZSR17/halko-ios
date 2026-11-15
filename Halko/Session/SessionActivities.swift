@@ -217,6 +217,7 @@ final class SessionActivities {
             content.restEndsAt = state.restEndsAt
             content.restTotalS = state.restTotalS
             content.heartRate = heartRate
+            content.theme = UserDefaults.standard.string(forKey: ThemeColor.key)
             return (content, last.startedAt)
         }
         let context = container.mainContext
@@ -228,7 +229,8 @@ final class SessionActivities {
             var content = SessionActivityAttributes.ContentState(
                 restEndsAt: state.restEndsAt,
                 restTotalS: state.restTotalS,
-                heartRate: heartRate
+                heartRate: heartRate,
+                theme: UserDefaults.standard.string(forKey: ThemeColor.key)
             )
             if let glance = try context.glance(of: state, unit: units.weight) {
                 let exerciseID = glance.exerciseID

@@ -61,6 +61,7 @@ struct HalkoWatchApp: App {
         WindowGroup {
             RootView()
                 .modifier(ChosenUnits())
+                .modifier(ChosenColor())
                 .environment(thumbnails)
                 .environment(liveSession)
                 .environment(permissions)
@@ -76,6 +77,18 @@ struct HalkoWatchApp: App {
                 }
         }
         .modelContainer(container)
+    }
+}
+
+// Gives the views below the color chosen in the iPhone's settings, kept on the watch with its other settings.
+struct ChosenColor: ViewModifier {
+    @AppStorage(ThemeColor.key) private var color = ThemeColor.lime
+
+    func body(content: Content) -> some View {
+        content
+            .tint(color.color)
+            .environment(\.accent, color.color)
+            .environment(\.onAccent, color.onColor)
     }
 }
 

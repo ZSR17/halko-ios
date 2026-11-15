@@ -1,4 +1,5 @@
 import ActivityKit
+import HalkoCore
 import SwiftUI
 import WidgetKit
 
@@ -28,7 +29,7 @@ struct SessionLiveActivity: Widget {
                         RestButtons()
                             .padding(.top, 8)
                     } else if !state.allDone {
-                        SetButtons(usesTimer: state.content.usesTimer == true)
+                        SetButtons(usesTimer: state.content.usesTimer == true, theme: state.theme)
                             .padding(.top, 8)
                     } else {
                         SessionLine(state: state)
@@ -36,7 +37,7 @@ struct SessionLiveActivity: Widget {
                     }
                 }
             } compactLeading: {
-                HalkoMark()
+                HalkoMark(theme: state.theme)
                     .frame(width: 18, height: 18)
             } compactTrailing: {
                 if let timer = state.timer {
@@ -52,7 +53,7 @@ struct SessionLiveActivity: Widget {
                 } else if let set = state.content.set {
                     Text(verbatim: set)
                         .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(Color(.accent))
+                        .foregroundStyle(state.theme.color)
                         .lineLimit(1)
                 }
             } minimal: {
@@ -67,11 +68,11 @@ struct SessionLiveActivity: Widget {
                         .foregroundStyle(Color(.rest))
                         .frame(maxWidth: 40)
                 } else {
-                    HalkoMark()
+                    HalkoMark(theme: state.theme)
                         .frame(width: 16, height: 16)
                 }
             }
-            .keylineTint(Color(.accent))
+            .keylineTint(state.theme.color)
             .widgetURL(SessionActivityAttributes.sessionURL)
         }
         // The watch's Smart Stack, and CarPlay.
@@ -84,9 +85,11 @@ struct TimerGlimpse {
     let content: SessionActivityAttributes.ContentState.Timer
     let isWaiting: Bool
     let isOver: Bool
+    let theme: ThemeColor
 
-    init(_ content: SessionActivityAttributes.ContentState.Timer, at date: Date) {
+    init(_ content: SessionActivityAttributes.ContentState.Timer, at date: Date, theme: ThemeColor) {
         self.content = content
+        self.theme = theme
         isWaiting = date < content.startsAt
         isOver = !isWaiting && (content.targetEnd.map { date >= $0 } ?? false)
     }
@@ -96,7 +99,7 @@ struct TimerGlimpse {
     }
 
     var tint: Color {
-        isWaiting && content.isPause ? Color(.rest) : Color(.accent)
+        isWaiting && content.isPause ? Color(.rest) : theme.color
     }
 }
 
@@ -111,12 +114,16 @@ struct SessionGlimpse {
     let startedAt: Date
     let rest: Rest?
     let timer: TimerGlimpse?
+    // The color chosen in the app's settings.
+    let theme: ThemeColor
 
     init(context: ActivityViewContext<SessionActivityAttributes>) {
         content = context.state
         startedAt = context.attributes.startedAt
         rest = context.isStale ? nil : context.state.restEndsAt.map { Rest(end: $0, totalS: context.state.restTotalS) }
-        timer = context.state.timer.map { TimerGlimpse($0, at: .now) }
+        let theme = ThemeColor(stored: context.state.theme)
+        self.theme = theme
+        timer = context.state.timer.map { TimerGlimpse($0, at: .now, theme: theme) }
     }
 
     var allDone: Bool {
@@ -181,7 +188,7 @@ private struct LockScreenView: View {
                 RestProgress(rest: rest)
                 RestButtons()
             } else if !state.allDone {
-                SetButtons(usesTimer: state.content.usesTimer == true)
+                SetButtons(usesTimer: state.content.usesTimer == true, theme: state.theme)
             }
         }
     }
@@ -216,7 +223,7 @@ private struct Headline: View {
                     Text(verbatim: set)
                         .font(.caption.weight(.semibold))
                         .textCase(.uppercase)
-                        .foregroundStyle(Color(.accent))
+                        .foregroundStyle(state.theme.color)
                 }
                 if let values = state.content.values {
                     Text(verbatim: values)
@@ -354,7 +361,7 @@ private struct TimerButtons: View {
                 .tint(.white)
                 Button(intent: BeginTimerIntent()) {
                     Text("Begin")
-                        .foregroundStyle(timer.content.isPause ? Color(.onRest) : Color(.onAccent))
+                        .foregroundStyle(timer.content.isPause ? Color(.onRest) : timer.theme.onColor)
                         .frame(maxWidth: .infinity, minHeight: 44)
                 }
                 .buttonStyle(.borderedProminent)
@@ -371,6 +378,7 @@ private struct TimerButtons: View {
 // The set to do: validated with the values shown, or, held for a time, its timer started too.
 private struct SetButtons: View {
     let usesTimer: Bool
+    let theme: ThemeColor
 
     var body: some View {
         if usesTimer {
@@ -385,18 +393,18 @@ private struct SetButtons: View {
                 .tint(.white)
                 Button(intent: StartTimerIntent()) {
                     Text("Start the timer")
-                        .foregroundStyle(Color(.onAccent))
+                        .foregroundStyle(theme.onColor)
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
                         .frame(maxWidth: .infinity, minHeight: 44)
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(Color(.accent))
+                .tint(theme.color)
             }
             .font(.subheadline.weight(.semibold))
             .buttonBorderShape(.capsule)
         } else {
-            ValidateButton()
+            ValidateButton(theme: theme)
         }
     }
 }
@@ -407,12 +415,12 @@ private struct StopButton: View {
     var body: some View {
         Button(intent: StopTimerIntent()) {
             Text(verbatim: timer.content.stopTitle)
-                .foregroundStyle(Color(.onAccent))
+                .foregroundStyle(timer.theme.onColor)
                 .frame(maxWidth: .infinity, minHeight: 44)
         }
         .buttonStyle(.borderedProminent)
         .buttonBorderShape(.capsule)
-        .tint(Color(.accent))
+        .tint(timer.theme.color)
         .font(.subheadline.weight(.semibold))
     }
 }
@@ -475,24 +483,28 @@ private struct RestButtons: View {
 
 // The set to do, done with the values shown; the rest follows.
 private struct ValidateButton: View {
+    let theme: ThemeColor
+
     var body: some View {
         Button(intent: ValidateSetIntent()) {
             Text("Validate the set")
-                .foregroundStyle(Color(.onAccent))
+                .foregroundStyle(theme.onColor)
                 .frame(maxWidth: .infinity, minHeight: 44)
         }
         .buttonStyle(.borderedProminent)
         .buttonBorderShape(.capsule)
-        .tint(Color(.accent))
+        .tint(theme.color)
         .font(.subheadline.weight(.semibold))
     }
 }
 
 // The H of Halko's icon.
 struct HalkoMark: View {
+    let theme: ThemeColor
+
     var body: some View {
         HalkoMarkShape()
-            .fill(Color(.accent))
+            .fill(theme.color)
             .accessibilityElement()
             .accessibilityLabel(Text(verbatim: "Halko"))
     }

@@ -20,6 +20,8 @@ nonisolated struct SessionActivityAttributes: ActivityAttributes {
         var heartRate: Int?
         // The timer of the set to do, while it runs.
         var timer: Timer?
+        // The color chosen in the settings (`ThemeColor`). Absent from an older content.
+        var theme: String?
 
         nonisolated struct Timer: Codable, Hashable {
             var startsAt: Date
