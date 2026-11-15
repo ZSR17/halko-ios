@@ -134,4 +134,44 @@ struct WorkoutActionsTests {
         #expect(push.folderID == nil)
         #expect(push.position == 3)
     }
+
+    @Test("Creates, renames and deletes a folder, whose workouts go back to the workouts page")
+    func folders() throws {
+        let legs = Workout(name: "Legs", position: 0)
+        context.insert(legs)
+        let folder = try context.createFolder(named: "PPL")
+        #expect(folder.position == 1)
+        try context.renameFolder(folder, to: "Push Pull Legs")
+        #expect(folder.name == "Push Pull Legs")
+        let push = Workout(folderID: folder.id, name: "Push", position: 5)
+        let pull = Workout(folderID: folder.id, name: "Pull", position: 2)
+        context.insert(push)
+        context.insert(pull)
+
+        try context.removeFolder(folder)
+        #expect(folder.removed)
+        #expect(pull.folderID == nil && push.folderID == nil)
+        #expect(pull.position == 6)
+        #expect(push.position == 7)
+        #expect(!pull.removed && !push.removed)
+    }
+
+    @Test("Orders the folders, then the workouts in none")
+    func order() throws {
+        let ppl = Folder(updatedAt: .distantPast, name: "PPL", position: 0)
+        let mobility = Folder(updatedAt: .distantPast, name: "Mobility", position: 1)
+        let legs = Workout(updatedAt: .distantPast, name: "Legs", position: 2)
+        let core = Workout(updatedAt: .distantPast, name: "Core", position: 3)
+        for model in [ppl, mobility, legs, core] as [any PersistentModel] {
+            context.insert(model)
+        }
+
+        try context.order(folders: [mobility, ppl], workouts: [legs, core])
+        #expect([mobility.position, ppl.position, legs.position, core.position] == [0, 1, 2, 3])
+        #expect(mobility.updatedAt > .distantPast && ppl.updatedAt > .distantPast)
+        #expect(legs.updatedAt == .distantPast && core.updatedAt == .distantPast)
+
+        try context.order(workouts: [core, legs])
+        #expect([core.position, legs.position] == [0, 1])
+    }
 }

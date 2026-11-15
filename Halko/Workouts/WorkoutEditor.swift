@@ -10,6 +10,8 @@ struct WorkoutEditor: View {
 
     // nil: a new workout, written only once saved.
     let workout: Workout?
+    // Where a new one goes; none for the workouts page.
+    let folder: Folder?
     // Added at the end as the sheet opens, from the exercise's page: ✕ leaves the workout as it was.
     let adding: Exercise?
     // As the sheet opened, to know whether anything changed.
@@ -27,8 +29,9 @@ struct WorkoutEditor: View {
     @Environment(\.units) private var units
 
     // `items`: its exercises, in order.
-    init(workout: Workout?, items: [WorkoutItem], adding: Exercise? = nil) {
+    init(workout: Workout?, items: [WorkoutItem], adding: Exercise? = nil, folder: Folder? = nil) {
         self.workout = workout
+        self.folder = folder
         self.adding = adding
         let draft = workout.map { WorkoutDraft($0, items: items) } ?? WorkoutDraft()
         _original = State(initialValue: draft)
@@ -183,7 +186,7 @@ struct WorkoutEditor: View {
             if let workout {
                 try modelContext.saveWorkout(workout, with: draft)
             } else {
-                _ = try modelContext.createWorkout(with: draft)
+                _ = try modelContext.createWorkout(with: draft, in: folder?.id)
             }
             dismiss()
         } catch {

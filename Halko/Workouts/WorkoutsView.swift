@@ -14,10 +14,75 @@ struct WorkoutsView: View {
     private var workouts: [Workout]
     @ScaledMetric(relativeTo: .headline) private var folderWidth = 150.0
     @State private var creating = false
+    @State private var naming = false
+    @State private var reordering = false
+    // The folder just created, opened.
+    @State private var created: Folder?
     @Environment(LiveSessionStore.self) private var liveSession
     @Environment(\.modelContext) private var context
 
     var body: some View {
+        Group {
+            if reordering {
+                ReorderList(folders: folders, workouts: workouts)
+            } else {
+                page
+            }
+        }
+        .navigationTitle("Workouts")
+        .toolbar {
+            if reordering {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") {
+                        reordering = false
+                    }
+                }
+            } else {
+                ToolbarItemGroup(placement: .primaryAction) {
+                    Button("Reorder", systemImage: "arrow.up.arrow.down") {
+                        reordering = true
+                    }
+                    .disabled(folders.count < 2 && workouts.count < 2)
+                    Menu("Add", systemImage: "plus") {
+                        Button("New workout", systemImage: "dumbbell") {
+                            creating = true
+                        }
+                        Button("New folder", systemImage: "folder.badge.plus") {
+                            naming = true
+                        }
+                    }
+                }
+            }
+        }
+        .folderNameAlert("New folder", isPresented: $naming, action: "Create", message: "To arrange your workouts.") { name in
+            do {
+                created = try context.createFolder(named: name)
+            } catch {
+                Self.logger.error("Cannot create the folder: \(String(describing: error))")
+            }
+        }
+        .sheet(isPresented: $creating) {
+            WorkoutEditor(workout: nil, items: [])
+        }
+        .navigationDestination(item: $created) { folder in
+            FolderView(folder: folder)
+        }
+        .navigationDestination(for: Folder.self) { folder in
+            FolderView(folder: folder)
+        }
+        .navigationDestination(for: Workout.self) { workout in
+            WorkoutView(workout: workout)
+        }
+        .navigationDestination(for: Exercise.self) { exercise in
+            ExerciseView(exercise: exercise)
+        }
+        // From the progress on the page of an exercise.
+        .navigationDestination(for: PastSessionLink.self) { link in
+            PastSessionView(link: link)
+        }
+    }
+
+    private var page: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 if let session = sessionsInProgress.first {
@@ -58,37 +123,21 @@ struct WorkoutsView: View {
                 }
             }
         }
-        .navigationTitle("Workouts")
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Button("New workout", systemImage: "plus") {
-                    creating = true
-                }
-            }
-        }
-        .sheet(isPresented: $creating) {
-            WorkoutEditor(workout: nil, items: [])
-        }
-        .navigationDestination(for: Folder.self) { folder in
-            FolderView(folder: folder)
-        }
-        .navigationDestination(for: Workout.self) { workout in
-            WorkoutView(workout: workout)
-        }
-        .navigationDestination(for: Exercise.self) { exercise in
-            ExerciseView(exercise: exercise)
-        }
-        // From the progress on the page of an exercise.
-        .navigationDestination(for: PastSessionLink.self) { link in
-            PastSessionView(link: link)
-        }
     }
 }
 
-// The workouts of a folder.
+// The workouts of a folder, and what can be done of it: renamed, reordered, a workout created in it, deleted.
 struct FolderView: View {
+    private static let logger = Logger(subsystem: "com.zsr.halko", category: "workouts")
+
     let folder: Folder
     @Query private var workouts: [Workout]
+    @State private var renaming = false
+    @State private var reordering = false
+    @State private var creating = false
+    @State private var confirmingDelete = false
+    @Environment(\.modelContext) private var context
+    @Environment(\.dismiss) private var dismiss
 
     init(folder: Folder) {
         self.folder = folder
@@ -97,19 +146,79 @@ struct FolderView: View {
     }
 
     var body: some View {
-        ScrollView {
-            WorkoutCards(workouts: workouts)
-                .padding([.horizontal, .bottom])
-        }
-        .background(Color(.systemGroupedBackground))
-        .overlay {
-            if workouts.isEmpty {
-                NoWorkouts()
+        Group {
+            if reordering {
+                ReorderList(folders: [], workouts: workouts)
+            } else {
+                ScrollView {
+                    WorkoutCards(workouts: workouts)
+                        .padding([.horizontal, .bottom])
+                }
+                .background(Color(.systemGroupedBackground))
+                .overlay {
+                    if workouts.isEmpty {
+                        NoWorkouts(inFolder: true)
+                    }
+                }
             }
         }
         .navigationTitle(folder.name)
         .navigationBarTitleDisplayMode(.large)
         .navigationSubtitle("\(workouts.count) workouts")
+        .toolbar {
+            if reordering {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") {
+                        reordering = false
+                    }
+                }
+            } else {
+                ToolbarItem(placement: .primaryAction) {
+                    Menu("More actions", systemImage: "ellipsis") {
+                        Button("Rename", systemImage: "pencil") {
+                            renaming = true
+                        }
+                        Button("Reorder", systemImage: "arrow.up.arrow.down") {
+                            reordering = true
+                        }
+                        .disabled(workouts.count < 2)
+                        Button("New workout here", systemImage: "dumbbell") {
+                            creating = true
+                        }
+                        Button("Delete the folder", systemImage: "trash", role: .destructive) {
+                            confirmingDelete = true
+                        }
+                        // Red as its text: the icons of a menu take the color of the theme.
+                        .tint(.red)
+                    }
+                    // Asked where the menu was.
+                    .confirmationDialog("Delete the folder “\(folder.name)”?", isPresented: $confirmingDelete, titleVisibility: .visible) {
+                        Button("Delete the folder", role: .destructive, action: delete)
+                    } message: {
+                        Text("Its \(workouts.count) workouts go back to Workouts. None is deleted.")
+                    }
+                }
+            }
+        }
+        .folderNameAlert("Rename the folder", isPresented: $renaming, action: "Rename", name: folder.name) { name in
+            do {
+                try context.renameFolder(folder, to: name)
+            } catch {
+                Self.logger.error("Cannot rename the folder: \(String(describing: error))")
+            }
+        }
+        .sheet(isPresented: $creating) {
+            WorkoutEditor(workout: nil, items: [], folder: folder)
+        }
+    }
+
+    private func delete() {
+        do {
+            try context.removeFolder(folder)
+            dismiss()
+        } catch {
+            Self.logger.error("Cannot delete the folder: \(String(describing: error))")
+        }
     }
 }
 
@@ -128,16 +237,21 @@ private struct WorkoutCards: View {
     }
 }
 
-// `create`: a button to make the first one.
+// `create`: a button to make the first one. In a folder, how to put one in it.
 private struct NoWorkouts: View {
+    var inFolder = false
     var create: (() -> Void)?
 
     var body: some View {
         // The description in a darker grey than the system's, for a contrast of 4.5:1.
         ContentUnavailableView {
-            Label("No workouts", systemImage: "dumbbell")
+            Label {
+                inFolder ? Text("No workouts in this folder") : Text("No workouts")
+            } icon: {
+                Image(systemName: "dumbbell")
+            }
         } description: {
-            Text("Your workouts will appear here.")
+            (inFolder ? Text("Put one here from its page: … › Move to folder.") : Text("Your workouts will appear here."))
                 .foregroundStyle(Color(.secondaryText))
         } actions: {
             if let create {

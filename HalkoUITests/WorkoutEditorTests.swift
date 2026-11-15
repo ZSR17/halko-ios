@@ -138,7 +138,8 @@ final class WorkoutEditorTests: XCTestCase {
     @MainActor
     func testNewWorkout() throws {
         let app = launch(language: "en", locale: "en_GB")
-        app.navigationBars["Workouts"].buttons["New workout"].tap()
+        app.navigationBars["Workouts"].buttons["Add"].tap()
+        app.buttons["New workout"].tap()
         XCTAssertTrue(app.navigationBars["New workout"].waitForExistence(timeout: 5))
         // No name yet.
         XCTAssertFalse(app.buttons["Save"].isEnabled)
