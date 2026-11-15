@@ -311,16 +311,6 @@
         }
       }
     },
-    "Folders" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dossiers"
-          }
-        }
-      }
-    },
     "Gong" : {
       "localizations" : {
         "fr" : {
@@ -491,6 +481,16 @@
         }
       }
     },
+    "Move to “%@”" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ranger dans « %@ »"
+          }
+        }
+      }
+    },
     "My data" : {
       "localizations" : {
         "fr" : {
@@ -641,6 +641,16 @@
         }
       }
     },
+    "Out of the folder" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sortir du dossier"
+          }
+        }
+      }
+    },
     "Permissions" : {
       "localizations" : {
         "fr" : {
@@ -717,16 +727,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Renommer le dossier"
-          }
-        }
-      }
-    },
-    "Reorder" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Réorganiser"
           }
         }
       }
@@ -859,16 +859,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pour ranger tes séances."
-          }
-        }
-      }
-    },
-    "Workouts in no folder" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Séances hors dossier"
           }
         }
       }

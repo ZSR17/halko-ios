@@ -44,10 +44,17 @@ extension ModelContext {
         try save()
     }
 
-    // Puts `workout` in the folder `folderID`, or out of any folder with nil: then last on the workouts page.
+    // Puts `workout` last in the folder `folderID`, or out of any folder with nil: then last on the workouts page.
     public func moveWorkout(_ workout: Workout, to folderID: String?) throws {
         guard workout.folderID != folderID else { return }
-        if folderID == nil {
+        if folderID != nil {
+            var last = FetchDescriptor<Workout>(
+                predicate: #Predicate { !$0.removed && $0.folderID == folderID },
+                sortBy: [SortDescriptor(\.position, order: .reverse)]
+            )
+            last.fetchLimit = 1
+            workout.position = (try fetch(last).first?.position ?? -1) + 1
+        } else {
             workout.position = try nextPosition()
         }
         workout.folderID = folderID
