@@ -92,11 +92,10 @@ final class FoldersTests: XCTestCase {
         XCTAssertTrue(app.buttons["New workout here"].exists)
         snap("Workouts › Folder menu")
         app.buttons["Delete the folder"].tap()
-        let confirm = app.buttons.matching(identifier: "Delete the folder").firstMatch
-        XCTAssertTrue(confirm.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.element(containing: "go back to Workouts").waitForExistence(timeout: 5))
         snap("Workouts › Delete a folder")
-        confirm.tap()
-        XCTAssertFalse(app.card("PPL program").waitForExistence(timeout: 2))
+        app.buttons.matching(identifier: "Delete the folder").firstMatch.tap()
+        wait(until: !app.card("PPL program").exists)
         XCTAssertTrue(app.card("Push A").waitForExistence(timeout: 5))
     }
 

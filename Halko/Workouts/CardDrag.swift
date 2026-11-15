@@ -31,9 +31,10 @@ final class CardDrag {
     // The cards, and the page (nil), the dragged card is over: one at a time, but told in no set order.
     private var over: Set<DraggedCard?> = []
 
-    // The dragged card, over the page: shown under the finger only. Seen again over the bars, where it is not let go.
+    // The dragged card, once it has left its place on the page: shown under the finger only. Not before, while the
+    // system lifts it from its place; seen again over the bars, where it is not let go.
     func isLifted(_ card: DraggedCard) -> Bool {
-        dragged == card && !over.isEmpty
+        dragged == card && !over.subtracting([card]).isEmpty
     }
 
     func folders(_ folders: [Folder]) -> [Folder] {
