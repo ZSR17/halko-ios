@@ -47,6 +47,7 @@ public enum SharedSettings {
         SetTimerSettings.getsInPositionKey,
         SetTimerSettings.positionKey,
         HealthSaving.key,
+        ThemeColor.key,
     ] + RestAlertSettings.keys
 
     // The values set; a key left out is at its default.

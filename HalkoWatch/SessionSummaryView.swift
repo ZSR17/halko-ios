@@ -50,7 +50,7 @@ struct SessionSummaryView: View {
         .onClockLine {
             Image(systemName: "checkmark")
                 .font(.footnote.weight(.bold))
-                .foregroundStyle(Color(.onAccent))
+                .foregroundStyle(.onTint)
                 .frame(width: 24, height: 24)
                 .background(.tint, in: .circle)
                 .frame(maxWidth: .infinity, alignment: .leading)

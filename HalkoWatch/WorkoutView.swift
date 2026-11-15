@@ -87,7 +87,7 @@ private struct WorkoutContent: View {
                 Button(action: start) {
                     Text("Start")
                         .font(.headline)
-                        .foregroundStyle(Color(.onAccent))
+                        .foregroundStyle(.onTint)
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)

@@ -566,7 +566,7 @@ private struct SetPage: View {
                         Button(action: startTimer) {
                             Text("Start")
                                 .font(.headline)
-                                .foregroundStyle(Color(.onAccent))
+                                .foregroundStyle(.onTint)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.7)
                                 .frame(maxWidth: .infinity)
@@ -581,7 +581,7 @@ private struct SetPage: View {
                     Button(action: validate) {
                         Text("Validate")
                             .font(.headline)
-                            .foregroundStyle(Color(.onAccent))
+                            .foregroundStyle(.onTint)
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.borderedProminent)
@@ -856,7 +856,7 @@ private struct SetEditPage: View {
                 } label: {
                     Text(isDone ? "Save" : "Do now")
                         .font(.headline)
-                        .foregroundStyle(Color(.onAccent))
+                        .foregroundStyle(.onTint)
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
@@ -1095,11 +1095,13 @@ private struct TimerPage: View {
     @ScaledMetric(relativeTo: .title2) private var ringSide = 66.0
     // The width of the text of the button in the corner.
     @State private var cornerWidth = 0.0
+    @Environment(\.accent) private var accent
+    @Environment(\.onAccent) private var onAccent
 
     var body: some View {
         NavigationStack {
             let display = SetTimerDisplay(timer: timer, date: phase)
-            let tint = display.isPause ? Color(.rest) : Color.accentColor
+            let tint = display.isPause ? Color(.rest) : accent
             ViewThatFits(in: .vertical) {
                 page(display, tint: tint, showsRing: true)
                 page(display, tint: tint, showsRing: false)
@@ -1194,7 +1196,7 @@ private struct TimerPage: View {
                     }
                 }
                 .font(.headline)
-                .foregroundStyle(display.isPause ? Color(.onRest) : Color(.onAccent))
+                .foregroundStyle(display.isPause ? Color(.onRest) : onAccent)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
                 .frame(maxWidth: .infinity)
@@ -1260,7 +1262,7 @@ private struct AllDonePage: View {
                 Button(action: finish) {
                     Text("Finish the session")
                         .font(.headline)
-                        .foregroundStyle(Color(.onAccent))
+                        .foregroundStyle(.onTint)
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)

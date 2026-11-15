@@ -59,6 +59,7 @@ struct SettingsTests {
         defaults.set(false, forKey: HealthSaving.key)
         #expect(!HealthSaving.isOn(in: defaults))
         #expect(SharedSettings.keys.contains(HealthSaving.key))
+        #expect(SharedSettings.keys.contains(ThemeColor.key))
     }
 
     @Test("Tells the end of a rest on the watch on the wrist, on the iPhone otherwise, or on both")

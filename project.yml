@@ -82,6 +82,9 @@ targets:
       # The app's colours.
       - path: Halko/Assets.xcassets
         buildPhase: resources
+    dependencies:
+      # The colour chosen in the settings, in its shade.
+      - package: HalkoCore
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.zsr.halko.widgets
@@ -100,7 +103,7 @@ targets:
       - HalkoWatch
       # As on the iPhone: how sets are written, in the units chosen, the sample data of the interface tests, what a
       # session reads, the session shared with the other device, the workout of Health, the access to Health and
-      # notifications, the notification of the end of a rest.
+      # notifications, the notification of the end of a rest, the colour chosen.
       - Halko/SetsText.swift
       - Halko/ChosenUnits.swift
       - Halko/ColumnTitle.swift
@@ -111,6 +114,7 @@ targets:
       - Halko/Health/WorkoutRecorder.swift
       - Halko/Health/HealthTypes.swift
       - Halko/Health/Permissions.swift
+      - Shared/ThemeColors.swift
       # The app's colours.
       - path: Halko/Assets.xcassets
         buildPhase: resources
