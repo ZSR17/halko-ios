@@ -7,7 +7,7 @@ import UniformTypeIdentifiers
 private let logger = Logger(subsystem: "com.zsr.halko", category: "workouts")
 
 // A card of a page of workouts, by the identifier of what it shows.
-enum DraggedCard: Equatable {
+enum DraggedCard: Hashable {
     case workout(String)
     case folder(String)
 }
@@ -20,13 +20,21 @@ struct DragOrder: Equatable {
 
 // A card touched and held, then dragged: over another, it takes its place, the folders among themselves, the workouts
 // among themselves; a workout let go on a folder goes in it, last. The order is written once the cards stop moving, so a
-// card let go away from the page keeps the order shown.
+// card let go away from the page keeps the order shown. While over the page, the card is only under the finger: its
+// place on the page stays empty.
 @Observable
 final class CardDrag {
     private(set) var dragged: DraggedCard?
     // The folder a workout is held over.
     private(set) var targetFolderID: String?
     private(set) var order: DragOrder?
+    // The cards, and the page (nil), the dragged card is over: one at a time, but told in no set order.
+    private var over: Set<DraggedCard?> = []
+
+    // The dragged card, over the page: shown under the finger only. Seen again over the bars, where it is not let go.
+    func isLifted(_ card: DraggedCard) -> Bool {
+        dragged == card && !over.isEmpty
+    }
 
     func folders(_ folders: [Folder]) -> [Folder] {
         arranged(folders, ids: order?.folderIDs, id: \.id)
@@ -39,14 +47,16 @@ final class CardDrag {
     func start(_ card: DraggedCard) -> NSItemProvider {
         dragged = card
         targetFolderID = nil
+        over = []
         switch card {
         case .workout(let id), .folder(let id):
             return NSItemProvider(object: id as NSString)
         }
     }
 
-    func enter(_ target: DraggedCard, folders: [Folder], workouts: [Workout]) {
-        guard let dragged, dragged != target else { return }
+    func enter(_ target: DraggedCard?, folders: [Folder], workouts: [Workout]) {
+        over.insert(target)
+        guard let target, let dragged, dragged != target else { return }
         var order = order ?? DragOrder(folderIDs: folders.map(\.id), workoutIDs: workouts.map(\.id))
         switch (dragged, target) {
         case (.workout(let id), .workout(let targetID)):
@@ -64,8 +74,9 @@ final class CardDrag {
         }
     }
 
-    func exit(_ target: DraggedCard) {
-        if case .folder(let id) = target, targetFolderID == id {
+    func exit(_ target: DraggedCard?) {
+        over.remove(target)
+        if case .folder(let id)? = target, targetFolderID == id {
             targetFolderID = nil
         }
     }
@@ -75,6 +86,7 @@ final class CardDrag {
         defer {
             dragged = nil
             targetFolderID = nil
+            over = []
         }
         guard let dragged else { return false }
         save(in: context, folders: folders, workouts: workouts)
@@ -151,6 +163,7 @@ private struct DraggableCard: ViewModifier {
 
     func body(content: Content) -> some View {
         content
+            .opacity(drag.isLifted(card) ? 0 : 1)
             // Lifted with the rounded corners of the card.
             .contentShape(.dragPreview, .rect(cornerRadius: 16))
             .onDrag {
@@ -191,15 +204,11 @@ private struct CardDrop: DropDelegate {
     }
 
     func dropEntered(info: DropInfo) {
-        if let target {
-            drag.enter(target, folders: folders, workouts: workouts)
-        }
+        drag.enter(target, folders: folders, workouts: workouts)
     }
 
     func dropExited(info: DropInfo) {
-        if let target {
-            drag.exit(target)
-        }
+        drag.exit(target)
     }
 
     func dropUpdated(info: DropInfo) -> DropProposal? {

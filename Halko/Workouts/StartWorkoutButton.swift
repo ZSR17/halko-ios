@@ -5,11 +5,38 @@ import SwiftUI
 
 private let logger = Logger(subsystem: "com.zsr.halko", category: "workouts")
 
-// Starts a session of a workout, or brings back the one in progress (one at a time, on any device); « Before your
-// first workout » first, the first time. On the workout's page and on its card.
+// Starts a session of a workout: on the workout's page and on its card.
 struct StartWorkoutButton<Label: View>: View {
     let workout: Workout
     let label: Label
+    @State private var starting = false
+
+    init(workout: Workout, @ViewBuilder label: () -> Label) {
+        self.workout = workout
+        self.label = label()
+    }
+
+    var body: some View {
+        Button {
+            starting = true
+        } label: {
+            label
+        }
+        .startsWorkout(workout, when: $starting)
+    }
+}
+
+extension View {
+    // Starts a session of `workout` once `starting` is set, or brings back the one in progress (one at a time, on any
+    // device); « Before your first workout » first, the first time.
+    func startsWorkout(_ workout: Workout, when starting: Binding<Bool>) -> some View {
+        modifier(WorkoutStart(workout: workout, starting: starting))
+    }
+}
+
+private struct WorkoutStart: ViewModifier {
+    let workout: Workout
+    @Binding var starting: Bool
     @Query(filter: #Predicate<Session> { !$0.removed && $0.endedAt == nil }, sort: \Session.startedAt, order: .reverse)
     private var sessionsInProgress: [Session]
     @Environment(\.modelContext) private var context
@@ -22,34 +49,32 @@ struct StartWorkoutButton<Label: View>: View {
     @State private var preparing = false
     @State private var prepared = false
 
-    init(workout: Workout, @ViewBuilder label: () -> Label) {
-        self.workout = workout
-        self.label = label()
-    }
-
-    var body: some View {
-        Button(action: start) {
-            label
-        }
-        .sheet(isPresented: $preparing, onDismiss: startPrepared) {
-            FirstWorkoutView {
-                await permissions.request()
-                prepared = true
-                preparing = false
+    func body(content: Content) -> some View {
+        content
+            .onChange(of: starting) { _, starting in
+                guard starting else { return }
+                self.starting = false
+                start()
             }
-        }
-        .alert(
-            "A session is already in progress",
-            isPresented: Binding { otherSession != nil } set: { if !$0 { otherSession = nil } },
-            presenting: otherSession
-        ) { session in
-            Button("Resume it") {
-                change { try liveSession.open(session, in: context) }
+            .sheet(isPresented: $preparing, onDismiss: startPrepared) {
+                FirstWorkoutView {
+                    await permissions.request()
+                    prepared = true
+                    preparing = false
+                }
             }
-            Button("Cancel", role: .cancel) {}
-        } message: { session in
-            Text("Finish “\(session.name)” before starting another one.")
-        }
+            .alert(
+                "A session is already in progress",
+                isPresented: Binding { otherSession != nil } set: { if !$0 { otherSession = nil } },
+                presenting: otherSession
+            ) { session in
+                Button("Resume it") {
+                    change { try liveSession.open(session, in: context) }
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: { session in
+                Text("Finish “\(session.name)” before starting another one.")
+            }
     }
 
     private func start() {

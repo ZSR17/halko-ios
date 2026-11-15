@@ -73,6 +73,33 @@ final class FoldersTests: XCTestCase {
         snap("Folder, dropped in")
     }
 
+    // A card touched and held without moving: what can be done of it, as in the menu of its page.
+    @MainActor
+    func testCardMenus() throws {
+        let app = launch(language: "en", locale: "en_GB")
+        let core = app.card("Core 15 min")
+        XCTAssertTrue(core.waitForExistence(timeout: 5))
+
+        core.press(forDuration: 1)
+        XCTAssertTrue(app.buttons["Duplicate"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Move to folder"].exists)
+        snap("Workouts › Card menu")
+        app.buttons["Duplicate"].tap()
+        XCTAssertTrue(app.card("Core 15 min (copy)").waitForExistence(timeout: 5))
+
+        app.card("PPL program").press(forDuration: 1)
+        XCTAssertTrue(app.buttons["Rename"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["New workout here"].exists)
+        snap("Workouts › Folder menu")
+        app.buttons["Delete the folder"].tap()
+        let confirm = app.buttons.matching(identifier: "Delete the folder").firstMatch
+        XCTAssertTrue(confirm.waitForExistence(timeout: 5))
+        snap("Workouts › Delete a folder")
+        confirm.tap()
+        XCTAssertFalse(app.card("PPL program").waitForExistence(timeout: 2))
+        XCTAssertTrue(app.card("Push A").waitForExistence(timeout: 5))
+    }
+
     @MainActor
     func testAddInFrench() throws {
         let app = launch(language: "fr", locale: "fr_FR")

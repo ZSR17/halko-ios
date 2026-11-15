@@ -83,6 +83,7 @@ struct WorkoutsView: View {
                                 FolderCard(folder: folder, isTarget: drag.targetFolderID == folder.id)
                             }
                             .buttonStyle(.plain)
+                            .folderMenu(folder)
                             .draggableCard(.folder(folder.id), drag: drag, folders: folders, workouts: workouts)
                             .moveActions(index: shownFolders.firstIndex(of: folder) ?? 0, count: shownFolders.count, horizontal: true) { offset in
                                 reorder(folders: moved(shownFolders, folder, by: offset), workouts: workouts)
@@ -223,6 +224,7 @@ private struct WorkoutCards: View {
                     WorkoutCard(workout: workout)
                 }
                 .buttonStyle(.plain)
+                .workoutMenu(workout)
                 .draggableCard(.workout(workout.id), drag: drag, folders: folders, workouts: workouts)
                 .moveActions(index: shown.firstIndex(of: workout) ?? 0, count: shown.count) { offset in
                     change { try context.order(folders: folders, workouts: moved(shown, workout, by: offset)) }
