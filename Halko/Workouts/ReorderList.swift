@@ -21,7 +21,7 @@ struct ReorderList: View {
         let exerciseCounts = Dictionary(grouping: items, by: \.workoutID).mapValues(\.count)
         List {
             if !folders.isEmpty {
-                Section("Folders") {
+                Section {
                     ForEach(folders) { folder in
                         row(index: folders.firstIndex(of: folder) ?? 0, count: folders.count) { offset in
                             order(folders: moved(folders, folder, by: offset), workouts: workouts)
@@ -44,6 +44,9 @@ struct ReorderList: View {
                         folders.move(fromOffsets: offsets, toOffset: destination)
                         order(folders: folders, workouts: workouts)
                     }
+                } header: {
+                    Text("Folders")
+                        .foregroundStyle(Color(.secondaryText))
                 }
             }
             if !workouts.isEmpty {
@@ -68,6 +71,7 @@ struct ReorderList: View {
                 } header: {
                     if !folders.isEmpty {
                         Text("Workouts in no folder")
+                            .foregroundStyle(Color(.secondaryText))
                     }
                 }
             }
