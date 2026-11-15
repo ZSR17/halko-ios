@@ -44,6 +44,7 @@ struct WorkoutView: View {
                 }
             }
             .navigationTitle(workout.name)
+            .plainTitle()
         }
     }
 

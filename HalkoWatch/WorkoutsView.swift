@@ -41,6 +41,7 @@ struct WorkoutsView: View {
             }
         }
         .navigationTitle("Workouts")
+        .plainTitle()
         .navigationDestination(for: Workout.self) { workout in
             WorkoutView(workout: workout)
         }
