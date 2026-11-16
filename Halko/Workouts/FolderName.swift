@@ -30,17 +30,22 @@ private struct FolderNameAlert: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .alert(title, isPresented: $isPresented) {
-                TextField("Name", text: $text)
-                Button("Cancel", role: .cancel) {}
-                Button(action) {
-                    save(trimmed)
-                }
-                .disabled(trimmed.isEmpty)
-            } message: {
-                if let message {
-                    Text(message)
-                }
+            // Its buttons in the color of a text, as every alert's.
+            .background {
+                Color.clear
+                    .alert(title, isPresented: $isPresented) {
+                        TextField("Name", text: $text)
+                        Button("Cancel", role: .cancel) {}
+                        Button(action) {
+                            save(trimmed)
+                        }
+                        .disabled(trimmed.isEmpty)
+                    } message: {
+                        if let message {
+                            Text(message)
+                        }
+                    }
+                    .tint(.primary)
             }
             .onChange(of: isPresented) { _, shown in
                 if shown {

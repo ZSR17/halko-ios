@@ -63,17 +63,22 @@ private struct WorkoutStart: ViewModifier {
                     preparing = false
                 }
             }
-            .alert(
-                "A session is already in progress",
-                isPresented: Binding { otherSession != nil } set: { if !$0 { otherSession = nil } },
-                presenting: otherSession
-            ) { session in
-                Button("Resume it") {
-                    change { try liveSession.open(session, in: context) }
-                }
-                Button("Cancel", role: .cancel) {}
-            } message: { session in
-                Text("Finish “\(session.name)” before starting another one.")
+            // Its buttons in the color of a text, as every alert's.
+            .background {
+                Color.clear
+                    .alert(
+                        "A session is already in progress",
+                        isPresented: Binding { otherSession != nil } set: { if !$0 { otherSession = nil } },
+                        presenting: otherSession
+                    ) { session in
+                        Button("Resume it") {
+                            change { try liveSession.open(session, in: context) }
+                        }
+                        Button("Cancel", role: .cancel) {}
+                    } message: { session in
+                        Text("Finish “\(session.name)” before starting another one.")
+                    }
+                    .tint(.primary)
             }
     }
 

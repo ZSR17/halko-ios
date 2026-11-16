@@ -114,13 +114,18 @@ struct LiveSessionView: View {
                 PastSessionView(link: link)
             }
         }
-        .alert("Discard the session?", isPresented: $discarding) {
-            Button("Discard", role: .destructive) {
-                discard()
-            }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("The sets done in this session will be deleted.")
+        // Its Cancel in the color of a text, as every alert's.
+        .background {
+            Color.clear
+                .alert("Discard the session?", isPresented: $discarding) {
+                    Button("Discard", role: .destructive) {
+                        discard()
+                    }
+                    Button("Cancel", role: .cancel) {}
+                } message: {
+                    Text("The sets done in this session will be deleted.")
+                }
+                .tint(.primary)
         }
         .task(id: state.sessionID) {
             loadPrevious()

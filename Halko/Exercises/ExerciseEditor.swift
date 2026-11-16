@@ -203,19 +203,24 @@ struct ExerciseEditor: View {
             }
             // Pulled down with changes, the sheet stays: ✕ asks before losing them.
             .interactiveDismissDisabled(hasChanges)
-            .alert(Text("Switch to “\(String(localized: (pendingType ?? original.exerciseType).name))”?"), isPresented: Binding {
-                pendingType != nil
-            } set: { shown in
-                if !shown {
-                    pendingType = nil
-                }
-            }, presenting: pendingType) { type in
-                Button("Cancel", role: .cancel) {}
-                Button("Switch") {
-                    draft.exerciseType = type
-                }
-            } message: { _ in
-                typeChangeMessage
+            // Its buttons in the color of a text, as every alert's.
+            .background {
+                Color.clear
+                    .alert(Text("Switch to “\(String(localized: (pendingType ?? original.exerciseType).name))”?"), isPresented: Binding {
+                        pendingType != nil
+                    } set: { shown in
+                        if !shown {
+                            pendingType = nil
+                        }
+                    }, presenting: pendingType) { type in
+                        Button("Cancel", role: .cancel) {}
+                        Button("Switch") {
+                            draft.exerciseType = type
+                        }
+                    } message: { _ in
+                        typeChangeMessage
+                    }
+                    .tint(.primary)
             }
             .alert("The exercise could not be saved.", isPresented: $failed) {
                 Button("OK") {}

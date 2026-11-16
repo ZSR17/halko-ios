@@ -112,21 +112,26 @@ struct PlatesView: View {
                 update { $0.targetG = openingTargetG }
             }
         }
-        .alert("Add a plate", isPresented: $adding) {
-            TextField("Plate weight", text: $newWeight)
-                .keyboardType(.decimalPad)
-            Button("Add", action: addPlate)
-            Button("Cancel", role: .cancel) {}
-        }
-        .alert("Edit the plate", isPresented: $correcting, presenting: corrected) { plate in
-            TextField("Plate weight", text: $newWeight)
-                .keyboardType(.decimalPad)
-            Button("Save") {
-                if let weight = typedWeight {
-                    update { $0.correct(id: plate.id, weightG: weight) }
+        // Their buttons in the color of a text, as every alert's.
+        .background {
+            Color.clear
+                .alert("Add a plate", isPresented: $adding) {
+                    TextField("Plate weight", text: $newWeight)
+                        .keyboardType(.decimalPad)
+                    Button("Add", action: addPlate)
+                    Button("Cancel", role: .cancel) {}
                 }
-            }
-            Button("Cancel", role: .cancel) {}
+                .alert("Edit the plate", isPresented: $correcting, presenting: corrected) { plate in
+                    TextField("Plate weight", text: $newWeight)
+                        .keyboardType(.decimalPad)
+                    Button("Save") {
+                        if let weight = typedWeight {
+                            update { $0.correct(id: plate.id, weightG: weight) }
+                        }
+                    }
+                    Button("Cancel", role: .cancel) {}
+                }
+                .tint(.primary)
         }
     }
 

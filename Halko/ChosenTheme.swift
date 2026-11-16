@@ -23,23 +23,32 @@ struct ChosenTheme: ViewModifier {
             .environment(\.accent, color.color)
             .environment(\.onAccent, color.onColor)
             .preferredColorScheme(appearance.scheme)
-            // The alerts, shown by the system, take the color of the window: that of a text, as their Cancel is gray and
-            // iOS gives all the buttons of an alert one color. The app's own views: none.
-            .background(WindowTint())
+            // The alerts and their text fields, shown by the system, take the color of the window. The app's own: none.
+            .background(WindowTint(color: color == .lime ? nil : UIColor(color.color)))
     }
 }
 
 private struct WindowTint: UIViewRepresentable {
+    let color: UIColor?
+
     func makeUIView(context: Context) -> TintingView {
         TintingView()
     }
 
-    func updateUIView(_ view: TintingView, context: Context) {}
+    func updateUIView(_ view: TintingView, context: Context) {
+        view.color = color
+    }
 }
 
 private final class TintingView: UIView {
+    var color: UIColor? {
+        didSet {
+            window?.tintColor = color
+        }
+    }
+
     override func didMoveToWindow() {
         super.didMoveToWindow()
-        window?.tintColor = .label
+        window?.tintColor = color
     }
 }
