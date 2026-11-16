@@ -18,6 +18,8 @@ struct SessionSummaryView: View {
     @State private var summary: SessionSummary?
     @State private var names: [String: String] = [:]
     @State private var rings: HKActivitySummary?
+    // The exercises added during the session, by name, until kept in its workout or not.
+    @State private var added: [String] = []
     @ScaledMetric(relativeTo: .body) private var ringsSide = 96.0
 
     var body: some View {
@@ -25,6 +27,9 @@ struct SessionSummaryView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 header
+                if !added.isEmpty {
+                    addedCard
+                }
                 if let summary {
                     stats(summary, text: text)
                     if !summary.records.isEmpty {
@@ -94,6 +99,67 @@ struct SessionSummaryView: View {
         .sessionCard()
     }
 
+    // The session is saved with them; its workout gets them only if asked.
+    private var addedCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Added during the session")
+                    .font(.headline)
+                    .accessibilityAddTraits(.isHeader)
+                Text(verbatim: added.formatted(.list(type: .and)))
+                    .font(.subheadline)
+                    .foregroundStyle(Color(.secondaryText))
+            }
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 10) {
+                    addedButtons
+                }
+                VStack(spacing: 10) {
+                    addedButtons
+                }
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 18))
+    }
+
+    @ViewBuilder
+    private var addedButtons: some View {
+        Button {
+            keepAdded()
+        } label: {
+            Text("Keep in \(session.name)")
+                .foregroundStyle(.onTint)
+                .frame(maxWidth: .infinity, minHeight: 44)
+        }
+        .buttonStyle(.borderedProminent)
+        .buttonBorderShape(.capsule)
+        Button {
+            withAnimation {
+                added = []
+            }
+        } label: {
+            Text("Only this time")
+                .foregroundStyle(Color(.label))
+                .frame(maxWidth: .infinity, minHeight: 44)
+        }
+        .buttonStyle(.bordered)
+        .buttonBorderShape(.capsule)
+        .tint(.gray)
+    }
+
+    private func keepAdded() {
+        do {
+            try context.keepAddedExercises(of: session)
+        } catch {
+            Self.logger.error("Cannot keep the exercises added: \(String(describing: error))")
+        }
+        withAnimation {
+            added = []
+        }
+    }
+
     private func healthCard(_ health: HealthResult) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Health")
@@ -137,6 +203,10 @@ struct SessionSummaryView: View {
             let exercises = try context.fetch(FetchDescriptor(predicate: Exercise.withIDs(ids)))
             names = Dictionary(exercises.map { ($0.id, $0.localizedName) }, uniquingKeysWith: { first, _ in first })
             self.summary = summary
+            let addedIDs = try context.addedExercises(of: session)
+            let addedExercises = Dictionary(try context.fetch(FetchDescriptor(predicate: Exercise.withIDs(addedIDs))).map { ($0.id, $0.localizedName) },
+                                            uniquingKeysWith: { first, _ in first })
+            added = addedIDs.compactMap { addedExercises[$0] }
         } catch {
             Self.logger.error("Cannot sum up the session: \(String(describing: error))")
         }

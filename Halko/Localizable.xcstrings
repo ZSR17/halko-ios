@@ -11,6 +11,36 @@
         }
       }
     },
+    "Add an exercise after" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter un exercice après"
+          }
+        }
+      }
+    },
+    "Added" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouté"
+          }
+        }
+      }
+    },
+    "Added during the session" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajoutés pendant la séance"
+          }
+        }
+      }
+    },
     "All allowed" : {
       "localizations" : {
         "fr" : {
@@ -461,6 +491,16 @@
         }
       }
     },
+    "Keep in %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Garder dans %@"
+          }
+        }
+      }
+    },
     "Language" : {
       "localizations" : {
         "fr" : {
@@ -627,6 +667,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sur cet iPhone"
+          }
+        }
+      }
+    },
+    "Only this time" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seulement cette fois"
           }
         }
       }

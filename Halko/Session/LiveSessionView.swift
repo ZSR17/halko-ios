@@ -35,6 +35,9 @@ struct LiveSessionView: View {
     @State private var discarding = false
     // The bottom of the screen not to draw in: the home indicator's, or the keyboard's.
     @State private var bottomInset: CGFloat = 0
+    // Exercises being chosen to add: after an exercise (its index), or at the end.
+    @State private var picking = false
+    @State private var addingAfter: Int?
     @FocusState private var focus: LiveField?
 
     init(state: LiveState, finished: @escaping (Session) -> Void) {
@@ -63,6 +66,17 @@ struct LiveSessionView: View {
                             )
                             .id(item.itemID)
                         }
+                        Button {
+                            addExercise(after: nil)
+                        } label: {
+                            Label("Add an exercise", systemImage: "plus")
+                                .font(.headline)
+                                .frame(maxWidth: .infinity, minHeight: 50)
+                        }
+                        .buttonStyle(.bordered)
+                        .buttonBorderShape(.capsule)
+                        // Under « Add a set » of the last exercise.
+                        .padding(.top, -12)
                     }
                     .padding()
                 }
@@ -127,8 +141,14 @@ struct LiveSessionView: View {
                 }
                 .tint(.primary)
         }
-        .task(id: state.sessionID) {
+        // Again for an exercise added.
+        .task(id: state.plan.map(\.exerciseID)) {
             loadPrevious()
+        }
+        .sheet(isPresented: $picking) {
+            ExercisePicker { exercises in
+                change { try context.addExercises(&$0, exercises, after: addingAfter, unit: units.weight) }
+            }
         }
         // On the other device too, once the changes pause: not at each tap or digit.
         .task(id: typing) {
@@ -161,7 +181,8 @@ struct LiveSessionView: View {
             edit: { key, values in typing[key] = values },
             addSet: { item in change { try context.addSet(&$0, item: item, unit: units.weight) } },
             deleteSet: deleteSet,
-            deleteExercise: { item in change { try context.deleteExercise(&$0, item: item) } }
+            deleteExercise: { item in change { try context.deleteExercise(&$0, item: item) } },
+            addExercise: { item in addExercise(after: item) }
         )
     }
 
@@ -297,6 +318,12 @@ struct LiveSessionView: View {
         change { try context.deleteSet(&$0, item: item, set: set) }
     }
 
+    private func addExercise(after item: Int?) {
+        focus = nil
+        addingAfter = item
+        picking = true
+    }
+
     private func unfold(_ itemID: String) {
         withAnimation {
             _ = unfolded.insert(itemID)
@@ -383,5 +410,7 @@ struct LiveActions {
     let addSet: (_ item: Int) -> Void
     let deleteSet: (_ item: Int, _ set: Int) -> Void
     let deleteExercise: (_ item: Int) -> Void
+    // Exercises to choose, to go right after it.
+    let addExercise: (_ item: Int) -> Void
 }
 

@@ -21,6 +21,8 @@ public struct LiveState: Codable, Equatable, Sendable {
     public var setTimer: SetTimer?
     // Values changed on sets not done yet, by step key, kept until the set is validated. Absent from an older state.
     private var typed: [String: SetValues]?
+    // The items of the plan added during the session, not in its workout. Absent from an older state.
+    var added: [String]?
 
     public init(
         sessionID: String,
@@ -52,6 +54,11 @@ public struct LiveState: Codable, Equatable, Sendable {
 
     public var livePlan: LivePlan {
         LivePlan(items: plan)
+    }
+
+    // Added during the session: not in its workout.
+    public func isAdded(_ item: Int) -> Bool {
+        plan.indices.contains(item) && added?.contains(plan[item].itemID) == true
     }
 
     // Resting at `date`.
