@@ -29,9 +29,8 @@ struct LiveSessionView: View {
     @State private var previous: [String: [Int: SetValues]] = [:]
     // Exercises done, opened again to correct a set, until the set to do changes.
     @State private var unfolded: Set<String> = []
-    // Asked from Finish at the top, or from the panel once every set is done.
+    // Asked from Finish at the top while sets are left; once every set is done, finishing saves at once.
     @State private var finishing = false
-    @State private var finishingAllDone = false
     @State private var discarding = false
     // The bottom of the screen not to draw in: the home indicator's, or the keyboard's.
     @State private var bottomInset: CGFloat = 0
@@ -216,7 +215,11 @@ struct LiveSessionView: View {
         }
         ToolbarItem(placement: .topBarTrailing) {
             Button("Finish") {
-                finishing = true
+                if table.allDone {
+                    finish()
+                } else {
+                    finishing = true
+                }
             }
             .foregroundStyle(.red)
             // Its buttons in the color of a text: sets are left, saving is not the action expected.
@@ -233,12 +236,8 @@ struct LiveSessionView: View {
     @ViewBuilder
     private func panel(_ table: LiveTable) -> some View {
         if table.allDone {
-            AllDonePanel(bottomPadding: panelBottomPadding) {
-                finishingAllDone = true
-            }
-            .finishDialog(isPresented: $finishingAllDone, setsDone: sets.count, of: table.plan.steps.count, save: finish) {
-                discarding = true
-            }
+            // Every set done: nothing to discard, nothing to ask.
+            AllDonePanel(bottomPadding: panelBottomPadding, finish: finish)
         } else if let timer = table.timer, let step = table.step {
             TimerPanel(table: table, actions: actions, step: step, timer: timer, bottomPadding: panelBottomPadding) {
                 store.change { $0.beginHolding() }
