@@ -72,7 +72,6 @@ private struct WorkoutStart: ViewModifier {
                     change { try liveSession.open(session, in: context) }
                 }
                 Button("Cancel", role: .cancel) {}
-                    .tint(.primary)
             } message: { session in
                 Text("Finish “\(session.name)” before starting another one.")
             }

@@ -211,7 +211,6 @@ struct ExerciseEditor: View {
                 }
             }, presenting: pendingType) { type in
                 Button("Cancel", role: .cancel) {}
-                    .tint(.primary)
                 Button("Switch") {
                     draft.exerciseType = type
                 }

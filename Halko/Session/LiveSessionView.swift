@@ -119,7 +119,6 @@ struct LiveSessionView: View {
                 discard()
             }
             Button("Cancel", role: .cancel) {}
-                .tint(.primary)
         } message: {
             Text("The sets done in this session will be deleted.")
         }
