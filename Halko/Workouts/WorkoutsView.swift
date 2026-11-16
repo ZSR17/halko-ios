@@ -16,8 +16,6 @@ struct WorkoutsView: View {
     @State private var creating = false
     @State private var naming = false
     @State private var drag = CardDrag()
-    // The folder just created, opened.
-    @State private var created: Folder?
     @Environment(LiveSessionStore.self) private var liveSession
     @Environment(\.modelContext) private var context
 
@@ -38,16 +36,13 @@ struct WorkoutsView: View {
             }
             .folderNameAlert("New folder", isPresented: $naming, action: "Create", message: "To arrange your workouts.") { name in
                 do {
-                    created = try context.createFolder(named: name)
+                    try context.createFolder(named: name)
                 } catch {
                     Self.logger.error("Cannot create the folder: \(String(describing: error))")
                 }
             }
             .sheet(isPresented: $creating) {
                 WorkoutEditor(workout: nil, items: [])
-            }
-            .navigationDestination(item: $created) { folder in
-                FolderView(folder: folder)
             }
             .navigationDestination(for: Folder.self) { folder in
                 FolderView(folder: folder)

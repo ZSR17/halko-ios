@@ -1,7 +1,7 @@
 import XCTest
 
 final class FoldersTests: XCTestCase {
-    // A folder created from the + of the tab, opened empty, renamed, then deleted.
+    // A folder created from the + of the tab, which stays on the page, opened empty, renamed, then deleted.
     @MainActor
     func testFolder() throws {
         let app = launch(language: "en", locale: "en_GB")
@@ -16,7 +16,12 @@ final class FoldersTests: XCTestCase {
         field.typeText("Upper body")
         snap("Workouts › New folder")
         app.alerts.buttons["Create"].tap()
+        let folder = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Upper body")).firstMatch
+        XCTAssertTrue(folder.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.navigationBars["Workouts"].exists)
+        snap("Workouts, folder created")
 
+        folder.tap()
         XCTAssertTrue(app.navigationBars["Upper body"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.element(containing: "No workouts in this folder").exists)
         try app.auditScreen()
