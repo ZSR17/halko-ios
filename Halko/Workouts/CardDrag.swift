@@ -51,8 +51,9 @@ final class CardDrag {
     // The folder a workout is held over: in the column of the finger, the one the card covers most, a quarter of it at
     // least, or the one under the finger.
     var targetFolderID: String? {
-        guard case .workout = dragged, let held = dragged.flatMap({ frames[$0] }) else { return nil }
+        guard let dragged, case .workout = dragged, let held = frames[dragged] else { return nil }
         let card = CGRect(x: finger.x - grab.width, y: finger.y - grab.height, width: held.width, height: held.height)
+        let finger = finger
         let covered = { (frame: CGRect) in
             frame.contains(finger) ? frame.height : frame.intersection(card).height
         }
