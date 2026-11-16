@@ -731,6 +731,16 @@
         }
       }
     },
+    "Reorder" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réorganiser"
+          }
+        }
+      }
+    },
     "Rest end" : {
       "localizations" : {
         "fr" : {
@@ -859,6 +869,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pour ranger tes séances."
+          }
+        }
+      }
+    },
+    "Touch and hold a card, then drag it to move it, or let go of a workout on a folder to put it in." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maintiens une carte et glisse-la pour la déplacer, ou lâche une séance sur un dossier pour l’y ranger."
+          }
+        }
+      }
+    },
+    "Touch and hold a workout, then drag it to move it." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maintiens une séance et glisse-la pour la déplacer."
           }
         }
       }
