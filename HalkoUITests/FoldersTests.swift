@@ -87,10 +87,12 @@ final class FoldersTests: XCTestCase {
     }
 
     // The handle of a workout card, at its top right, while reordering.
+    @MainActor
     private func grip(of card: XCUIElement) -> XCUICoordinate {
         card.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: card.frame.width - 28, dy: 36))
     }
 
+    @MainActor
     private func center(of element: XCUIElement) -> XCUICoordinate {
         element.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
     }
