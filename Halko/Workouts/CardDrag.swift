@@ -30,7 +30,7 @@ private struct DragPlan {
     let gap: CGRect
 }
 
-// A card touched and held, then dragged, as the exercises of a workout: it follows the finger, the others make room for
+// A card dragged by its handle, as the exercises of a workout: it follows the finger, the others make room for
 // it where it would go, dashed, and it takes that place when let go; the folders among themselves, the workouts among
 // themselves. A workout let go on a folder goes in it, last, and the folder under it is in the color of the app.
 @Observable
@@ -48,15 +48,24 @@ final class CardDrag {
     // Where each card is laid out, before it is moved aside.
     private var frames: [DraggedCard: CGRect] = [:]
 
-    // The folder a workout is held over.
+    // The folder a workout is held over: in the column of the finger, the one the card covers most, a quarter of it at
+    // least, or the one under the finger.
     var targetFolderID: String? {
-        guard case .workout = dragged else { return nil }
-        for (card, frame) in frames {
-            if case .folder(let id) = card, frame.contains(finger) {
-                return id
+        guard let dragged, case .workout = dragged, let held = frames[dragged] else { return nil }
+        let card = CGRect(x: finger.x - grab.width, y: finger.y - grab.height, width: held.width, height: held.height)
+        let finger = finger
+        let covered = { (frame: CGRect) in
+            frame.contains(finger) ? frame.height : frame.intersection(card).height
+        }
+        var best: (id: String, covered: CGFloat)?
+        for (key, frame) in frames {
+            guard case .folder(let id) = key, (frame.minX...frame.maxX).contains(finger.x) else { continue }
+            let amount = covered(frame)
+            if amount >= frame.height / 4, amount > best?.covered ?? 0 {
+                best = (id, amount)
             }
         }
-        return nil
+        return best?.id
     }
 
     func folders(_ folders: [Folder]) -> [Folder] {
@@ -207,9 +216,9 @@ final class CardDrag {
 }
 
 extension View {
-    // A card touched and held, then dragged among `cards`, those of its kind on the page in their order.
-    func draggableCard(_ card: DraggedCard, drag: CardDrag, cards: [DraggedCard], folders: [Folder], workouts: [Workout]) -> some View {
-        modifier(DraggableCard(card: card, drag: drag, cards: cards, folders: folders, workouts: workouts))
+    // A card dragged by its handle among `cards`, those of its kind on the page in their order.
+    func draggableCard(_ card: DraggedCard, drag: CardDrag, cards: [DraggedCard]) -> some View {
+        modifier(DraggableCard(card: card, drag: drag, cards: cards))
     }
 
     // The page the cards are dragged on, `cards` those of each kind in their order: where the one held would go,
@@ -240,13 +249,34 @@ extension View {
     }
 }
 
+// The handle of a card: held and dragged, it moves the card, at once, as on the page of a workout; the rest of the card
+// scrolls the page. VoiceOver moves the card by its actions.
+struct CardGrip: View {
+    let card: DraggedCard
+    let drag: CardDrag
+    let folders: [Folder]
+    let workouts: [Workout]
+    @Environment(\.modelContext) private var context
+
+    var body: some View {
+        Image(systemName: "line.3.horizontal")
+            .font(.title3)
+            .foregroundStyle(drag.dragged == card ? AnyShapeStyle(.tint) : AnyShapeStyle(Color(.secondaryText)))
+            .frame(minWidth: 44, minHeight: 44, alignment: .trailing)
+            .contentShape(.rect)
+            .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .named(CardDrag.space)).onChanged { value in
+                drag.move(card, to: value.location, from: value.startLocation)
+            }.onEnded { _ in
+                drag.end(in: context, folders: folders, workouts: workouts)
+            })
+            .accessibilityHidden(true)
+    }
+}
+
 private struct DraggableCard: ViewModifier {
     let card: DraggedCard
     let drag: CardDrag
     let cards: [DraggedCard]
-    let folders: [Folder]
-    let workouts: [Workout]
-    @Environment(\.modelContext) private var context
 
     func body(content: Content) -> some View {
         let held = drag.dragged == card
@@ -263,18 +293,6 @@ private struct DraggableCard: ViewModifier {
             .onGeometryChange(for: CGRect.self) { $0.frame(in: .named(CardDrag.space)) } action: { frame in
                 drag.measure(card, frame: frame)
             }
-            .gesture(
-                LongPressGesture(minimumDuration: 0.3)
-                    .sequenced(before: DragGesture(minimumDistance: 0, coordinateSpace: .named(CardDrag.space)))
-                    .onChanged { value in
-                        if case .second(true, let moved?) = value {
-                            drag.move(card, to: moved.location, from: moved.startLocation)
-                        }
-                    }
-                    .onEnded { _ in
-                        drag.end(in: context, folders: folders, workouts: workouts)
-                    }
-            )
     }
 }
 

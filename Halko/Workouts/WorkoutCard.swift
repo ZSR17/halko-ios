@@ -3,18 +3,22 @@ import SwiftData
 import SwiftUI
 
 // A planned workout: its name, number of exercises, when it was last done and the muscles it works most. Its Start
-// starts the session; the rest of the card opens the workout's page. While the cards are reordered, a handle in place
-// of Start. VoiceOver reads the card as one, Start among its actions.
-struct WorkoutCard: View {
+// starts the session; the rest of the card opens the workout's page. While the cards are reordered, `grip` in place of
+// Start. VoiceOver reads the card as one, Start among its actions.
+struct WorkoutCard<Grip: View>: View {
     let workout: Workout
-    let reordering: Bool
+    let grip: Grip?
     @Query private var items: [WorkoutItem]
     @Query private var lastSessions: [Session]
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
-    init(workout: Workout, reordering: Bool) {
+    init(workout: Workout, @ViewBuilder grip: () -> Grip) {
+        self.init(workout: workout, grip: grip())
+    }
+
+    private init(workout: Workout, grip: Grip?) {
         self.workout = workout
-        self.reordering = reordering
+        self.grip = grip
         let id = workout.id
         let sessionWorkoutID: String? = workout.id
         _items = Query(filter: #Predicate<WorkoutItem> { !$0.removed && $0.workoutID == id }, sort: \WorkoutItem.position)
@@ -41,12 +45,8 @@ struct WorkoutCard: View {
                         .foregroundStyle(Color(.secondaryText))
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                if reordering {
-                    Image(systemName: "line.3.horizontal")
-                        .font(.title3)
-                        .foregroundStyle(Color(.secondaryText))
-                        .frame(minWidth: 44, minHeight: 44, alignment: .trailing)
-                        .accessibilityHidden(true)
+                if let grip {
+                    grip
                 } else if !items.isEmpty {
                     // Nothing to start in a workout without exercises, as on its page.
                     StartWorkoutButton(workout: workout) {
@@ -73,6 +73,12 @@ struct WorkoutCard: View {
         let exercises = Text("\(items.count) exercises")
         guard let last = lastSessions.first else { return exercises }
         return Text("\(exercises) · \(last.startedAt, format: .relative(presentation: .named))")
+    }
+}
+
+extension WorkoutCard where Grip == EmptyView {
+    init(workout: Workout) {
+        self.init(workout: workout, grip: nil)
     }
 }
 
