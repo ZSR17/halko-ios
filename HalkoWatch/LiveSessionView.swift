@@ -970,11 +970,14 @@ private struct RestPage: View {
             .heartBesideCorner(cornerWidth, centred: true)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
+                    // Filled with the color of the rest, as on the iPhone, not the app's: the button of the bar takes
+                    // the tint.
                     Button(action: skip) {
                         Text("Skip")
+                            .foregroundStyle(Color(.onRest))
                             .measuringWidth($cornerWidth)
                     }
-                    .foregroundStyle(Color(.rest))
+                    .tint(Color(.rest))
                 }
             }
         }
@@ -1019,6 +1022,9 @@ private struct RestPage: View {
             }
             .buttonStyle(.bordered)
             .buttonBorderShape(.capsule)
+            // Gray, as on the iPhone: not the color of the app.
+            .tint(.gray)
+            .foregroundStyle(.white)
             // Clear of the rounded corners of the screen.
             .padding(.horizontal, 10)
         }
