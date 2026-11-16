@@ -311,6 +311,16 @@
         }
       }
     },
+    "For exercises working one side at a time: the side each set starts with, on the iPhone and on the watch." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pour les exercices travaillant un côté à la fois : le côté par lequel commence chaque série, sur l’iPhone et sur la montre."
+          }
+        }
+      }
+    },
     "Gong" : {
       "localizations" : {
         "fr" : {
@@ -461,6 +471,16 @@
         }
       }
     },
+    "Left" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gauche"
+          }
+        }
+      }
+    },
     "Light" : {
       "localizations" : {
         "fr" : {
@@ -527,6 +547,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nouvelle séance ici"
+          }
+        }
+      }
+    },
+    "Next: left side" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ensuite côté gauche"
           }
         }
       }
@@ -761,6 +791,26 @@
         }
       }
     },
+    "Right" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Droite"
+          }
+        }
+      }
+    },
+    "Right side: %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Côté droit : %@"
+          }
+        }
+      }
+    },
     "Ringtone" : {
       "localizations" : {
         "fr" : {
@@ -859,6 +909,16 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "Start with" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Commencer par"
           }
         }
       }

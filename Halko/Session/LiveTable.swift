@@ -149,7 +149,7 @@ struct SetTimerDisplay {
 
     var holdTitle: String {
         if timer.sidesPauseS != nil {
-            return timer.isFirstSide ? String(localized: "Left side") : String(localized: "Right side")
+            return timer.isRightSide ? String(localized: "Right side") : String(localized: "Left side")
         }
         return timer.targetS == nil ? String(localized: "Held") : String(localized: "Time left")
     }
@@ -192,8 +192,17 @@ struct SetTimerDisplay {
         return "+\(FieldText.clock(timer.heldS(at: date) - targetS))"
     }
 
-    // After the first side: "Left side: 0:40".
+    // During the pause to change sides: the side that comes.
+    var nextSide: String {
+        timer.isRightSide ? String(localized: "Next: right side") : String(localized: "Next: left side")
+    }
+
+    // After the first side: "Left side: 0:40", or the right one when it came first.
     var firstSide: String? {
-        timer.firstSideS.map { String(localized: "Left side: \(FieldText.clock($0))") }
+        timer.firstSideS.map { held in
+            timer.startsRight == true
+                ? String(localized: "Right side: \(FieldText.clock(held))")
+                : String(localized: "Left side: \(FieldText.clock(held))")
+        }
     }
 }

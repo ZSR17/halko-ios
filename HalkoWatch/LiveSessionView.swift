@@ -1231,7 +1231,7 @@ private struct TimerPage: View {
 
     private func firstLine(_ display: SetTimerDisplay) -> String {
         if display.isPause {
-            return String(localized: "Next: right side")
+            return display.nextSide
         }
         if display.isOver {
             return String(localized: "Target reached")

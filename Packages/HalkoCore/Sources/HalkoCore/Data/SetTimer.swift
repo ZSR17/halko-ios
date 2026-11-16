@@ -20,6 +20,13 @@ public struct SetTimer: Codable, Equatable, Sendable {
     // The time held on the first side, once it is done.
     public internal(set) var firstSideS: Int?
     public let stopsAtTarget: Bool
+    // The right side first, as chosen in the settings when it started; absent from an older timer: the left.
+    public let startsRight: Bool?
+
+    // The side being held, or about to be, of an exercise done by sides: the right one first when chosen so.
+    public var isRightSide: Bool {
+        sidesPauseS != nil && (startsRight == true) == isFirstSide
+    }
 
     public var isFirstSide: Bool {
         sidesPauseS != nil && firstSideS == nil
@@ -63,23 +70,28 @@ public struct SetTimerSettings: Codable, Equatable, Sendable {
     public static let stopsAtTargetKey = "setTimer.stopsAtTarget"
     public static let getsInPositionKey = "setTimer.getsInPosition"
     public static let positionKey = "setTimer.positionS"
+    public static let startsRightKey = "setTimer.startsRight"
     public static let defaultPositionS = 5
 
     public var stopsAtTarget: Bool
     public var getsInPosition: Bool
     public var positionS: Int
+    // An exercise working one side at a time starts each set on the right; else on the left.
+    public var startsRight: Bool
 
-    public init(stopsAtTarget: Bool = false, getsInPosition: Bool = true, positionS: Int = defaultPositionS) {
+    public init(stopsAtTarget: Bool = false, getsInPosition: Bool = true, positionS: Int = defaultPositionS, startsRight: Bool = false) {
         self.stopsAtTarget = stopsAtTarget
         self.getsInPosition = getsInPosition
         self.positionS = positionS
+        self.startsRight = startsRight
     }
 
     public init(defaults: UserDefaults) {
         self.init(
             stopsAtTarget: defaults.bool(forKey: Self.stopsAtTargetKey),
             getsInPosition: defaults.object(forKey: Self.getsInPositionKey) as? Bool ?? true,
-            positionS: defaults.object(forKey: Self.positionKey) as? Int ?? Self.defaultPositionS
+            positionS: defaults.object(forKey: Self.positionKey) as? Int ?? Self.defaultPositionS,
+            startsRight: defaults.bool(forKey: Self.startsRightKey)
         )
     }
 
@@ -87,6 +99,7 @@ public struct SetTimerSettings: Codable, Equatable, Sendable {
         defaults.set(stopsAtTarget, forKey: Self.stopsAtTargetKey)
         defaults.set(getsInPosition, forKey: Self.getsInPositionKey)
         defaults.set(positionS, forKey: Self.positionKey)
+        defaults.set(startsRight, forKey: Self.startsRightKey)
     }
 }
 
@@ -104,7 +117,8 @@ extension LiveState {
             targetS: targetS,
             sidesPauseS: sidesPauseS,
             firstSideS: nil,
-            stopsAtTarget: settings.stopsAtTarget && targetS != nil
+            stopsAtTarget: settings.stopsAtTarget && targetS != nil,
+            startsRight: sidesPauseS == nil ? nil : settings.startsRight
         )
     }
 

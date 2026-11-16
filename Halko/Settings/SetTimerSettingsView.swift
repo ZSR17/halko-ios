@@ -6,6 +6,7 @@ struct SetTimerSettingsView: View {
     @AppStorage(SetTimerSettings.stopsAtTargetKey) private var stopsAtTarget = false
     @AppStorage(SetTimerSettings.getsInPositionKey) private var getsInPosition = true
     @AppStorage(SetTimerSettings.positionKey) private var positionS = SetTimerSettings.defaultPositionS
+    @AppStorage(SetTimerSettings.startsRightKey) private var startsRight = false
     @State private var choosing = false
 
     var body: some View {
@@ -51,6 +52,24 @@ struct SetTimerSettingsView: View {
                     .foregroundStyle(Color(.secondaryText))
             } footer: {
                 Text("Turned off, the timer starts as soon as you press Start.")
+                    .foregroundStyle(Color(.secondaryText))
+            }
+            Section {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Start with")
+                    Picker("Start with", selection: $startsRight) {
+                        Text("Left").tag(false)
+                        Text("Right").tag(true)
+                    }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
+                }
+                .padding(.vertical, 4)
+            } header: {
+                Text("One side at a time")
+                    .foregroundStyle(Color(.secondaryText))
+            } footer: {
+                Text("For exercises working one side at a time: the side each set starts with, on the iPhone and on the watch.")
                     .foregroundStyle(Color(.secondaryText))
             }
         }

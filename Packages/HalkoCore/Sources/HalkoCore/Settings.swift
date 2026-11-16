@@ -46,6 +46,7 @@ public enum SharedSettings {
         SetTimerSettings.stopsAtTargetKey,
         SetTimerSettings.getsInPositionKey,
         SetTimerSettings.positionKey,
+        SetTimerSettings.startsRightKey,
         HealthSaving.key,
         ThemeColor.key,
     ] + RestAlertSettings.keys
