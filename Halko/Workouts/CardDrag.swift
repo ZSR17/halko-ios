@@ -2,7 +2,6 @@ import HalkoCore
 import os
 import SwiftData
 import SwiftUI
-import UniformTypeIdentifiers
 
 private let logger = Logger(subsystem: "com.zsr.halko", category: "workouts")
 
@@ -12,7 +11,7 @@ enum DraggedCard: Hashable {
     case folder(String)
 }
 
-// The order a page shows while a card is dragged over it, not written yet.
+// The order a page shows once a card is let go, until the queries show it too.
 struct DragOrder: Equatable {
     var folderIDs: [String]
     var workoutIDs: [String]
@@ -24,30 +23,40 @@ struct FiledWorkout: Equatable {
     let folder: String
 }
 
-// A card touched and held, then dragged: over another, it takes its place, the folders among themselves, the workouts
-// among themselves; a workout let go on a folder goes in it, last. The order is written once the cards stop moving, so a
-// card let go away from the page keeps the order shown. While over the page, the card is only under the finger: its
-// place on the page stays empty.
+// Where the cards are drawn while one is held: the place it would take, and where each other goes to leave it room.
+private struct DragPlan {
+    let slot: Int
+    let origins: [DraggedCard: CGPoint]
+    let gap: CGRect
+}
+
+// A card touched and held, then dragged, as the exercises of a workout: it follows the finger, the others make room for
+// it where it would go, dashed, and it takes that place when let go; the folders among themselves, the workouts among
+// themselves. A workout let go on a folder goes in it, last, and the folder under it is in the color of the app.
 @Observable
 final class CardDrag {
+    // Read by the measures of the cards, off the main actor.
+    nonisolated static let space = "workout-cards"
+    nonisolated private static let spacing: CGFloat = 10
+
     private(set) var dragged: DraggedCard?
-    // The folder a workout is held over.
-    private(set) var targetFolderID: String?
     private(set) var order: DragOrder?
     var filed: FiledWorkout?
-    // The cards, and the page (nil), the dragged card is over: one at a time, but told in no set order.
-    private var over: Set<DraggedCard?> = []
+    private var finger = CGPoint.zero
+    // Where the finger holds the card, from its top left corner.
+    private var grab = CGSize.zero
+    // Where each card is laid out, before it is moved aside.
+    private var frames: [DraggedCard: CGRect] = [:]
 
-    // The dragged card, over the page: shown under the finger only, from its own place on. Seen again over the bars,
-    // where it is not let go.
-    func isLifted(_ card: DraggedCard) -> Bool {
-        dragged == card && !over.isEmpty
-    }
-
-    // The other cards, while a workout is held over a folder.
-    func isPale(_ card: DraggedCard) -> Bool {
-        guard let targetFolderID else { return false }
-        return card != .folder(targetFolderID)
+    // The folder a workout is held over.
+    var targetFolderID: String? {
+        guard case .workout = dragged else { return nil }
+        for (card, frame) in frames {
+            if case .folder(let id) = card, frame.contains(finger) {
+                return id
+            }
+        }
+        return nil
     }
 
     func folders(_ folders: [Folder]) -> [Folder] {
@@ -58,68 +67,127 @@ final class CardDrag {
         arranged(workouts, ids: order?.workoutIDs, id: \.id)
     }
 
-    func start(_ card: DraggedCard) -> NSItemProvider {
-        dragged = card
-        targetFolderID = nil
-        over = []
-        switch card {
-        case .workout(let id), .folder(let id):
-            return NSItemProvider(object: id as NSString)
-        }
+    func measure(_ card: DraggedCard, frame: CGRect) {
+        frames[card] = frame
     }
 
-    func enter(_ target: DraggedCard?, folders: [Folder], workouts: [Workout]) {
-        over.insert(target)
-        guard let target, let dragged, dragged != target else { return }
-        var order = order ?? DragOrder(folderIDs: folders.map(\.id), workoutIDs: workouts.map(\.id))
-        switch (dragged, target) {
-        case (.workout(let id), .workout(let targetID)):
-            Self.move(id, to: targetID, in: &order.workoutIDs)
-        case (.folder(let id), .folder(let targetID)):
-            Self.move(id, to: targetID, in: &order.folderIDs)
-        case (.workout, .folder(let folderID)):
-            targetFolderID = folderID
-            return
-        case (.folder, .workout):
-            return
+    func move(_ card: DraggedCard, to location: CGPoint, from start: CGPoint) {
+        if dragged == nil, let frame = frames[card] {
+            grab = CGSize(width: start.x - frame.minX, height: start.y - frame.minY)
+            withAnimation(.snappy) {
+                dragged = card
+            }
+        }
+        finger = location
+    }
+
+    // Where `card` is drawn from its place, among `cards` of its kind in their order.
+    func offset(of card: DraggedCard, among cards: [DraggedCard]) -> CGSize {
+        guard let dragged, let frame = frames[card] else { return .zero }
+        if card == dragged {
+            return CGSize(width: finger.x - grab.width - frame.minX, height: finger.y - grab.height - frame.minY)
+        }
+        guard let origin = plan(among: cards)?.origins[card] else { return .zero }
+        return CGSize(width: origin.x - frame.minX, height: origin.y - frame.minY)
+    }
+
+    // Where the dragged card would go, among `cards` of its kind.
+    func gap(among cards: [DraggedCard]) -> CGRect? {
+        plan(among: cards)?.gap
+    }
+
+    // Let go: in a folder, or at its place, written.
+    func end(in context: ModelContext, folders: [Folder], workouts: [Workout]) {
+        guard let dragged else { return }
+        let folderCards = folders.map { DraggedCard.folder($0.id) }
+        let workoutCards = workouts.map { DraggedCard.workout($0.id) }
+        var order = DragOrder(folderIDs: folders.map(\.id), workoutIDs: workouts.map(\.id))
+        switch dragged {
+        case .workout(let id):
+            if let folderID = targetFolderID, let workout = workouts.first(where: { $0.id == id }),
+               let folder = folders.first(where: { $0.id == folderID }) {
+                change {
+                    try context.moveWorkout(workout, to: folderID)
+                    filed = FiledWorkout(workout: workout.name, folder: folder.name)
+                }
+                withAnimation(.snappy) {
+                    self.dragged = nil
+                }
+                return
+            }
+            if let slot = plan(among: workoutCards)?.slot {
+                order.workoutIDs = Self.moved(id, to: slot, in: order.workoutIDs)
+            }
+        case .folder(let id):
+            if let slot = plan(among: folderCards)?.slot {
+                order.folderIDs = Self.moved(id, to: slot, in: order.folderIDs)
+            }
         }
         withAnimation(.snappy) {
             self.order = order
+            self.dragged = nil
+        }
+        let byID = Dictionary(workouts.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        let foldersByID = Dictionary(folders.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        change {
+            try context.order(folders: order.folderIDs.compactMap { foldersByID[$0] }, workouts: order.workoutIDs.compactMap { byID[$0] })
         }
     }
 
-    func exit(_ target: DraggedCard?) {
-        over.remove(target)
-        if case .folder(let id)? = target, targetFolderID == id {
-            targetFolderID = nil
-        }
+    // Reordering left before the card was let go.
+    func cancel() {
+        dragged = nil
     }
 
-    // Let go on the page (`target` nil) or on a card.
-    func drop(on target: DraggedCard?, in context: ModelContext, folders: [Folder], workouts: [Workout]) -> Bool {
-        defer {
-            dragged = nil
-            targetFolderID = nil
-            over = []
-        }
-        guard let dragged else { return false }
-        save(in: context, folders: folders, workouts: workouts)
-        if case .workout(let id) = dragged, case .folder(let folderID)? = target,
-           let workout = workouts.first(where: { $0.id == id }), let folder = folders.first(where: { $0.id == folderID }) {
-            change {
-                try context.moveWorkout(workout, to: folderID)
-                filed = FiledWorkout(workout: workout.name, folder: folder.name)
-            }
-        }
-        return true
-    }
-
-    func save(in context: ModelContext, folders: [Folder], workouts: [Workout]) {
-        guard order != nil else { return }
-        let folders = self.folders(folders)
-        let workouts = self.workouts(workouts)
-        change { try context.order(folders: folders, workouts: workouts) }
+    // Once the queries show the order written.
+    func settle() {
         order = nil
+    }
+
+    private func plan(among cards: [DraggedCard]) -> DragPlan? {
+        guard let dragged, cards.contains(dragged), targetFolderID == nil, let held = frames[dragged] else { return nil }
+        let others = cards.filter { $0 != dragged }
+        let center = CGPoint(x: finger.x - grab.width + held.width / 2, y: finger.y - grab.height + held.height / 2)
+        switch dragged {
+        case .workout:
+            return listPlan(others: others, cards: cards, held: held, centerY: center.y)
+        case .folder:
+            return gridPlan(others: others, cards: cards, center: center)
+        }
+    }
+
+    // A column: each place under the cards above it, of their own heights.
+    private func listPlan(others: [DraggedCard], cards: [DraggedCard], held: CGRect, centerY: CGFloat) -> DragPlan? {
+        guard let top = cards.first.flatMap({ frames[$0]?.minY }) else { return nil }
+        var tops = [top]
+        for card in others {
+            tops.append(tops[tops.count - 1] + (frames[card]?.height ?? 0) + Self.spacing)
+        }
+        let slot = tops.indices.min { abs(tops[$0] + held.height / 2 - centerY) < abs(tops[$1] + held.height / 2 - centerY) } ?? 0
+        var origins: [DraggedCard: CGPoint] = [:]
+        for (index, card) in others.enumerated() {
+            origins[card] = CGPoint(x: frames[card]?.minX ?? 0, y: tops[index] + (index >= slot ? held.height + Self.spacing : 0))
+        }
+        return DragPlan(slot: slot, origins: origins, gap: CGRect(x: held.minX, y: tops[slot], width: held.width, height: held.height))
+    }
+
+    // A grid: the places are those of the cards, in their order.
+    private func gridPlan(others: [DraggedCard], cards: [DraggedCard], center: CGPoint) -> DragPlan? {
+        let cells = cards.compactMap { frames[$0] }
+        guard cells.count == cards.count else { return nil }
+        let distance = { (cell: CGRect) in hypot(cell.midX - center.x, cell.midY - center.y) }
+        let slot = cells.indices.min { distance(cells[$0]) < distance(cells[$1]) } ?? 0
+        var origins: [DraggedCard: CGPoint] = [:]
+        for (index, card) in others.enumerated() {
+            origins[card] = cells[index >= slot ? index + 1 : index].origin
+        }
+        return DragPlan(slot: slot, origins: origins, gap: cells[slot])
+    }
+
+    private static func moved(_ id: String, to slot: Int, in ids: [String]) -> [String] {
+        var ids = ids.filter { $0 != id }
+        ids.insert(id, at: min(slot, ids.count))
+        return ids
     }
 
     private func arranged<Model>(_ models: [Model], ids: [String]?, id: KeyPath<Model, String>) -> [Model] {
@@ -127,11 +195,6 @@ final class CardDrag {
         let ranks = Dictionary(ids.enumerated().map { ($1, $0) }, uniquingKeysWith: { first, _ in first })
         // Stable: one the drag does not know yet stays where it is among the others.
         return models.sorted { (ranks[$0[keyPath: id]] ?? .max) < (ranks[$1[keyPath: id]] ?? .max) }
-    }
-
-    private static func move(_ id: String, to targetID: String, in ids: inout [String]) {
-        guard let from = ids.firstIndex(of: id), let to = ids.firstIndex(of: targetID) else { return }
-        ids.move(fromOffsets: [from], toOffset: to > from ? to + 1 : to)
     }
 
     private func change(_ write: () throws -> Void) {
@@ -144,17 +207,20 @@ final class CardDrag {
 }
 
 extension View {
-    // A card that can be touched and held to be dragged, and over which another can be. `preview`: the card under the
-    // finger, drawn apart from the one on the page, which leaves its place.
-    func draggableCard<Preview: View>(
-        _ card: DraggedCard, drag: CardDrag, folders: [Folder], workouts: [Workout], @ViewBuilder preview: () -> Preview
-    ) -> some View {
-        modifier(DraggableCard(card: card, drag: drag, folders: folders, workouts: workouts, preview: preview()))
+    // A card touched and held, then dragged among `cards`, those of its kind on the page in their order.
+    func draggableCard(_ card: DraggedCard, drag: CardDrag, cards: [DraggedCard], folders: [Folder], workouts: [Workout]) -> some View {
+        modifier(DraggableCard(card: card, drag: drag, cards: cards, folders: folders, workouts: workouts))
     }
 
-    // The page the cards are dragged on: a card let go between two keeps the order shown.
-    func cardDrops(_ drag: CardDrag, folders: [Folder], workouts: [Workout]) -> some View {
-        modifier(CardDrops(drag: drag, folders: folders, workouts: workouts))
+    // The page the cards are dragged on, `cards` those of each kind in their order: where the one held would go,
+    // dashed. Put on the stack of the cards, not padded.
+    func cardDragSpace(_ drag: CardDrag, folders: [DraggedCard], workouts: [DraggedCard]) -> some View {
+        modifier(CardDragSpace(drag: drag, folders: folders, workouts: workouts))
+    }
+
+    // Where a workout let go on a folder went, for a few seconds.
+    func filedBanner(_ drag: CardDrag) -> some View {
+        modifier(FiledBannerModifier(drag: drag))
     }
 
     // Moves for VoiceOver, which cannot drag: one place before or after, where there is one.
@@ -174,61 +240,77 @@ extension View {
     }
 }
 
-private struct DraggableCard<Preview: View>: ViewModifier {
+private struct DraggableCard: ViewModifier {
     let card: DraggedCard
     let drag: CardDrag
+    let cards: [DraggedCard]
     let folders: [Folder]
     let workouts: [Workout]
-    let preview: Preview
-    @State private var width: CGFloat?
     @Environment(\.modelContext) private var context
-    @Environment(\.colorScheme) private var colorScheme
-    @Environment(\.accent) private var accent
-    @Environment(\.onAccent) private var onAccent
 
     func body(content: Content) -> some View {
+        let held = drag.dragged == card
+        let offset = drag.offset(of: card, among: cards)
         content
-            .opacity(drag.isLifted(card) ? 0 : drag.isPale(card) ? 0.55 : 1)
-            .animation(.snappy, value: drag.isPale(card))
-            .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
-            // Lifted with the rounded corners of the card.
-            .contentShape(.dragPreview, .rect(cornerRadius: 16))
-            .onDrag {
-                drag.start(card)
-            } preview: {
-                // Drawn outside the page: its width, data and colors given again.
-                preview
-                    .frame(width: width)
-                    .contentShape(.dragPreview, .rect(cornerRadius: 16))
-                    .modelContainer(context.container)
-                    .environment(\.colorScheme, colorScheme)
-                    .tint(accent)
-                    .environment(\.accent, accent)
-                    .environment(\.onAccent, onAccent)
+            // Lifted; smaller over a folder, to go in it.
+            .scaleEffect(held ? (drag.targetFolderID == nil ? 1.03 : 0.8) : 1)
+            .shadow(color: .black.opacity(held ? 0.25 : 0), radius: 16, y: 8)
+            .animation(.snappy, value: drag.targetFolderID)
+            .offset(offset)
+            // Under the finger as it moves; the others to their place.
+            .animation(held ? nil : .snappy, value: offset)
+            .zIndex(held ? 1 : 0)
+            .onGeometryChange(for: CGRect.self) { $0.frame(in: .named(CardDrag.space)) } action: { frame in
+                drag.measure(card, frame: frame)
             }
-            .onDrop(of: [.plainText], delegate: CardDrop(target: card, drag: drag, folders: folders, workouts: workouts, context: context))
+            .gesture(
+                LongPressGesture(minimumDuration: 0.3)
+                    .sequenced(before: DragGesture(minimumDistance: 0, coordinateSpace: .named(CardDrag.space)))
+                    .onChanged { value in
+                        if case .second(true, let moved?) = value {
+                            drag.move(card, to: moved.location, from: moved.startLocation)
+                        }
+                    }
+                    .onEnded { _ in
+                        drag.end(in: context, folders: folders, workouts: workouts)
+                    }
+            )
     }
 }
 
-private struct CardDrops: ViewModifier {
+private struct CardDragSpace: ViewModifier {
     let drag: CardDrag
-    let folders: [Folder]
-    let workouts: [Workout]
-    @Environment(\.modelContext) private var context
+    let folders: [DraggedCard]
+    let workouts: [DraggedCard]
 
     func body(content: Content) -> some View {
         content
-            .onDrop(of: [.plainText], delegate: CardDrop(target: nil, drag: drag, folders: folders, workouts: workouts, context: context))
+            .coordinateSpace(.named(CardDrag.space))
+            .overlay(alignment: .topLeading) {
+                if let gap = drag.gap(among: folders) ?? drag.gap(among: workouts) {
+                    RoundedRectangle(cornerRadius: 16)
+                        .strokeBorder(Color(.separator), style: StrokeStyle(lineWidth: 2, dash: [6, 4]))
+                        .frame(width: gap.width, height: gap.height)
+                        .offset(x: gap.minX, y: gap.minY)
+                        .allowsHitTesting(false)
+                        .accessibilityHidden(true)
+                }
+            }
+            // The order shown when let go, until the queries show it too.
             .task(id: drag.order) {
                 guard drag.order != nil else { return }
                 try? await Task.sleep(for: .seconds(1))
                 guard !Task.isCancelled else { return }
-                drag.save(in: context, folders: folders, workouts: workouts)
+                drag.settle()
             }
-            // A light tap when a workout comes over a folder.
-            .sensoryFeedback(.impact(weight: .light), trigger: drag.targetFolderID) { _, folderID in
-                folderID != nil
-            }
+    }
+}
+
+private struct FiledBannerModifier: ViewModifier {
+    let drag: CardDrag
+
+    func body(content: Content) -> some View {
+        content
             .overlay(alignment: .bottom) {
                 if let filed = drag.filed {
                     FiledBanner(filed: filed) {
@@ -269,34 +351,5 @@ private struct FiledBanner: View {
             guard !Task.isCancelled else { return }
             done()
         }
-    }
-}
-
-// Only a card of the page: nothing from another app.
-private struct CardDrop: DropDelegate {
-    let target: DraggedCard?
-    let drag: CardDrag
-    let folders: [Folder]
-    let workouts: [Workout]
-    let context: ModelContext
-
-    func validateDrop(info: DropInfo) -> Bool {
-        drag.dragged != nil
-    }
-
-    func dropEntered(info: DropInfo) {
-        drag.enter(target, folders: folders, workouts: workouts)
-    }
-
-    func dropExited(info: DropInfo) {
-        drag.exit(target)
-    }
-
-    func dropUpdated(info: DropInfo) -> DropProposal? {
-        DropProposal(operation: .move)
-    }
-
-    func performDrop(info: DropInfo) -> Bool {
-        drag.drop(on: target, in: context, folders: folders, workouts: workouts)
     }
 }

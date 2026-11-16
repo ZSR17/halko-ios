@@ -45,6 +45,7 @@ struct WorkoutsView: View {
             // Left with another tab.
             .onDisappear {
                 reordering = false
+                drag.cancel()
             }
             .folderNameAlert("New folder", isPresented: $naming, action: "Create", message: "To arrange your workouts.") { name in
                 do {
@@ -73,6 +74,8 @@ struct WorkoutsView: View {
 
     private var page: some View {
         let shownFolders = drag.folders(folders)
+        let folderCards = shownFolders.map { DraggedCard.folder($0.id) }
+        let workoutCards = drag.workouts(workouts).map { DraggedCard.workout($0.id) }
         return ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 if let session = sessionsInProgress.first {
@@ -97,9 +100,7 @@ struct WorkoutsView: View {
                             Group {
                                 if reordering {
                                     FolderCard(folder: folder, isTarget: drag.targetFolderID == folder.id)
-                                        .draggableCard(.folder(folder.id), drag: drag, folders: folders, workouts: workouts) {
-                                            FolderCard(folder: folder, isTarget: false)
-                                        }
+                                        .draggableCard(.folder(folder.id), drag: drag, cards: folderCards, folders: shownFolders, workouts: drag.workouts(workouts))
                                 } else {
                                     NavigationLink(value: folder) {
                                         FolderCard(folder: folder, isTarget: false)
@@ -115,15 +116,20 @@ struct WorkoutsView: View {
                             }
                         }
                     }
+                    // A folder held over the workouts.
+                    .zIndex(isDragged(folder: true) ? 1 : 0)
                 }
                 if !folders.isEmpty && !workouts.isEmpty {
                     Divider()
                 }
-                WorkoutCards(workouts: workouts, folders: folders, drag: drag, reordering: $reordering)
+                WorkoutCards(workouts: workouts, folders: shownFolders, drag: drag, reordering: $reordering)
+                    // A workout held over the folders.
+                    .zIndex(isDragged(folder: false) ? 1 : 0)
             }
+            .cardDragSpace(drag, folders: folderCards, workouts: workoutCards)
             .padding([.horizontal, .bottom])
         }
-        .cardDrops(drag, folders: folders, workouts: workouts)
+        .filedBanner(drag)
         .background(Color(.systemGroupedBackground))
         .overlay {
             if sessionsInProgress.isEmpty && folders.isEmpty && workouts.isEmpty {
@@ -131,6 +137,14 @@ struct WorkoutsView: View {
                     creating = true
                 }
             }
+        }
+    }
+
+    private func isDragged(folder: Bool) -> Bool {
+        switch drag.dragged {
+        case .folder: folder
+        case .workout: !folder
+        case nil: false
         }
     }
 
@@ -180,9 +194,9 @@ struct FolderView: View {
                 }
                 WorkoutCards(workouts: workouts, folders: [], drag: drag, reordering: $reordering)
             }
+            .cardDragSpace(drag, folders: [], workouts: drag.workouts(workouts).map { DraggedCard.workout($0.id) })
             .padding([.horizontal, .bottom])
         }
-        .cardDrops(drag, folders: [], workouts: workouts)
         .background(Color(.systemGroupedBackground))
         .overlay {
             if workouts.isEmpty {
@@ -205,6 +219,7 @@ struct FolderView: View {
         }
         .onDisappear {
             reordering = false
+            drag.cancel()
         }
         .folderNameAlert("Rename the folder", isPresented: $renaming, action: "Rename", name: folder.name) { name in
             do {
@@ -267,14 +282,14 @@ private struct WorkoutCards: View {
 
     var body: some View {
         let shown = drag.workouts(workouts)
-        LazyVStack(spacing: 10) {
+        let cards = shown.map { DraggedCard.workout($0.id) }
+        // Not lazy: the places of all the cards known while one is dragged.
+        VStack(spacing: 10) {
             ForEach(shown) { workout in
                 Group {
                     if reordering {
                         WorkoutCard(workout: workout, reordering: true)
-                            .draggableCard(.workout(workout.id), drag: drag, folders: folders, workouts: workouts) {
-                                WorkoutCard(workout: workout, reordering: true)
-                            }
+                            .draggableCard(.workout(workout.id), drag: drag, cards: cards, folders: folders, workouts: shown)
                     } else {
                         NavigationLink(value: workout) {
                             WorkoutCard(workout: workout, reordering: false)
