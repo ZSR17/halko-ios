@@ -104,6 +104,37 @@ final class LiveSessionTests: XCTestCase {
         XCTAssertTrue(app.element(containing: "Set 2 of 4 · Barbell Bench Press - Medium Grip").waitForExistence(timeout: 5))
     }
 
+    // An exercise added after the first one, from its « … »: chosen as in the workout editor, it says it was added; the
+    // set to do stays the same.
+    @MainActor
+    func testAddExercise() throws {
+        let app = launch(language: "en", locale: "en_GB")
+        app.openSessionInProgress()
+        XCTAssertTrue(app.element(containing: "Set 2 of 4 · Barbell Bench Press - Medium Grip").waitForExistence(timeout: 30))
+
+        app.buttons["More actions for Barbell Bench Press - Medium Grip"].tap()
+        XCTAssertTrue(app.buttons["Add an exercise after"].waitForExistence(timeout: 5))
+        app.buttons["Add an exercise after"].tap()
+        XCTAssertTrue(app.navigationBars["Add exercises"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["877 exercises"].waitForExistence(timeout: 30))
+        app.searchFields.firstMatch.tap()
+        app.searchFields.firstMatch.typeText("barbell curl")
+        let curl = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Barbell Curl,")).firstMatch
+        XCTAssertTrue(curl.waitForExistence(timeout: 5))
+        curl.tap()
+        if !curl.isSelected {
+            // The first tap only put the keyboard away.
+            curl.tap()
+        }
+        app.buttons["Add 1"].tap()
+
+        XCTAssertTrue(app.element(containing: "Exercise 1 of 6").waitForExistence(timeout: 5))
+        XCTAssertTrue(app.element(containing: "Set 2 of 4 · Barbell Bench Press - Medium Grip").exists)
+        let added = app.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH %@ AND label CONTAINS %@", "Barbell Curl", "Added")).firstMatch
+        XCTAssertTrue(added.waitForExistence(timeout: 5))
+        snap("Session › Exercise added")
+    }
+
     @MainActor
     func testLiveSessionInFrench() throws {
         let app = launch(language: "fr", locale: "fr_FR")

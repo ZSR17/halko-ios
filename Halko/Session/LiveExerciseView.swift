@@ -3,7 +3,8 @@ import SwiftUI
 
 // An exercise of the session: its picture, name and plan, then a row for each set (warm-up or number, last time's
 // values, the values, a check) and « Add a set ». As in the workout editor, a set swiped left shows Delete (its only set
-// deletes the exercise); « … » deletes the exercise, once confirmed. Folded to its name once every set is done; a tap opens it again, until the next set is validated.
+// deletes the exercise); « … » adds exercises after it, or deletes it, once confirmed. One added during the session says
+// so. Folded to its name once every set is done; a tap opens it again, until the next set is validated.
 struct LiveExerciseView: View {
     let index: Int
     let table: LiveTable
@@ -12,6 +13,7 @@ struct LiveExerciseView: View {
     let unfold: () -> Void
     let focus: FocusState<LiveField?>.Binding
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.accent) private var accent
     // The set whose Delete button shows.
     @State private var openSet: Int?
     @State private var confirmingDelete = false
@@ -134,33 +136,36 @@ struct LiveExerciseView: View {
             } else {
                 summary
             }
-            if table.state.canDeleteExercise {
-                Menu {
+            Menu {
+                Button("Add an exercise after", systemImage: "plus") {
+                    actions.addExercise(index)
+                }
+                if table.state.canDeleteExercise {
                     Button("Delete this exercise", systemImage: "trash", role: .destructive) {
                         confirmingDelete = true
                     }
                     // Red as its text: the icons of a menu take the color of the theme.
                     .tint(.red)
-                } label: {
-                    Image(systemName: "ellipsis")
-                        .font(.body.weight(.semibold))
-                        .frame(minWidth: 44, minHeight: 44)
-                        .contentShape(.rect)
                 }
-                .accessibilityLabel(Text("More actions for \(table.name(index))"))
-                // Asked where the menu was.
-                .confirmationDialog(
-                    "Delete “\(table.name(index))” from this session?",
-                    isPresented: $confirmingDelete,
-                    titleVisibility: .visible
-                ) {
-                    Button("Delete this exercise", role: .destructive) {
-                        actions.deleteExercise(index)
-                    }
-                } message: {
-                    if hasSetsDone {
-                        Text("The sets done of it are deleted too.")
-                    }
+            } label: {
+                Image(systemName: "ellipsis")
+                    .font(.body.weight(.semibold))
+                    .frame(minWidth: 44, minHeight: 44)
+                    .contentShape(.rect)
+            }
+            .accessibilityLabel(Text("More actions for \(table.name(index))"))
+            // Asked where the menu was.
+            .confirmationDialog(
+                "Delete “\(table.name(index))” from this session?",
+                isPresented: $confirmingDelete,
+                titleVisibility: .visible
+            ) {
+                Button("Delete this exercise", role: .destructive) {
+                    actions.deleteExercise(index)
+                }
+            } message: {
+                if hasSetsDone {
+                    Text("The sets done of it are deleted too.")
                 }
             }
         }
@@ -180,6 +185,9 @@ struct LiveExerciseView: View {
                 }
                 if item.supersetGroup != nil {
                     Tag(Text("Superset"), color: Color(.superset))
+                }
+                if table.state.isAdded(index) {
+                    Tag(Text("Added"), color: accent)
                 }
                 if let note = item.note {
                     Label {
