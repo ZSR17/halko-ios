@@ -240,6 +240,8 @@ struct TimerPanel: View {
                 .frame(maxWidth: .infinity, minHeight: 44)
         }
         .buttonStyle(.bordered)
+        // Gray, as −15 s and +15 s of the rest: not the action expected.
+        .tint(.gray)
         Button(action: display.isWaiting ? begin : stop) {
             Group {
                 if display.isWaiting {
@@ -329,6 +331,8 @@ private struct SetContent: View {
                 .frame(minHeight: 44)
         }
         .buttonStyle(.bordered)
+        // Gray, as −15 s and +15 s of the rest: not the action expected.
+        .tint(.gray)
         .buttonBorderShape(.capsule)
         .controlSize(.large)
         Button(action: actions.startTimer) {
