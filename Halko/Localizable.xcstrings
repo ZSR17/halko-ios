@@ -5005,6 +5005,16 @@
         }
       }
     },
+    "“%@” moved to %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "« %1$@ » rangée dans %2$@"
+          }
+        }
+      }
+    },
     "≈ %lld reps" : {
       "localizations" : {
         "en" : {

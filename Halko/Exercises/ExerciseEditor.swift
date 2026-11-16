@@ -184,6 +184,8 @@ struct ExerciseEditor: View {
                         }
                     }
                     .accessibilityLabel(Text("Cancel"))
+                    // Gray, as every Cancel: leaving is not the action expected.
+                    .tint(.primary)
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button(role: .confirm) {
@@ -209,6 +211,7 @@ struct ExerciseEditor: View {
                 }
             }, presenting: pendingType) { type in
                 Button("Cancel", role: .cancel) {}
+                    .tint(.primary)
                 Button("Switch") {
                     draft.exerciseType = type
                 }

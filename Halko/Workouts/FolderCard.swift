@@ -2,7 +2,7 @@ import HalkoCore
 import SwiftData
 import SwiftUI
 
-// A folder of workouts: its name and how many workouts it holds.
+// A folder of workouts: its name and how many workouts it holds. A workout held over it: in the color of the app.
 struct FolderCard: View {
     let folder: Folder
     // A workout held over it, to be put in it.
@@ -36,8 +36,12 @@ struct FolderCard: View {
         .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 16))
         .overlay {
             if isTarget {
-                RoundedRectangle(cornerRadius: 16)
-                    .strokeBorder(.tint, lineWidth: 3)
+                ZStack {
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(.tint.opacity(0.15))
+                    RoundedRectangle(cornerRadius: 16)
+                        .strokeBorder(.tint, lineWidth: 2)
+                }
             }
         }
         .animation(.snappy, value: isTarget)

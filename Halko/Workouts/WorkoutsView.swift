@@ -97,7 +97,9 @@ struct WorkoutsView: View {
                             Group {
                                 if reordering {
                                     FolderCard(folder: folder, isTarget: drag.targetFolderID == folder.id)
-                                        .draggableCard(.folder(folder.id), drag: drag, folders: folders, workouts: workouts)
+                                        .draggableCard(.folder(folder.id), drag: drag, folders: folders, workouts: workouts) {
+                                            FolderCard(folder: folder, isTarget: false)
+                                        }
                                 } else {
                                     NavigationLink(value: folder) {
                                         FolderCard(folder: folder, isTarget: false)
@@ -270,7 +272,9 @@ private struct WorkoutCards: View {
                 Group {
                     if reordering {
                         WorkoutCard(workout: workout, reordering: true)
-                            .draggableCard(.workout(workout.id), drag: drag, folders: folders, workouts: workouts)
+                            .draggableCard(.workout(workout.id), drag: drag, folders: folders, workouts: workouts) {
+                                WorkoutCard(workout: workout, reordering: true)
+                            }
                     } else {
                         NavigationLink(value: workout) {
                             WorkoutCard(workout: workout, reordering: false)

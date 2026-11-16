@@ -117,6 +117,7 @@ struct PlatesView: View {
                 .keyboardType(.decimalPad)
             Button("Add", action: addPlate)
             Button("Cancel", role: .cancel) {}
+                .tint(.primary)
         }
         .alert("Edit the plate", isPresented: $correcting, presenting: corrected) { plate in
             TextField("Plate weight", text: $newWeight)
@@ -127,6 +128,7 @@ struct PlatesView: View {
                 }
             }
             Button("Cancel", role: .cancel) {}
+                .tint(.primary)
         }
     }
 

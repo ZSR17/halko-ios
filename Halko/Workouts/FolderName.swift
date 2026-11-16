@@ -33,6 +33,7 @@ private struct FolderNameAlert: ViewModifier {
             .alert(title, isPresented: $isPresented) {
                 TextField("Name", text: $text)
                 Button("Cancel", role: .cancel) {}
+                    .tint(.primary)
                 Button(action) {
                     save(trimmed)
                 }

@@ -34,6 +34,8 @@ struct ExercisePicker: View {
                         dismiss()
                     }
                     .accessibilityLabel(Text("Cancel"))
+                    // Gray, as every Cancel: leaving is not the action expected.
+                    .tint(.primary)
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button(role: .confirm) {
