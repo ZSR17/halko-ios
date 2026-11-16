@@ -556,13 +556,16 @@ private struct SetPage: View {
                 Spacer(minLength: 4)
                 if table.canUseTimer(step) {
                     HStack(spacing: 6) {
+                        // Gray, as on the iPhone: not the action expected.
                         Button(action: validate) {
                             Text("Validate")
+                                .foregroundStyle(.white)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.7)
                                 .frame(maxWidth: .infinity)
                         }
                         .buttonStyle(.bordered)
+                        .tint(.gray)
                         Button(action: startTimer) {
                             Text("Start")
                                 .font(.headline)
@@ -1116,10 +1119,14 @@ private struct TimerPage: View {
             .heartBesideCorner(cornerWidth)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
+                    // Gray with a white text, as on the iPhone: the button of the bar takes the tint, the app's would
+                    // hide its text.
                     Button(action: cancel) {
                         Text("Cancel")
+                            .foregroundStyle(.white)
                             .measuringWidth($cornerWidth)
                     }
+                    .tint(.gray)
                 }
             }
         }
