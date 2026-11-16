@@ -51,7 +51,12 @@ struct LiveSessionView: View {
             work(table)
                 .tag(SessionPage.work)
             MetricsPage(table: table, session: sessions.first) {
-                finishing = true
+                // Every set done: saved at once, nothing to ask.
+                if table.allDone {
+                    finish()
+                } else {
+                    finishing = true
+                }
             }
             .tag(SessionPage.metrics)
         }
@@ -93,9 +98,7 @@ struct LiveSessionView: View {
     @ViewBuilder
     private func work(_ table: LiveTable) -> some View {
         if table.allDone {
-            AllDonePage(session: sessions.first) {
-                finishing = true
-            }
+            AllDonePage(session: sessions.first, finish: finish)
         } else if let timer = table.timer {
             TimerPage(table: table, timer: timer) {
                 store.change { $0.beginHolding() }

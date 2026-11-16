@@ -191,7 +191,9 @@ final class WatchSessionTests: XCTestCase {
         XCTAssertTrue(text(app, "Toutes les séries sont faites").waitForExistence(timeout: 5))
         try app.performAccessibilityAudit()
         snap("Watch – Toutes les séries faites")
-        XCTAssertTrue(app.buttons["Terminer la séance"].exists)
+        // Saved at once: nothing to discard.
+        app.buttons["Terminer la séance"].tap()
+        XCTAssertTrue(text(app, "Séance enregistrée").waitForExistence(timeout: 5))
     }
 
     // The sample workouts, in a database kept in memory, on the page of Push A.
