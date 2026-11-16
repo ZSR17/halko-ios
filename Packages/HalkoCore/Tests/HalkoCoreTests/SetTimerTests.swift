@@ -95,14 +95,17 @@ struct SetTimerTests {
 
     @Test("By sides, the left side first, or the right one when chosen so; a timer kept before the choice starts left")
     func firstSide() throws {
-        #expect(try #require(try started(sidesPauseS: 10).setTimer).isRightSide == false)
+        let left = try #require(try started(sidesPauseS: 10).setTimer)
+        #expect(!left.isRightSide)
         var state = try started(SetTimerSettings(startsRight: true), sidesPauseS: 10)
         #expect(state.setTimer?.isRightSide == true)
         try context.stopTimer(&state, now: start + 45)
         #expect(state.setTimer?.isRightSide == false)
-        #expect(try started(SetTimerSettings(startsRight: true)).setTimer?.startsRight == nil)
+        let plain = try started(SetTimerSettings(startsRight: true))
+        #expect(plain.setTimer?.startsRight == nil)
 
-        var json = try #require(try JSONSerialization.jsonObject(with: JSONEncoder().encode(try #require(started(sidesPauseS: 10).setTimer))) as? [String: Any])
+        let encoded = try JSONEncoder().encode(left)
+        var json = try #require(try JSONSerialization.jsonObject(with: encoded) as? [String: Any])
         json["startsRight"] = nil
         let older = try JSONDecoder().decode(SetTimer.self, from: JSONSerialization.data(withJSONObject: json))
         #expect(!older.isRightSide)
