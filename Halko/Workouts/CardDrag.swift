@@ -18,6 +18,12 @@ struct DragOrder: Equatable {
     var workoutIDs: [String]
 }
 
+// A workout let go on a folder: said for a moment.
+struct FiledWorkout: Equatable {
+    let workout: String
+    let folder: String
+}
+
 // A card touched and held, then dragged: over another, it takes its place, the folders among themselves, the workouts
 // among themselves; a workout let go on a folder goes in it, last. The order is written once the cards stop moving, so a
 // card let go away from the page keeps the order shown. While over the page, the card is only under the finger: its
@@ -28,13 +34,20 @@ final class CardDrag {
     // The folder a workout is held over.
     private(set) var targetFolderID: String?
     private(set) var order: DragOrder?
+    var filed: FiledWorkout?
     // The cards, and the page (nil), the dragged card is over: one at a time, but told in no set order.
     private var over: Set<DraggedCard?> = []
 
-    // The dragged card, once it has left its place on the page: shown under the finger only. Not before, while the
-    // system lifts it from its place; seen again over the bars, where it is not let go.
+    // The dragged card, over the page: shown under the finger only, from its own place on. Seen again over the bars,
+    // where it is not let go.
     func isLifted(_ card: DraggedCard) -> Bool {
-        dragged == card && !over.subtracting([card]).isEmpty
+        dragged == card && !over.isEmpty
+    }
+
+    // The other cards, while a workout is held over a folder.
+    func isPale(_ card: DraggedCard) -> Bool {
+        guard let targetFolderID else { return false }
+        return card != .folder(targetFolderID)
     }
 
     func folders(_ folders: [Folder]) -> [Folder] {
@@ -92,8 +105,11 @@ final class CardDrag {
         guard let dragged else { return false }
         save(in: context, folders: folders, workouts: workouts)
         if case .workout(let id) = dragged, case .folder(let folderID)? = target,
-           let workout = workouts.first(where: { $0.id == id }) {
-            change { try context.moveWorkout(workout, to: folderID) }
+           let workout = workouts.first(where: { $0.id == id }), let folder = folders.first(where: { $0.id == folderID }) {
+            change {
+                try context.moveWorkout(workout, to: folderID)
+                filed = FiledWorkout(workout: workout.name, folder: folder.name)
+            }
         }
         return true
     }
@@ -128,9 +144,12 @@ final class CardDrag {
 }
 
 extension View {
-    // A card that can be touched and held to be dragged, and over which another can be.
-    func draggableCard(_ card: DraggedCard, drag: CardDrag, folders: [Folder], workouts: [Workout]) -> some View {
-        modifier(DraggableCard(card: card, drag: drag, folders: folders, workouts: workouts))
+    // A card that can be touched and held to be dragged, and over which another can be. `preview`: the card under the
+    // finger, drawn apart from the one on the page, which leaves its place.
+    func draggableCard<Preview: View>(
+        _ card: DraggedCard, drag: CardDrag, folders: [Folder], workouts: [Workout], @ViewBuilder preview: () -> Preview
+    ) -> some View {
+        modifier(DraggableCard(card: card, drag: drag, folders: folders, workouts: workouts, preview: preview()))
     }
 
     // The page the cards are dragged on: a card let go between two keeps the order shown.
@@ -155,20 +174,37 @@ extension View {
     }
 }
 
-private struct DraggableCard: ViewModifier {
+private struct DraggableCard<Preview: View>: ViewModifier {
     let card: DraggedCard
     let drag: CardDrag
     let folders: [Folder]
     let workouts: [Workout]
+    let preview: Preview
+    @State private var width: CGFloat?
     @Environment(\.modelContext) private var context
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.accent) private var accent
+    @Environment(\.onAccent) private var onAccent
 
     func body(content: Content) -> some View {
         content
-            .opacity(drag.isLifted(card) ? 0 : 1)
+            .opacity(drag.isLifted(card) ? 0 : drag.isPale(card) ? 0.55 : 1)
+            .animation(.snappy, value: drag.isPale(card))
+            .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
             // Lifted with the rounded corners of the card.
             .contentShape(.dragPreview, .rect(cornerRadius: 16))
             .onDrag {
                 drag.start(card)
+            } preview: {
+                // Drawn outside the page: its width, data and colors given again.
+                preview
+                    .frame(width: width)
+                    .contentShape(.dragPreview, .rect(cornerRadius: 16))
+                    .modelContainer(context.container)
+                    .environment(\.colorScheme, colorScheme)
+                    .tint(accent)
+                    .environment(\.accent, accent)
+                    .environment(\.onAccent, onAccent)
             }
             .onDrop(of: [.plainText], delegate: CardDrop(target: card, drag: drag, folders: folders, workouts: workouts, context: context))
     }
@@ -189,6 +225,50 @@ private struct CardDrops: ViewModifier {
                 guard !Task.isCancelled else { return }
                 drag.save(in: context, folders: folders, workouts: workouts)
             }
+            // A light tap when a workout comes over a folder.
+            .sensoryFeedback(.impact(weight: .light), trigger: drag.targetFolderID) { _, folderID in
+                folderID != nil
+            }
+            .overlay(alignment: .bottom) {
+                if let filed = drag.filed {
+                    FiledBanner(filed: filed) {
+                        drag.filed = nil
+                    }
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+            }
+            .animation(.snappy, value: drag.filed)
+    }
+}
+
+// Where a workout let go on a folder went, for a few seconds; VoiceOver says it.
+private struct FiledBanner: View {
+    let filed: FiledWorkout
+    let done: () -> Void
+
+    var body: some View {
+        let text = Text("“\(filed.workout)” moved to \(Text(filed.folder).bold())")
+        HStack(spacing: 10) {
+            Image(systemName: "folder")
+                .font(.title3)
+                .foregroundStyle(.tint)
+                .accessibilityHidden(true)
+            text
+                .font(.subheadline)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .background(Color(.tertiarySystemGroupedBackground), in: .rect(cornerRadius: 16))
+        .shadow(color: .black.opacity(0.2), radius: 12, y: 6)
+        .padding()
+        .accessibilityElement(children: .combine)
+        .task(id: filed) {
+            AccessibilityNotification.Announcement(String(localized: "“\(filed.workout)” moved to \(filed.folder)")).post()
+            try? await Task.sleep(for: .seconds(3))
+            guard !Task.isCancelled else { return }
+            done()
+        }
     }
 }
 
