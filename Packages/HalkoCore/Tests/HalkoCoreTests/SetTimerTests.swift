@@ -93,6 +93,24 @@ struct SetTimerTests {
         #expect(try context.sets(of: state.sessionID).map(\.durationS) == [35])
     }
 
+    @Test("By sides, the left side first, or the right one when chosen so; a timer kept before the choice starts left")
+    func firstSide() throws {
+        let left = try #require(try started(sidesPauseS: 10).setTimer)
+        #expect(!left.isRightSide)
+        var state = try started(SetTimerSettings(startsRight: true), sidesPauseS: 10)
+        #expect(state.setTimer?.isRightSide == true)
+        try context.stopTimer(&state, now: start + 45)
+        #expect(state.setTimer?.isRightSide == false)
+        let plain = try started(SetTimerSettings(startsRight: true))
+        #expect(plain.setTimer?.startsRight == nil)
+
+        let encoded = try JSONEncoder().encode(left)
+        var json = try #require(try JSONSerialization.jsonObject(with: encoded) as? [String: Any])
+        json["startsRight"] = nil
+        let older = try JSONDecoder().decode(SetTimer.self, from: JSONSerialization.data(withJSONObject: json))
+        #expect(!older.isRightSide)
+    }
+
     @Test("The other values of the set go with it")
     func otherValues() throws {
         var state = try started(values: SetValues(weightG: 10_000, durationS: 60))
@@ -128,7 +146,7 @@ struct SetTimerTests {
     func settings() throws {
         let defaults = try #require(UserDefaults(suiteName: "SetTimerTests-\(UUID().uuidString)"))
         #expect(SetTimerSettings(defaults: defaults) == SetTimerSettings())
-        let chosen = SetTimerSettings(stopsAtTarget: true, getsInPosition: false, positionS: 12)
+        let chosen = SetTimerSettings(stopsAtTarget: true, getsInPosition: false, positionS: 12, startsRight: true)
         chosen.save(to: defaults)
         #expect(SetTimerSettings(defaults: defaults) == chosen)
     }

@@ -200,7 +200,7 @@ struct TimerPanel: View {
                         .font(.subheadline)
                         .foregroundStyle(Color(.secondaryText))
                 }
-                Text("Next: right side")
+                Text(verbatim: display.nextSide)
                     .font(.headline)
             } else if display.isWaiting {
                 Text("Next")
