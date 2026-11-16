@@ -47,8 +47,8 @@ final class FoldersTests: XCTestCase {
         XCTAssertFalse(app.element(containing: "Upper body").exists)
     }
 
-    // Reorder from a card touched and held: a workout dragged over another to take its place, then let go on a folder
-    // to go in it, last; Done goes back to the page.
+    // Reorder from a card touched and held: a workout dragged by its handle over another to take its place, then let go
+    // on a folder to go in it, last; Done goes back to the page.
     @MainActor
     func testDrag() throws {
         let app = launch(language: "en", locale: "en_GB")
@@ -61,15 +61,15 @@ final class FoldersTests: XCTestCase {
         XCTAssertTrue(app.buttons["Reorder"].waitForExistence(timeout: 5))
         app.buttons["Reorder"].tap()
         XCTAssertTrue(app.buttons["Done"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.element(containing: "Touch and hold a card").exists)
+        XCTAssertTrue(app.element(containing: "Drag a card by its handle").exists)
         snap("Workouts, reordering")
 
-        core.press(forDuration: 1, thenDragTo: fullBody, withVelocity: .slow, thenHoldForDuration: 0.5)
+        grip(of: core).press(forDuration: 0.2, thenDragTo: center(of: fullBody), withVelocity: .slow, thenHoldForDuration: 0.5)
         wait(until: core.frame.minY < fullBody.frame.minY)
         snap("Workouts, dragged")
 
         let program = app.card("PPL program")
-        fullBody.press(forDuration: 1, thenDragTo: program, withVelocity: .slow, thenHoldForDuration: 0.5)
+        grip(of: fullBody).press(forDuration: 0.2, thenDragTo: center(of: program), withVelocity: .slow, thenHoldForDuration: 0.5)
         wait(until: program.label.contains("4 workouts"))
         XCTAssertFalse(fullBody.exists)
         // Where it went, said for a moment.
@@ -84,6 +84,15 @@ final class FoldersTests: XCTestCase {
         XCTAssertTrue(fullBody.waitForExistence(timeout: 5))
         XCTAssertLessThan(legs.frame.minY, fullBody.frame.minY)
         snap("Folder, dropped in")
+    }
+
+    // The handle of a workout card, at its top right, while reordering.
+    private func grip(of card: XCUIElement) -> XCUICoordinate {
+        card.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: card.frame.width - 28, dy: 36))
+    }
+
+    private func center(of element: XCUIElement) -> XCUICoordinate {
+        element.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
     }
 
     // A card touched and held without moving: what can be done of it, as in the menu of its page.

@@ -99,11 +99,13 @@ struct WorkoutsView: View {
                         ForEach(shownFolders) { folder in
                             Group {
                                 if reordering {
-                                    FolderCard(folder: folder, isTarget: drag.targetFolderID == folder.id)
-                                        .draggableCard(.folder(folder.id), drag: drag, cards: folderCards, folders: shownFolders, workouts: drag.workouts(workouts))
+                                    FolderCard(folder: folder, isTarget: drag.targetFolderID == folder.id) {
+                                        CardGrip(card: .folder(folder.id), drag: drag, folders: shownFolders, workouts: drag.workouts(workouts))
+                                    }
+                                    .draggableCard(.folder(folder.id), drag: drag, cards: folderCards)
                                 } else {
                                     NavigationLink(value: folder) {
-                                        FolderCard(folder: folder, isTarget: false)
+                                        FolderCard(folder: folder)
                                     }
                                     .buttonStyle(.plain)
                                     .folderMenu(folder) {
@@ -288,11 +290,13 @@ private struct WorkoutCards: View {
             ForEach(shown) { workout in
                 Group {
                     if reordering {
-                        WorkoutCard(workout: workout, reordering: true)
-                            .draggableCard(.workout(workout.id), drag: drag, cards: cards, folders: folders, workouts: shown)
+                        WorkoutCard(workout: workout) {
+                            CardGrip(card: .workout(workout.id), drag: drag, folders: folders, workouts: shown)
+                        }
+                        .draggableCard(.workout(workout.id), drag: drag, cards: cards)
                     } else {
                         NavigationLink(value: workout) {
-                            WorkoutCard(workout: workout, reordering: false)
+                            WorkoutCard(workout: workout)
                         }
                         .buttonStyle(.plain)
                         .workoutMenu(workout) {
@@ -334,8 +338,8 @@ private struct ReorderHint: View {
 
     var body: some View {
         (inFolder
-            ? Text("Touch and hold a workout, then drag it to move it.")
-            : Text("Touch and hold a card, then drag it to move it, or let go of a workout on a folder to put it in."))
+            ? Text("Drag a workout by its handle to move it.")
+            : Text("Drag a card by its handle to move it, or let go of a workout on a folder to put it in."))
             .font(.subheadline)
             .foregroundStyle(Color(.secondaryText))
     }
