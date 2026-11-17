@@ -143,6 +143,20 @@ struct LiveSnapshotTests {
         #expect(try LiveMessage(decoding: sent.encoded()) == sent)
     }
 
+    @Test("A watch not worn says from when the iPhone records the session; an older one says nothing of it")
+    func takeOver() throws {
+        let state = try watch.startSession(of: workout, now: start)
+        let handedBack = try #require(try watch.liveSnapshot(of: state.sessionID, state: state, recordsHealth: false, takeOverFrom: start))
+        let received = try LiveMessage(decoding: LiveMessage.snapshot(handedBack).encoded())
+        #expect(received == .snapshot(handedBack))
+
+        var older = try JSONSerialization.jsonObject(with: JSONEncoder().encode(handedBack)) as? [String: Any] ?? [:]
+        older["takeOverFrom"] = nil
+        let decoded = try JSONDecoder().decode(LiveSnapshot.self, from: JSONSerialization.data(withJSONObject: older))
+        #expect(decoded.takeOverFrom == nil)
+        #expect(decoded.recordsHealth == false)
+    }
+
     @Test("Two parts of a workout make one result")
     func twoParts() {
         let phonePart = HealthResult(sessionID: "a", activeKilocalories: 20, averageHeartRate: nil, maximumHeartRate: nil)

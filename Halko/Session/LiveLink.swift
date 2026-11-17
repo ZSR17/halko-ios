@@ -78,7 +78,12 @@ final class LiveLink {
     private func tell() {
         guard let current else { return }
         do {
-            guard let snapshot = try context.liveSnapshot(of: current, state: store.state, recordsHealth: recorder.isRecording) else { return }
+            guard let snapshot = try context.liveSnapshot(
+                of: current,
+                state: store.state,
+                recordsHealth: recorder.isRecording,
+                takeOverFrom: recorder.handedBackAt
+            ) else { return }
             if let shared, snapshot.says(sameAs: shared), saidRecording == snapshot.recordsHealth { return }
             shared = snapshot
             saidRecording = snapshot.recordsHealth
@@ -137,6 +142,12 @@ final class LiveLink {
             current = state.sessionID
             shared = snapshot
             recorder.otherDevice(records: snapshot.recordsHealth)
+            #if os(iOS)
+            // The watch gave its workout up, not worn: the iPhone's records the session from the same start.
+            if !snapshot.recordsHealth, let from = snapshot.takeOverFrom, !recorder.isRecording {
+                recorder.start(sessionID: state.sessionID, at: from)
+            }
+            #endif
             store.set(state)
             #if os(watchOS)
             if held == nil {
