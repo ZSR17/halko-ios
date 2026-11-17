@@ -1128,14 +1128,14 @@ private struct TimerPage: View {
             .heartBesideCorner(cornerWidth)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    // Gray with a white text, as on the iPhone: the button of the bar takes the tint, the app's would
-                    // hide its text.
+                    // Dark gray with a white text, as on the iPhone: the button of the bar takes the tint, the app's
+                    // would hide its text, the system gray is too light.
                     Button(action: cancel) {
                         Text("Cancel")
                             .foregroundStyle(.white)
                             .measuringWidth($cornerWidth)
                     }
-                    .tint(.gray)
+                    .tint(Color(.cancelFill))
                 }
             }
         }

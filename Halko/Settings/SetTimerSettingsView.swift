@@ -62,6 +62,8 @@ struct SetTimerSettingsView: View {
                         Text("Right").tag(true)
                     }
                     .pickerStyle(.segmented)
+                    // Taller, easier to hit.
+                    .controlSize(.large)
                     .labelsHidden()
                 }
                 .padding(.vertical, 4)
