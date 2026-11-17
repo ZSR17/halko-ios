@@ -42,11 +42,19 @@ final class CardDrag {
     private(set) var dragged: DraggedCard?
     private(set) var order: DragOrder?
     var filed: FiledWorkout?
-    private var finger = CGPoint.zero
+    // Scrolls the page while a card is held near its top or bottom.
+    let edge = EdgeScroll()
+    // Where the finger last moved.
+    private var moved = CGPoint.zero
     // Where the finger holds the card, from its top left corner.
     private var grab = CGSize.zero
     // Where each card is laid out, before it is moved aside.
     private var frames: [DraggedCard: CGRect] = [:]
+
+    // Where the finger is on the page, which may have scrolled under it since it moved.
+    private var finger: CGPoint {
+        CGPoint(x: moved.x, y: moved.y + edge.drift)
+    }
 
     // The folder a workout is held over: in the column of the finger, the one the card covers most, a quarter of it at
     // least, or the one under the finger.
@@ -87,7 +95,8 @@ final class CardDrag {
                 dragged = card
             }
         }
-        finger = location
+        moved = location
+        edge.hold(at: location.y)
     }
 
     // Where `card` is drawn from its place, among `cards` of its kind in their order.
@@ -108,6 +117,9 @@ final class CardDrag {
     // Let go: in a folder, or at its place, written.
     func end(in context: ModelContext, folders: [Folder], workouts: [Workout]) {
         guard let dragged else { return }
+        defer {
+            edge.release()
+        }
         let folderCards = folders.map { DraggedCard.folder($0.id) }
         let workoutCards = workouts.map { DraggedCard.workout($0.id) }
         var order = DragOrder(folderIDs: folders.map(\.id), workoutIDs: workouts.map(\.id))
@@ -146,6 +158,7 @@ final class CardDrag {
     // Reordering left before the card was let go.
     func cancel() {
         dragged = nil
+        edge.release()
     }
 
     // Once the queries show the order written.
@@ -304,6 +317,7 @@ private struct CardDragSpace: ViewModifier {
     func body(content: Content) -> some View {
         content
             .coordinateSpace(.named(CardDrag.space))
+            .edgeScrollSpace(drag.edge)
             .overlay(alignment: .topLeading) {
                 if let gap = drag.gap(among: folders) ?? drag.gap(among: workouts) {
                     RoundedRectangle(cornerRadius: 16)

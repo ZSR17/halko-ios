@@ -131,6 +131,7 @@ struct WorkoutsView: View {
             .cardDragSpace(drag, folders: folderCards, workouts: workoutCards)
             .padding([.horizontal, .bottom])
         }
+        .edgeScroll(drag.edge)
         .filedBanner(drag)
         .background(Color(.systemGroupedBackground))
         .overlay {
@@ -199,6 +200,7 @@ struct FolderView: View {
             .cardDragSpace(drag, folders: [], workouts: drag.workouts(workouts).map { DraggedCard.workout($0.id) })
             .padding([.horizontal, .bottom])
         }
+        .edgeScroll(drag.edge)
         .background(Color(.systemGroupedBackground))
         .overlay {
             if workouts.isEmpty {

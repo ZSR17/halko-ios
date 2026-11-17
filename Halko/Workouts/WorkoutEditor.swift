@@ -22,6 +22,8 @@ struct WorkoutEditor: View {
     @State private var showsHelp = false
     @State private var failed = false
     @State private var added = false
+    // Scrolls the page while an exercise is held near its top or bottom.
+    @State private var edge = EdgeScroll()
     @FocusState private var focus: EditorField?
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
@@ -83,7 +85,7 @@ struct WorkoutEditor: View {
                                     .presentationCompactAdaptation(.popover)
                             }
                         }
-                        EditorItems(draft: $draft, fields: fields, focus: $focus)
+                        EditorItems(draft: $draft, fields: fields, focus: $focus, edge: edge)
                         Button {
                             picking = true
                         } label: {
@@ -102,6 +104,7 @@ struct WorkoutEditor: View {
                 }
                 .scrollDismissesKeyboard(.interactively)
                 .scrollingToFocus(focus, in: proxy)
+                .edgeScroll(edge)
             }
             .background(Color(.systemGroupedBackground))
             .navigationTitle(workout == nil ? Text("New workout") : Text("Edit workout"))
@@ -263,6 +266,7 @@ private struct EditorItems: View {
     @Binding var draft: WorkoutDraft
     let fields: FieldText
     let focus: FocusState<EditorField?>.Binding
+    let edge: EdgeScroll
     @Query private var exercises: [Exercise]
     @State private var moving: Moving?
     // Where each row is laid out, before it is moved aside.
@@ -271,10 +275,11 @@ private struct EditorItems: View {
     // Read by the measures of the rows, off the main actor.
     nonisolated private static let space = "workout-editor-items"
 
-    init(draft: Binding<WorkoutDraft>, fields: FieldText, focus: FocusState<EditorField?>.Binding) {
+    init(draft: Binding<WorkoutDraft>, fields: FieldText, focus: FocusState<EditorField?>.Binding, edge: EdgeScroll) {
         _draft = draft
         self.fields = fields
         self.focus = focus
+        self.edge = edge
         _exercises = Query(filter: Exercise.withIDs(draft.wrappedValue.items.map(\.exerciseID)))
     }
 
@@ -302,6 +307,7 @@ private struct EditorItems: View {
             }
         }
         .coordinateSpace(.named(Self.space))
+        .edgeScrollSpace(edge)
         .sensoryFeedback(.selection, trigger: plan?.slot)
     }
 
@@ -395,6 +401,7 @@ private struct EditorItems: View {
                     }
                 }
                 moving?.fingerY = value.location.y
+                edge.hold(at: value.location.y)
             }.onEnded { _ in
                 drop()
             })
@@ -418,7 +425,8 @@ private struct EditorItems: View {
             frames: frames,
             moved: what.entries,
             grabbed: what.grabbed,
-            fingerY: what.fingerY
+            // The page may have scrolled under the finger since it moved.
+            fingerY: what.fingerY + edge.drift
         ) { slot in
             if what.isBlock {
                 // Between blocks only.
@@ -434,6 +442,9 @@ private struct EditorItems: View {
 
     private func drop() {
         guard let what = moving else { return }
+        defer {
+            edge.release()
+        }
         let entries = EditorEntry.entries(of: draft)
         withAnimation(.snappy) {
             moving = nil
