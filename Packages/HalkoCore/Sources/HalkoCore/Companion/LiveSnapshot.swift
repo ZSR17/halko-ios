@@ -42,12 +42,16 @@ public struct LiveSnapshot: Codable, Equatable, Sendable {
     public var sets: [SetLogRow]
     // The workout of Health of the session runs on the sender.
     public var recordsHealth: Bool
+    // The sender gave its workout up during the session, with nothing measured (a watch not worn): the other device's
+    // takes the session over from then. Absent from an older sender.
+    public var takeOverFrom: Date?
 
-    public init(state: LiveState?, session: SessionRow, sets: [SetLogRow], recordsHealth: Bool) {
+    public init(state: LiveState?, session: SessionRow, sets: [SetLogRow], recordsHealth: Bool, takeOverFrom: Date? = nil) {
         self.state = state
         self.session = session
         self.sets = sets
         self.recordsHealth = recordsHealth
+        self.takeOverFrom = takeOverFrom
     }
 
     // Nothing in it is new for a device holding `other`: a rest over on its own is no news, each device sees it itself.
@@ -86,10 +90,16 @@ public enum LiveOutcome {
 
 extension ModelContext {
     // The session as this device holds it; nil if it does not know it.
-    public func liveSnapshot(of sessionID: String, state: LiveState?, recordsHealth: Bool) throws -> LiveSnapshot? {
+    public func liveSnapshot(of sessionID: String, state: LiveState?, recordsHealth: Bool, takeOverFrom: Date? = nil) throws -> LiveSnapshot? {
         guard let session = try fetch(FetchDescriptor(predicate: #Predicate<Session> { $0.id == sessionID })).first else { return nil }
         let sets = try fetch(FetchDescriptor<SetLog>(predicate: #Predicate { $0.sessionID == sessionID }, sortBy: [SortDescriptor(\.id)]))
-        return LiveSnapshot(state: session.isOver ? nil : state, session: session.row, sets: sets.map(\.row), recordsHealth: recordsHealth)
+        return LiveSnapshot(
+            state: session.isOver ? nil : state,
+            session: session.row,
+            sets: sets.map(\.row),
+            recordsHealth: recordsHealth,
+            takeOverFrom: takeOverFrom
+        )
     }
 
     // Takes what the other device holds, `held` being the state of the session on this one.

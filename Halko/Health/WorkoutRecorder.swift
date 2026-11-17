@@ -38,6 +38,9 @@ final class WorkoutRecorder {
     private static let unnamedDelay = Duration.seconds(30)
     // How long the iPhone waits for the watch's workout to come back once it lost it, before telling the session itself.
     private static let lostWatchDelay = Duration.seconds(30)
+    // How long the watch's workout waits for a heart rate: without one, the watch is not worn, and the iPhone takes the
+    // workout over.
+    private static let notWornDelay = Duration.seconds(30)
 
     // The last heart rate measured, in beats per minute.
     private(set) var heartRate: Double?
@@ -71,6 +74,10 @@ final class WorkoutRecorder {
     @ObservationIgnored private var watchLost: Task<Void, Never>?
     // The workout left running by the app when it stopped may come back: none is started meanwhile.
     @ObservationIgnored private var isRecovering = false
+    // This device's workout has measured a heart rate.
+    @ObservationIgnored private var heardHeart = false
+    // The watch's workout, given up for not being worn, began then: the iPhone's takes the session over from there.
+    @ObservationIgnored private(set) var handedBackAt: Date?
 
     init(health: HKHealthStore?) {
         self.health = health
@@ -88,7 +95,7 @@ final class WorkoutRecorder {
     // A workout of Health in progress keeps the app running in the background, where it can tell the end of a rest
     // itself. A mirrored one does not.
     var isRecording: Bool {
-        session != nil
+        session != nil && handedBackAt == nil
     }
 
     private static var configuration: HKWorkoutConfiguration {
@@ -121,6 +128,9 @@ final class WorkoutRecorder {
             } else {
                 dropIfUnnamed(session)
             }
+            #if os(watchOS)
+            handBackIfNotWorn(session, startedAt: date)
+            #endif
         } catch {
             Self.logger.error("Cannot start the workout: \(String(describing: error))")
         }
@@ -150,6 +160,29 @@ final class WorkoutRecorder {
             self.discard()
         }
     }
+
+    #if os(watchOS)
+    // No heart rate after a while: the watch is not on the wrist. With the iPhone there to take over, the watch gives
+    // its workout up, with nothing measured, and the iPhone records the session from the same start; the watch still
+    // shows it and acts on it. Not when the heart rate is not recorded at all.
+    private func handBackIfNotWorn(_ session: HKWorkoutSession, startedAt date: Date) {
+        guard let health, health.authorizationStatus(for: HKQuantityType(.heartRate)) == .sharingAuthorized else { return }
+        let started = ObjectIdentifier(session)
+        Task { [weak self] in
+            try? await Task.sleep(for: Self.notWornDelay)
+            guard let self, let own = self.session, ObjectIdentifier(own) == started, !self.heardHeart, self.isMirroring,
+                  self.sessionID != nil else { return }
+            Self.logger.notice("No heart rate: the watch is not worn, the iPhone takes the workout over")
+            self.handedBackAt = date
+            // Said by the workout's channel while it is still open.
+            self.peer?.workoutEnding()
+            let builder = own.associatedWorkoutBuilder()
+            self.detach()
+            own.end()
+            builder.discardWorkout()
+        }
+    }
+    #endif
 
     // After the app was stopped during a session: the workout of Health goes on with it.
     func recover(sessionID: String?) {
@@ -373,6 +406,7 @@ final class WorkoutRecorder {
     }
 
     private func stopFollowingOtherDevice() {
+        handedBackAt = nil
         otherDeviceRecords = false
         mirrored = nil
         mirroredRelay = nil
@@ -407,6 +441,8 @@ final class WorkoutRecorder {
         self.session = session
         self.sessionID = sessionID
         self.relay = relay
+        heardHeart = false
+        handedBackAt = nil
         heartRate = nil
         activeKilocalories = nil
         peer?.recordingChanged()
@@ -436,6 +472,9 @@ final class WorkoutRecorder {
 
     private var relayEvents: Relay.Events {
         Relay.Events { [weak self] heartRate, kilocalories in
+            if heartRate != nil {
+                self?.heardHeart = true
+            }
             self?.heartRate = heartRate ?? self?.heartRate
             self?.activeKilocalories = kilocalories ?? self?.activeKilocalories
             self?.peer?.measured(heartRate: heartRate, kilocalories: kilocalories)
