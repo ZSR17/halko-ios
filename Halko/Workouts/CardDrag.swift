@@ -317,7 +317,7 @@ private struct CardDragSpace: ViewModifier {
     func body(content: Content) -> some View {
         content
             .coordinateSpace(.named(CardDrag.space))
-            .edgeScrollSpace(drag.edge)
+            .edgeScroll(drag.edge)
             .overlay(alignment: .topLeading) {
                 if let gap = drag.gap(among: folders) ?? drag.gap(among: workouts) {
                     RoundedRectangle(cornerRadius: 16)

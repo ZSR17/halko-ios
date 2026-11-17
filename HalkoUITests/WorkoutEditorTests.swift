@@ -107,6 +107,22 @@ final class WorkoutEditorTests: XCTestCase {
         snap("Edit workout, reordered")
     }
 
+    // Held near the bottom of the screen, an exercise scrolls the page down, longer than the screen at the largest text.
+    @MainActor
+    func testReorderScrolls() throws {
+        let app = launch(language: "en", locale: "en_GB", textSize: "UICTContentSizeCategoryAccessibilityXXXL")
+        app.openWorkoutEditor()
+        let name = app.textFields["Workout name"]
+        XCTAssertTrue(name.waitForExistence(timeout: 5))
+        let top = name.frame.minY
+        let bench = app.handle("Move Barbell Bench Press - Medium Grip")
+        let bottom = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.97))
+        bench.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+            .press(forDuration: 0.3, thenDragTo: bottom, withVelocity: .default, thenHoldForDuration: 3)
+        snap("Edit workout, scrolled by an exercise held")
+        XCTAssertLessThan(name.frame.minY, top - 100, "Name field from \(top) to \(name.frame.minY)")
+    }
+
     @MainActor
     func testAddExercises() throws {
         let app = launch(language: "en", locale: "en_GB")
