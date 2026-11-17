@@ -104,7 +104,6 @@ struct WorkoutEditor: View {
                 }
                 .scrollDismissesKeyboard(.interactively)
                 .scrollingToFocus(focus, in: proxy)
-                .edgeScroll(edge)
             }
             .background(Color(.systemGroupedBackground))
             .navigationTitle(workout == nil ? Text("New workout") : Text("Edit workout"))
@@ -307,7 +306,7 @@ private struct EditorItems: View {
             }
         }
         .coordinateSpace(.named(Self.space))
-        .edgeScrollSpace(edge)
+        .edgeScroll(edge)
         .sensoryFeedback(.selection, trigger: plan?.slot)
     }
 
