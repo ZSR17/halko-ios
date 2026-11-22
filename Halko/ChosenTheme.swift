@@ -28,6 +28,16 @@ struct ChosenTheme: ViewModifier {
     }
 }
 
+extension ChosenTheme {
+    // Before the window is made: until the views set its color, the system draws in it with the app's own, a moment
+    // in another color at launch.
+    static func tintWindows(from defaults: UserDefaults) {
+        let color = ThemeColor(stored: defaults.string(forKey: ThemeColor.key))
+        guard color != .lime else { return }
+        UIWindow.appearance().tintColor = UIColor(color.color)
+    }
+}
+
 private struct WindowTint: UIViewRepresentable {
     let color: UIColor?
 
