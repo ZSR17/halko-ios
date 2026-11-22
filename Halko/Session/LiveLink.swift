@@ -141,13 +141,12 @@ final class LiveLink {
         case let .going(state):
             current = state.sessionID
             shared = snapshot
-            recorder.otherDevice(records: snapshot.recordsHealth)
             #if os(iOS)
-            // The watch gave its workout up, not worn: the iPhone's records the session from the same start.
-            if !snapshot.recordsHealth, let from = snapshot.takeOverFrom, !recorder.isRecording {
-                recorder.start(sessionID: state.sessionID, at: from)
+            if !snapshot.recordsHealth, let from = snapshot.takeOverFrom {
+                recorder.takeOver(sessionID: state.sessionID, from: from)
             }
             #endif
+            recorder.otherDevice(records: snapshot.recordsHealth)
             store.set(state)
             #if os(watchOS)
             if held == nil {

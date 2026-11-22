@@ -79,6 +79,9 @@ final class WorkoutRecorder {
     @ObservationIgnored private var heardHeart = false
     // The watch's workout, given up for not being worn, began then: the iPhone's takes the session over from there.
     @ObservationIgnored private(set) var handedBackAt: Date?
+    // The iPhone took the session over from the watch not worn, which does not record it again: a message of the watch
+    // from before, arriving late, does not hand it back.
+    @ObservationIgnored private var tookOver = false
 
     init(health: HKHealthStore?) {
         self.health = health
@@ -249,6 +252,7 @@ final class WorkoutRecorder {
     // What the other device says of the session being done here. On the iPhone, a workout on the watch takes over: the
     // part done here is saved, and the watch's workout carries on from now.
     func otherDevice(records: Bool) {
+        guard !(records && tookOver) else { return }
         if records {
             watchLost?.cancel()
             watchLost = nil
@@ -292,6 +296,14 @@ final class WorkoutRecorder {
     }
 
     #if os(iOS)
+    // The watch gave its workout up, not worn: the iPhone's records the session from the same start.
+    func takeOver(sessionID: String, from date: Date) {
+        guard !tookOver, session == nil else { return }
+        tookOver = true
+        otherDeviceRecords = false
+        start(sessionID: sessionID, at: date)
+    }
+
     // To be called at launch: a workout started on the watch launches the app in the background. Once for each
     // connection, which is lost and found again during a session.
     func listenForWatch() {
@@ -443,6 +455,7 @@ final class WorkoutRecorder {
 
     private func stopFollowingOtherDevice() {
         handedBackAt = nil
+        tookOver = false
         otherDeviceRecords = false
         mirrored = nil
         mirroredRelay = nil
