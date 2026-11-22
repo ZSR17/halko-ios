@@ -38,9 +38,10 @@ final class WorkoutRecorder {
     private static let unnamedDelay = Duration.seconds(30)
     // How long the iPhone waits for the watch's workout to come back once it lost it, before telling the session itself.
     private static let lostWatchDelay = Duration.seconds(30)
-    // How long the watch's workout waits for a heart rate: without one, the watch is not worn, and the iPhone takes the
-    // workout over.
+    // How long the watch's workout runs before the watch looks whether it is worn: if not, the iPhone takes it over.
     private static let notWornDelay = Duration.seconds(30)
+    // The iPhone's workout handed to the watch so soon is a moment of the start, with nothing measured: not kept.
+    private static let briefWorkout: TimeInterval = 15
 
     // The last heart rate measured, in beats per minute.
     private(set) var heartRate: Double?
@@ -162,17 +163,20 @@ final class WorkoutRecorder {
     }
 
     #if os(watchOS)
-    // No heart rate after a while: the watch is not on the wrist. With the iPhone there to take over, the watch gives
-    // its workout up, with nothing measured, and the iPhone records the session from the same start; the watch still
-    // shows it and acts on it. Not when the heart rate is not recorded at all.
+    // After a while, the watch is not on the wrist: locked, as it does once taken off, or without a heart rate. Its
+    // sensor gives one even on a desk: the lock tells it best. With the iPhone there to take over, the watch gives its
+    // workout up, and the iPhone records the session from the same start; the watch still shows it and acts on it.
     private func handBackIfNotWorn(_ session: HKWorkoutSession, startedAt date: Date) {
-        guard let health, health.authorizationStatus(for: HKQuantityType(.heartRate)) == .sharingAuthorized else { return }
+        guard let health else { return }
+        // Without it, no heart rate says nothing.
+        let measuresHeart = health.authorizationStatus(for: HKQuantityType(.heartRate)) == .sharingAuthorized
         let started = ObjectIdentifier(session)
         Task { [weak self] in
             try? await Task.sleep(for: Self.notWornDelay)
-            guard let self, let own = self.session, ObjectIdentifier(own) == started, !self.heardHeart, self.isMirroring,
-                  self.sessionID != nil else { return }
-            Self.logger.notice("No heart rate: the watch is not worn, the iPhone takes the workout over")
+            guard let self, self.isOwn(started) else { return }
+            let locked = await Self.isLocked(health)
+            guard let own = self.session, self.isOwn(started), locked || (measuresHeart && !self.heardHeart) else { return }
+            Self.logger.notice("The watch is not worn (locked: \(locked)): the iPhone takes the workout over")
             self.handedBackAt = date
             // Said by the workout's channel while it is still open.
             self.peer?.workoutEnding()
@@ -180,6 +184,23 @@ final class WorkoutRecorder {
             self.detach()
             own.end()
             builder.discardWorkout()
+        }
+    }
+
+    // This device's workout still, with the iPhone following it and the session known.
+    private func isOwn(_ started: ObjectIdentifier) -> Bool {
+        guard let own = session else { return false }
+        return ObjectIdentifier(own) == started && isMirroring && sessionID != nil
+    }
+
+    // Health cannot be read while the device is locked: the watch, with a code, once off the wrist.
+    private nonisolated static func isLocked(_ health: HKHealthStore) async -> Bool {
+        let query = HKSampleQueryDescriptor(predicates: [.quantitySample(type: HKQuantityType(.heartRate))], sortDescriptors: [], limit: 1)
+        do {
+            _ = try await query.result(for: health)
+            return false
+        } catch {
+            return (error as? HKError)?.code == .errorDatabaseInaccessible
         }
     }
     #endif
@@ -237,7 +258,7 @@ final class WorkoutRecorder {
         #if os(iOS)
         if records {
             waitingForWatch = nil
-            saveOwnWorkout(at: .now)
+            handOverOwnWorkout()
         }
         #endif
     }
@@ -365,6 +386,21 @@ final class WorkoutRecorder {
         }
         #endif
     }
+
+    #if os(iOS)
+    // To the watch: the part done here is saved, unless it began a moment ago, the watch answering late at the start.
+    private func handOverOwnWorkout() {
+        guard let session else { return }
+        let builder = session.associatedWorkoutBuilder()
+        guard let start = builder.startDate, Date.now.timeIntervalSince(start) < Self.briefWorkout else {
+            saveOwnWorkout(at: .now)
+            return
+        }
+        detach()
+        session.end()
+        builder.discardWorkout()
+    }
+    #endif
 
     private func saveOwnWorkout(at date: Date) {
         guard let session else { return }
