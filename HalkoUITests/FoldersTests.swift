@@ -70,10 +70,10 @@ final class FoldersTests: XCTestCase {
 
         let program = app.card("PPL program")
         grip(of: fullBody).press(forDuration: 0.2, thenDragTo: center(of: program), withVelocity: .slow, thenHoldForDuration: 0.5)
+        // Where it went, said for a moment: looked for first, before it goes.
+        XCTAssertTrue(app.element(containing: "moved to").waitForExistence(timeout: 2))
         wait(until: program.label.contains("4 workouts"))
         XCTAssertFalse(fullBody.exists)
-        // Where it went, said for a moment.
-        XCTAssertTrue(app.element(containing: "moved to").waitForExistence(timeout: 2))
         snap("Workouts, filed in a folder")
 
         app.buttons["Done"].tap()

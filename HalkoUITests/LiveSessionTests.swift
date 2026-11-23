@@ -72,9 +72,11 @@ final class LiveSessionTests: XCTestCase {
         snap("Session › Delete an exercise")
         app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.08)).tap()
         XCTAssertTrue(app.element(containing: "Exercise 1 of 5").waitForExistence(timeout: 5))
+        XCTAssertTrue(app.element(containing: "from this session?").waitForNonExistence(timeout: 5))
 
         // Saved: the summary, with the load beaten (80 × 8 today, 85 × 3 twice before); an estimated 1RM beaten is no record.
         app.buttons["Finish"].tap()
+        XCTAssertTrue(app.buttons["Save the session"].waitForExistence(timeout: 5))
         snap("Session › Finish")
         app.buttons["Save the session"].tap()
         XCTAssertTrue(app.staticTexts["Workout saved"].waitForExistence(timeout: 5))
