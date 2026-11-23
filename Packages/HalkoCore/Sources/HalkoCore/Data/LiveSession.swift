@@ -146,16 +146,15 @@ extension ModelContext {
         ))
     }
 
-    // What was done of each set (by index) the last time the exercise was done, in a finished session other than
-    // `sessionID`.
+    // What was done of each set (by index) the last time it was done, in finished sessions other than `sessionID`: a
+    // set left out last time comes from the session before that had it.
     public func previousPerformance(of exerciseID: String, excluding sessionID: String) throws -> [Int: SetValues] {
         let finished = Set(try fetch(FetchDescriptor(predicate: #Predicate<Session> { !$0.removed && $0.endedAt != nil })).map(\.id))
         let sets = try fetch(FetchDescriptor(
             predicate: #Predicate<SetLog> { !$0.removed && $0.exerciseID == exerciseID && $0.sessionID != sessionID },
             sortBy: [SortDescriptor(\.completedAt, order: .reverse)]
         )).filter { finished.contains($0.sessionID) }
-        guard let last = sets.first?.sessionID else { return [:] }
-        return Dictionary(sets.filter { $0.sessionID == last }.map { ($0.setIndex, SetValues($0)) }, uniquingKeysWith: { first, _ in first })
+        return Dictionary(sets.map { ($0.setIndex, SetValues($0)) }, uniquingKeysWith: { recent, _ in recent })
     }
 
     // Records a set done, then goes to the next set not done and starts the rest. A set already done is corrected:
