@@ -200,6 +200,22 @@ struct LiveSessionTests {
         #expect(try context.previousPerformance(of: "bench", excluding: second.sessionID) == [0: SetValues(reps: 6, weightG: 90_000)])
     }
 
+    @Test("Last time: a set left out last time is the one of the session before that had it")
+    func previousSetLeftOut() throws {
+        var first = try context.startSession(of: workout, now: start)
+        try context.logSet(&first, step: 0, values: SetValues(reps: 8, weightG: 80_000), now: start + 60)
+        try context.logSet(&first, step: 1, values: SetValues(reps: 7, weightG: 80_000), now: start + 240)
+        _ = try context.finishSession(first, now: start + 900)
+        var second = try context.startSession(of: workout, now: start + 86_400)
+        try context.logSet(&second, step: 0, values: SetValues(reps: 8, weightG: 85_000), now: start + 86_460)
+        _ = try context.finishSession(second, now: start + 87_000)
+        let third = try context.startSession(of: workout, now: start + 172_800)
+        #expect(try context.previousPerformance(of: "bench", excluding: third.sessionID) == [
+            0: SetValues(reps: 8, weightG: 85_000),
+            1: SetValues(reps: 7, weightG: 80_000),
+        ])
+    }
+
     @Test("A session started elsewhere resumes at the first set not done")
     func resuming() throws {
         var state = try context.startSession(of: workout, now: start)
