@@ -109,6 +109,14 @@ struct RestAlertSettingsView: View {
                 .listRowBackground(Color.clear)
                 .listRowInsets(EdgeInsets())
             }
+            Section {
+                NavigationLink("Sound log") {
+                    RestSoundLogView()
+                }
+            } footer: {
+                Text("What happened to the sound of the end of the rests, newest first: to send if it was not heard.")
+                    .foregroundStyle(Color(.secondaryText))
+            }
         }
         .navigationTitle("Rest end")
         .navigationBarTitleDisplayMode(.inline)
@@ -124,6 +132,43 @@ struct RestAlertSettingsView: View {
         }
         if alert.vibration {
             AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
+        }
+    }
+}
+
+// The log of the sound of the end of the rests, newest first, to read and pass on.
+private struct RestSoundLogView: View {
+    @AppStorage(RestSoundLog.key) private var log = ""
+
+    var body: some View {
+        ScrollView {
+            Text(verbatim: log.split(separator: "\n").reversed().joined(separator: "\n"))
+                .font(.footnote.monospaced())
+                .textSelection(.enabled)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding()
+        }
+        .overlay {
+            if log.isEmpty {
+                ContentUnavailableView {
+                    Label("Nothing yet", systemImage: "waveform")
+                } description: {
+                    Text("Filled in during the sessions with the sound on the iPhone.")
+                        .foregroundStyle(Color(.secondaryText))
+                }
+            }
+        }
+        .navigationTitle("Sound log")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if !log.isEmpty {
+                ToolbarItem(placement: .primaryAction) {
+                    ShareLink(item: log)
+                }
+                ToolbarItem(placement: .secondaryAction) {
+                    Button("Clear", role: .destructive, action: RestSoundLog.clear)
+                }
+            }
         }
     }
 }

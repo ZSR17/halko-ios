@@ -351,6 +351,16 @@
         }
       }
     },
+    "Filled in during the sessions with the sound on the iPhone." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rempli pendant les séances, avec le son sur l’iPhone."
+          }
+        }
+      }
+    },
     "Finish the session in progress to erase everything." : {
       "localizations" : {
         "fr" : {
@@ -427,6 +437,36 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Importé"
+          }
+        }
+      }
+    },
+    "Nothing yet" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rien pour l’instant"
+          }
+        }
+      }
+    },
+    "Sound log" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Journal du son"
+          }
+        }
+      }
+    },
+    "What happened to the sound of the end of the rests, newest first: to send if it was not heard." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce qui est arrivé au son de fin de repos, du plus récent au plus ancien : à envoyer s’il ne s’est pas fait entendre."
           }
         }
       }
