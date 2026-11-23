@@ -84,7 +84,7 @@ jobs:
         run: |
           # The newest watchOS runtime of this Xcode, and its first watch.
           watch=$(xcrun simctl list devices available --json | jq -r '
-            .devices | to_entries | map(select(.key | contains("watchOS"))) | sort_by(.key | sub(".*watchOS-"; "") | split("-") | map(tonumber))
+            .devices | to_entries | map(select(.key | test("watchOS-[0-9]+(-[0-9]+)*$"))) | sort_by(.key | sub(".*watchOS-"; "") | split("-") | map(tonumber))
             | last.value | map(select(.name | startswith("Apple Watch"))) | first.udid')
           xcrun simctl list devices | grep -e "$watch"
           echo "watch=$watch" >> "$GITHUB_OUTPUT"
@@ -164,9 +164,10 @@ jobs:
       - name: Pick an iPhone simulator
         id: simulator
         run: |
-          # The newest iOS runtime of this Xcode, and its first iPhone (not the iPhone Duo, which has its own tests).
+          # The newest iOS runtime of this Xcode, and its first iPhone (not the iPhone Duo, which has its own tests, nor
+          # the runtimes made for one device only).
           id=$(xcrun simctl list devices available --json | jq -r '
-            .devices | to_entries | map(select(.key | contains("iOS"))) | sort_by(.key | sub(".*iOS-"; "") | split("-") | map(tonumber))
+            .devices | to_entries | map(select(.key | test("iOS-[0-9]+(-[0-9]+)*$"))) | sort_by(.key | sub(".*iOS-"; "") | split("-") | map(tonumber))
             | last.value | map(select((.name | startswith("iPhone")) and (.name | contains("Duo") | not))) | first.udid')
           xcrun simctl list devices | grep -e "$id"
           echo "id=$id" >> "$GITHUB_OUTPUT"
