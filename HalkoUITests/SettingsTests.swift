@@ -61,6 +61,15 @@ final class SettingsTests: XCTestCase {
         app.reveal(app.buttons["10 s"])
         app.buttons["10 s"].tap()
         XCTAssertTrue(app.buttons["10 s"].isSelected)
+
+        // What happened to the sound, empty or filled in by the sessions of the other tests.
+        app.reveal(app.buttons["Sound log"])
+        app.buttons["Sound log"].tap()
+        XCTAssertTrue(app.navigationBars["Sound log"].waitForExistence(timeout: 5))
+        try app.auditScreen()
+        snap("Settings › Rest end › Sound log")
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+
         app.navigationBars.buttons.element(boundBy: 0).tap()
         XCTAssertTrue(app.element(containing: "Watch and iPhone · vibration").waitForExistence(timeout: 5))
     }
