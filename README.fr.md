@@ -27,7 +27,7 @@ xcodegen generate
 open Halko.xcodeproj
 ```
 
-Prérequis : Xcode 26 ou plus récent ; les apps tournent sur iOS 26 et watchOS 26.
+Prérequis : Xcode 27 ou plus récent ; les apps tournent sur iOS 26 et watchOS 26.
 
 - `Halko/` : l'app iPhone.
 - `HalkoWatch/` : l'app Apple Watch, installée avec l'app iPhone, qui lui donne les séances et les photos de leurs

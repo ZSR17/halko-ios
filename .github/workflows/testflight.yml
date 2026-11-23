@@ -11,6 +11,11 @@ permissions:
   actions: read
   contents: read
 
+# Built with the Xcode the App Store asks for (the iOS 27 SDK from April 2027), on GitHub's machines that have it, with
+# the simulator of the iPhone Duo.
+env:
+  DEVELOPER_DIR: /Applications/Xcode_27.2.app/Contents/Developer
+
 jobs:
   ci:
     name: CI of this commit
@@ -32,7 +37,7 @@ jobs:
 
   upload:
     needs: ci
-    runs-on: macos-26
+    runs-on: xcode-27
     env:
       TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
       KEY_ID: ${{ secrets.ASC_KEY_ID }}
