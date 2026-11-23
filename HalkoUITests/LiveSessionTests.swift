@@ -70,7 +70,8 @@ final class LiveSessionTests: XCTestCase {
         app.buttons["Delete this exercise"].tap()
         XCTAssertTrue(app.element(containing: "from this session?").waitForExistence(timeout: 5))
         snap("Session › Delete an exercise")
-        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.08)).tap()
+        // Beside the column titles: iOS 27 opens the question higher, over the top of the screen.
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.26)).tap()
         XCTAssertTrue(app.element(containing: "Exercise 1 of 5").waitForExistence(timeout: 5))
         XCTAssertTrue(app.element(containing: "from this session?").waitForNonExistence(timeout: 5))
 
