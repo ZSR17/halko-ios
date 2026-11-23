@@ -154,9 +154,9 @@ jobs:
     needs: changes
     if: needs.changes.outputs.code == 'true'
     runs-on: xcode-27
-    # All its tests take ~25 min, more when failing ones are tried again; a simulator stuck on a launch waits forever
-    # (GitHub's own limit is 6 h): stopped here, to be rerun.
-    timeout-minutes: 75
+    # All its tests take ~25 min with iOS 26's simulator, far more with iOS 27's, more when failing ones are tried
+    # again; a simulator stuck on a launch waits forever (GitHub's own limit is 6 h): stopped here, to be rerun.
+    timeout-minutes: 150
     steps:
       - uses: actions/checkout@v7
       - run: brew install xcodegen
