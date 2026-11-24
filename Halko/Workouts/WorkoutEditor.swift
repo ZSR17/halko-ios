@@ -115,9 +115,6 @@ struct WorkoutEditor: View {
             .background(Color(.systemGroupedBackground))
             .navigationTitle(workout == nil ? Text("New workout") : Text("Edit workout"))
             .navigationBarTitleDisplayMode(.inline)
-            // A new workout starts with its name, given by the system: set by the view while the sheet comes up, it
-            // left iOS 27's keyboard without its bar.
-            .defaultFocus($focus, workout == nil ? .name : nil)
             .toolbar {
                 // ✕ and ✓, as in the exercise editor. With changes, ✕ turns into "Discard Changes": a tap elsewhere
                 // keeps editing.
