@@ -212,7 +212,7 @@ final class WorkoutRecorder {
     func recover(sessionID: String?) {
         guard let health, let sessionID, session == nil, !isRecovering else { return }
         isRecovering = true
-        health.recoverActiveWorkoutSession { @Sendable session, error in
+        health.recoverActiveWorkoutSession { @Sendable [weak self] session, error in
             if let error {
                 Self.logger.error("Cannot recover the workout: \(String(describing: error))")
             }
@@ -308,7 +308,7 @@ final class WorkoutRecorder {
     // connection, which is lost and found again during a session.
     func listenForWatch() {
         let events = relayEvents
-        health?.workoutSessionMirroringStartHandler = { @Sendable session in
+        health?.workoutSessionMirroringStartHandler = { @Sendable [weak self] session in
             let relay = Relay(events: events)
             session.delegate = relay
             let found = Handoff(value: (session, relay))
@@ -345,7 +345,7 @@ final class WorkoutRecorder {
             return
         }
         waitingForWatch = sessionID
-        health.startWatchApp(with: Self.configuration) { @Sendable started, error in
+        health.startWatchApp(with: Self.configuration) { @Sendable [weak self] started, error in
             if let error {
                 Self.logger.debug("The watch did not start: \(String(describing: error))")
             }
@@ -385,7 +385,7 @@ final class WorkoutRecorder {
 
     private func mirror(_ session: HKWorkoutSession) {
         #if os(watchOS)
-        session.startMirroringToCompanionDevice { @Sendable success, error in
+        session.startMirroringToCompanionDevice { @Sendable [weak self] success, error in
             if let error {
                 Self.logger.debug("Not mirrored on the iPhone: \(String(describing: error))")
             }
@@ -425,12 +425,12 @@ final class WorkoutRecorder {
             builder.value.discardWorkout()
             return
         }
-        builder.value.endCollection(withEnd: date) { @Sendable _, error in
+        builder.value.endCollection(withEnd: date) { @Sendable [weak self] _, error in
             if let error {
                 Self.logger.error("Cannot end the workout: \(String(describing: error))")
                 return
             }
-            builder.value.finishWorkout { @Sendable workout, error in
+            builder.value.finishWorkout { @Sendable [weak self] workout, error in
                 if let error {
                     Self.logger.error("Cannot save the workout: \(String(describing: error))")
                 }

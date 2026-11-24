@@ -20,6 +20,11 @@ concurrency:
   group: ci-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+# Built with the Xcode the App Store asks for (the iOS 27 SDK from April 2027), on GitHub's machines that have it, with
+# the simulator of the iPhone Duo.
+env:
+  DEVELOPER_DIR: /Applications/Xcode_27.2.app/Contents/Developer
+
 jobs:
   changes:
     runs-on: ubuntu-24.04
@@ -58,7 +63,7 @@ jobs:
   core:
     needs: changes
     if: needs.changes.outputs.code == 'true'
-    runs-on: macos-26
+    runs-on: xcode-27
     steps:
       - uses: actions/checkout@v7
       - run: xcodebuild -version
@@ -67,7 +72,7 @@ jobs:
   watch:
     needs: changes
     if: needs.changes.outputs.code == 'true' && needs.changes.outputs.watch == 'true'
-    runs-on: macos-26
+    runs-on: xcode-27
     # A simulator stuck on a launch waits forever (GitHub's own limit is 6 h): stopped here, to be rerun.
     timeout-minutes: 60
     steps:
@@ -79,7 +84,7 @@ jobs:
         run: |
           # The newest watchOS runtime of this Xcode, and its first watch.
           watch=$(xcrun simctl list devices available --json | jq -r '
-            .devices | to_entries | map(select(.key | contains("watchOS"))) | sort_by(.key | sub(".*watchOS-"; "") | split("-") | map(tonumber))
+            .devices | to_entries | map(select(.key | test("watchOS-[0-9]+(-[0-9]+)*$"))) | sort_by(.key | sub(".*watchOS-"; "") | split("-") | map(tonumber))
             | last.value | map(select(.name | startswith("Apple Watch"))) | first.udid')
           xcrun simctl list devices | grep -e "$watch"
           echo "watch=$watch" >> "$GITHUB_OUTPUT"
@@ -148,10 +153,10 @@ jobs:
   apps:
     needs: changes
     if: needs.changes.outputs.code == 'true'
-    runs-on: macos-26
-    # All its tests take ~25 min, more when failing ones are tried again; a simulator stuck on a launch waits forever
-    # (GitHub's own limit is 6 h): stopped here, to be rerun.
-    timeout-minutes: 75
+    runs-on: xcode-27
+    # All its tests take ~25 min with iOS 26's simulator, far more with iOS 27's, more when failing ones are tried
+    # again; a simulator stuck on a launch waits forever (GitHub's own limit is 6 h): stopped here, to be rerun.
+    timeout-minutes: 150
     steps:
       - uses: actions/checkout@v7
       - run: brew install xcodegen
@@ -159,10 +164,11 @@ jobs:
       - name: Pick an iPhone simulator
         id: simulator
         run: |
-          # The newest iOS runtime of this Xcode, and its first iPhone.
+          # The newest iOS runtime of this Xcode, and its first iPhone (not the iPhone Duo, which has its own tests, nor
+          # the runtimes made for one device only).
           id=$(xcrun simctl list devices available --json | jq -r '
-            .devices | to_entries | map(select(.key | contains("iOS"))) | sort_by(.key | sub(".*iOS-"; "") | split("-") | map(tonumber))
-            | last.value | map(select(.name | startswith("iPhone"))) | first.udid')
+            .devices | to_entries | map(select(.key | test("iOS-[0-9]+(-[0-9]+)*$"))) | sort_by(.key | sub(".*iOS-"; "") | split("-") | map(tonumber))
+            | last.value | map(select((.name | startswith("iPhone")) and (.name | contains("Duo") | not))) | first.udid')
           xcrun simctl list devices | grep -e "$id"
           echo "id=$id" >> "$GITHUB_OUTPUT"
       - name: Test the iPhone app

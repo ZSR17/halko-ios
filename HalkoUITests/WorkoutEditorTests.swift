@@ -160,16 +160,20 @@ final class WorkoutEditorTests: XCTestCase {
         // No name yet.
         XCTAssertFalse(app.buttons["Save"].isEnabled)
         XCTAssertTrue(app.element(containing: "0 exercises").exists)
-        // The name is being typed: the keyboard put away first, since the audit does not always tell it from the
-        // screen while it comes up.
-        app.buttons["Done"].firstMatch.tap()
-        XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 5))
+        // No keyboard until the name is touched: then with Done above it.
+        XCTAssertFalse(app.keyboards.firstMatch.exists)
         try app.auditScreen()
         snap("New workout")
-
         let name = app.textFields["Workout name"]
         name.tap()
-        name.typeText("Legs B")
+        XCTAssertTrue(app.buttons["Done"].firstMatch.waitForExistence(timeout: 5))
+        app.buttons["Done"].firstMatch.tap()
+        XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 5))
+
+        // Return closes the keyboard too.
+        name.tap()
+        name.typeText("Legs B\n")
+        XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 5))
         XCTAssertTrue(app.buttons["Save"].isEnabled)
         app.buttons["Add an exercise"].tap()
         XCTAssertTrue(app.staticTexts["877 exercises"].waitForExistence(timeout: 30))
