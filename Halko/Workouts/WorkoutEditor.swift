@@ -61,6 +61,11 @@ struct WorkoutEditor: View {
                             TextField("Workout name", text: $draft.name)
                                 .font(.title2.weight(.bold))
                                 .focused($focus, equals: .name)
+                                // Return closes the keyboard too: the way out even without its bar.
+                                .submitLabel(.done)
+                                .onSubmit {
+                                    focus = nil
+                                }
                                 .id(EditorField.name)
                                 .padding(.horizontal, 12)
                                 .frame(minHeight: 48)
@@ -103,11 +108,16 @@ struct WorkoutEditor: View {
                     .padding([.horizontal, .bottom])
                 }
                 .scrollDismissesKeyboard(.interactively)
+                // Short, a new workout still pulls down to close the keyboard.
+                .scrollBounceBehavior(.always)
                 .scrollingToFocus(focus, in: proxy)
             }
             .background(Color(.systemGroupedBackground))
             .navigationTitle(workout == nil ? Text("New workout") : Text("Edit workout"))
             .navigationBarTitleDisplayMode(.inline)
+            // A new workout starts with its name, given by the system: set by the view while the sheet comes up, it
+            // left iOS 27's keyboard without its bar.
+            .defaultFocus($focus, workout == nil ? .name : nil)
             .toolbar {
                 // ✕ and ✓, as in the exercise editor. With changes, ✕ turns into "Discard Changes": a tap elsewhere
                 // keeps editing.
@@ -156,10 +166,6 @@ struct WorkoutEditor: View {
                 if let adding, !added {
                     added = true
                     add([adding])
-                }
-                // A new workout starts with its name.
-                if workout == nil {
-                    focus = .name
                 }
             }
         }
