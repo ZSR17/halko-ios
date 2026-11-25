@@ -8,9 +8,10 @@ import os
 // before it too.
 //
 // Its audio is made ready when the session starts, with the app on screen, and kept until the session ends. The sounds
-// are handed to the audio output when the rest starts, to be played at their time: in the background, the app then
-// never has to start any audio itself (`audio` background mode, while a workout of Health keeps the app running).
-// Mixed with others, holding it changes nothing for what is playing. What happens to it goes in `RestSoundLog`.
+// are handed to the audio output when the rest starts, to be played at their time (`audio` background mode). In the
+// background, iOS lets an app start a sound only while its audio plays (seen on device: every rest started there was
+// refused, error 561015905): a silent sound loops from the start of the session to its end, the user's choice of
+// 2026-11-25. Mixed with others, it changes nothing for what is playing. What happens goes in `RestSoundLog`.
 @MainActor
 final class RestSound {
     // What is heard of a rest, or of the timer of a set: a sound at its end, the beeps before.
@@ -26,6 +27,7 @@ final class RestSound {
     private var tone: RestAlertSettings.Tone?
     private var volume: Float = 1
     private var player: AVAudioPlayer?
+    private var silence: AVAudioPlayer?
     private var tickPlayers: [AVAudioPlayer] = []
     // The sound that has just started, kept while it plays: the next one is already waiting.
     private var ringing: AVAudioPlayer?
@@ -49,8 +51,10 @@ final class RestSound {
             RestSoundLog.add("Let go")
             player?.stop()
             tickPlayers.forEach { $0.stop() }
+            silence?.stop()
             player = nil
             tickPlayers = []
+            silence = nil
             alarm = nil
             for observer in observers {
                 NotificationCenter.default.removeObserver(observer)
@@ -123,6 +127,18 @@ final class RestSound {
         }
         player = makePlayer(tone?.fileName)
         tickPlayers = (0..<Self.tickCount).compactMap { _ in makePlayer("RestTick") }
+        silence?.stop()
+        silence = makePlayer("Silence")
+        silence?.numberOfLoops = -1
+        keepSilence()
+    }
+
+    // Played again after a call or a restart of the system's audio, which stop it.
+    private func keepSilence() {
+        guard let silence, !silence.isPlaying else { return }
+        if !silence.play() {
+            RestSoundLog.add("Refused to keep the silence")
+        }
     }
 
     private func makePlayer(_ name: String?) -> AVAudioPlayer? {
@@ -141,6 +157,7 @@ final class RestSound {
 
     private func resume() {
         refused = false
+        keepSilence()
         for player in tickPlayers + (player.map { [$0] } ?? []) {
             player.stop()
             player.currentTime = 0
