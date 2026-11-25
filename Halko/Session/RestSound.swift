@@ -30,6 +30,9 @@ final class RestSound {
     // The sound that has just started, kept while it plays: the next one is already waiting.
     private var ringing: AVAudioPlayer?
     private var alarm: Alarm?
+    // iOS did not let the sound wait for the end of the rest: started in the background, with nothing playing, the app
+    // may not start its audio (seen on device, error 561015905). Tried again with the app on screen.
+    private(set) var refused = false
     private var observers: [any NSObjectProtocol] = []
     private let finished = Finished()
 
@@ -96,7 +99,7 @@ final class RestSound {
 
     // The rest that started, or none.
     func schedule(_ alarm: Alarm?) {
-        guard alarm != self.alarm else { return }
+        guard alarm != self.alarm || refused else { return }
         let over = self.alarm.map { $0.end <= .now } ?? false
         self.alarm = alarm
         RestSoundLog.add(alarm.map { "Waits \(Int($0.end.timeIntervalSinceNow.rounded())) s, \($0.ticks.count) beeps" } ?? "Waits for nothing")
@@ -137,6 +140,7 @@ final class RestSound {
     }
 
     private func resume() {
+        refused = false
         for player in tickPlayers + (player.map { [$0] } ?? []) {
             player.stop()
             player.currentTime = 0
@@ -147,6 +151,7 @@ final class RestSound {
         } catch {
             Self.logger.error("Cannot wait for the end of the rest: \(String(describing: error))")
             RestSoundLog.add("Cannot start the audio: \(Self.describe(error))")
+            refused = true
         }
         var times = Array(zip(tickPlayers, alarm.ticks.filter { $0 > .now }))
         if let player {
@@ -159,6 +164,7 @@ final class RestSound {
             if !player.play(atTime: player.deviceCurrentTime + time.timeIntervalSinceNow) {
                 Self.logger.error("Cannot wait for the end of the rest")
                 RestSoundLog.add("Refused to wait for a sound")
+                refused = true
             }
         }
     }

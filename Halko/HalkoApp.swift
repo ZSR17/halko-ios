@@ -11,6 +11,7 @@ struct HalkoApp: App {
     @State private var liveSession: LiveSessionStore
     @State private var permissions: Permissions
     @State private var recorder: WorkoutRecorder
+    @Environment(\.scenePhase) private var scenePhase
     private let activities: SessionActivities
     // Hands the watch app its workouts, for as long as the app runs.
     private let watch: WatchLink?
@@ -90,7 +91,7 @@ struct HalkoApp: App {
                     await ExerciseLibrary.install(in: container)
                 }
                 // Outside the app: the Live Activity and the end of the rest.
-                .task(id: OutsideKey(state: liveSession.state, heartRate: recorder.heartRate.map { Int($0.rounded()) }, watchRecords: recorder.otherDeviceRecords)) {
+                .task(id: OutsideKey(state: liveSession.state, heartRate: recorder.heartRate.map { Int($0.rounded()) }, watchRecords: recorder.otherDeviceRecords, onScreen: scenePhase == .active)) {
                     await activities.refresh()
                 }
         }
@@ -103,6 +104,8 @@ private struct OutsideKey: Equatable {
     let state: LiveState?
     let heartRate: Int?
     let watchRecords: Bool
+    // Back on screen, the sound of a rest that iOS refused in the background waits for its end again.
+    let onScreen: Bool
 }
 
 // In the app, the end of the rest only rings: the session shows it already.

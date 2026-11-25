@@ -13,7 +13,8 @@ import SwiftData
 // the sound picked plays over the music, even in silent mode, and the iPhone vibrates; no notification, which Siri
 // would read in headphones (and no alert of the activity: it did not light the screen up, only played the system's
 // sound). Without that workout the app is not running then: a notification tells it. With the workout on the watch,
-// the watch tells it, and the iPhone too when both were chosen.
+// the watch tells it, and the iPhone too when both were chosen. A rest started with the app in the background, when iOS
+// does not let its sound wait for the end: the notification tells it too.
 @MainActor
 final class SessionActivities {
     private static let logger = Logger(subsystem: "com.zsr.halko", category: "session")
@@ -86,7 +87,8 @@ final class SessionActivities {
             await show(found)
         }
         let targetEnd = store.state?.setTimer?.targetEnd
-        let alert = recorder.isRecording || recorder.otherDeviceRecords ? nil : found.flatMap { found -> RestAlert.Request? in
+        let notifies = !(recorder.isRecording || recorder.otherDeviceRecords) || sound.refused
+        let alert = !notifies ? nil : found.flatMap { found -> RestAlert.Request? in
             if let targetEnd {
                 return RestAlert.Request(end: targetEnd, body: Self.alertBody(found.content), title: String(localized: "Target reached"))
             }
@@ -96,6 +98,9 @@ final class SessionActivities {
             // A rest over on its own: its notification, just shown, stays.
             let ended = alert == nil && (lastAlert.map { $0.end <= .now } ?? true)
             lastAlert = alert
+            if sound.refused, alert != nil {
+                RestSoundLog.add("Notification instead, if allowed")
+            }
             if !ended {
                 await RestAlert.schedule(alert)
             }
