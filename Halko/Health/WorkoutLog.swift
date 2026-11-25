@@ -6,7 +6,7 @@ import WatchConnectivity
 // pass on when the watch did not record a session; the watch sends its own lines there. Nothing else leaves the devices.
 @MainActor
 enum WorkoutLog {
-    static let key = "workoutLog"
+    nonisolated static let key = "workoutLog"
 
     static func add(_ line: String) {
         let time = Date.now.formatted(.dateTime.day().month(.twoDigits).hour().minute().second())
