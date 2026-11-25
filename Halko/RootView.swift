@@ -2,7 +2,7 @@ import HalkoCore
 import SwiftUI
 
 // The five tabs, which become a sidebar when there is room. Each tab has its own navigation stack, its title large on
-// the line of its buttons, so that the page starts high. The session in progress covers them, in full screen.
+// the line of its buttons, so that the page starts high; Workouts, with room (the iPhone Duo open), two columns. The session in progress covers them, in full screen.
 struct RootView: View {
     @Environment(LiveSessionStore.self) private var liveSession
 
@@ -10,10 +10,7 @@ struct RootView: View {
         @Bindable var liveSession = liveSession
         TabView {
             Tab("Workouts", systemImage: "dumbbell") {
-                NavigationStack {
-                    WorkoutsView()
-                        .toolbarTitleDisplayMode(.inlineLarge)
-                }
+                WorkoutsTab()
             }
             Tab("Exercises", systemImage: "list.bullet") {
                 NavigationStack {

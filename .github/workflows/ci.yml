@@ -182,16 +182,60 @@ jobs:
             xcodebuild build -project Halko.xcodeproj -scheme Halko -destination "id=$SIMULATOR" -derivedDataPath build
             exit
           fi
-          only=()
+          # Those of the iPhone Duo open: on its simulator, in the next step.
+          only=(-skip-testing:HalkoUITests/DuoTests)
           if [ "$TESTS" != all ]; then
             for test in $TESTS; do
-              only+=("-only-testing:HalkoUITests/$test")
+              [ "$test" != DuoTests ] && only+=("-only-testing:HalkoUITests/$test")
             done
+            if [ ${#only[@]} -eq 1 ]; then
+              xcodebuild build-for-testing -project Halko.xcodeproj -scheme Halko -destination "id=$SIMULATOR" -derivedDataPath build
+              exit
+            fi
           fi
-          xcodebuild test -project Halko.xcodeproj -scheme Halko -destination "id=$SIMULATOR" -derivedDataPath build -resultBundlePath Halko.xcresult -retry-tests-on-failure -test-iterations 3 ${only[@]+"${only[@]}"}
+          xcodebuild test -project Halko.xcodeproj -scheme Halko -destination "id=$SIMULATOR" -derivedDataPath build -resultBundlePath Halko.xcresult -retry-tests-on-failure -test-iterations 3 "${only[@]}"
+      - name: Test the screens of the iPhone Duo open
+        if: contains(format(' {0} ', needs.changes.outputs.ui-tests), ' all ') || contains(format(' {0} ', needs.changes.outputs.ui-tests), ' DuoTests ')
+        run: |
+          # The newest iPhone Duo.
+          duo=$(xcrun simctl list devices available --json | jq -r '
+            [.devices | to_entries[] | .key as $runtime | .value[] | select(.name | contains("Duo")) | {runtime: $runtime, udid}]
+            | sort_by(.runtime | capture("iOS-(?<v>[0-9]+(-[0-9]+)*)").v | split("-") | map(tonumber)) | last.udid')
+          xcrun simctl list devices | grep -e "$duo"
+          xcrun simctl boot "$duo"
+          xcrun simctl bootstatus "$duo"
+          # It starts closed, and Apple has no command to open it: hinge (MIT, read before use, pinned to that version)
+          # sends the event of the hinge slider of Xcode's Device Hub, and fails when the simulator does not take it.
+          git clone -q https://github.com/artemnovichkov/hinge.git "$RUNNER_TEMP/hinge"
+          git -C "$RUNNER_TEMP/hinge" checkout -q 06cb720276281da7f1aadd3874acb0d0ae5eb2b5
+          hinge="$RUNNER_TEMP/hinge/skills/hinge/scripts/hinge"
+          "$hinge" -d "$duo" open
+          # The inner screen takes over 1 to 2.5 s after the hinge.
+          sleep 3
+          "$hinge" -d "$duo" posture
+          # XCTest's screenshots of the inner screen are black: each one the tests ask for, by a file in this folder, is
+          # taken here with simctl, then the file is removed to say it is done.
+          shots="$GITHUB_WORKSPACE/screenshots-duo-inner"
+          mkdir -p "$shots"
+          while true; do
+            for request in "$shots"/*.request; do
+              [ -e "$request" ] || continue
+              "$hinge" -d "$duo" screenshot "${request%.request}.png"
+              rm "$request"
+            done
+            sleep 0.2
+          done &
+          taker=$!
+          status=0
+          TEST_RUNNER_DUO_SHOTS="$shots" xcodebuild test -project Halko.xcodeproj -scheme Halko -destination "id=$duo" -derivedDataPath build -resultBundlePath HalkoDuo.xcresult -retry-tests-on-failure -test-iterations 3 -only-testing:HalkoUITests/DuoTests || status=$?
+          kill "$taker"
+          exit "$status"
       - name: List the tests that passed only when tried again (iPhone)
         if: always() && hashFiles('Halko.xcresult/**') != ''
         run: bash .github/retried-tests.sh Halko.xcresult "iPhone"
+      - name: List the tests that passed only when tried again (iPhone Duo open)
+        if: always() && hashFiles('HalkoDuo.xcresult/**') != ''
+        run: bash .github/retried-tests.sh HalkoDuo.xcresult "iPhone Duo open"
       - name: Check the watch app and the widgets are inside the iPhone app, and both apps have their icon
         run: |
           app=build/Build/Products/Debug-iphonesimulator/Halko.app
@@ -219,12 +263,28 @@ jobs:
           name: screenshots
           path: screenshots
           if-no-files-found: ignore
+      - name: Export the screenshots of the iPhone Duo open
+        if: always() && hashFiles('HalkoDuo.xcresult/**') != ''
+        run: xcrun xcresulttool export attachments --path HalkoDuo.xcresult --output-path screenshots-duo
+      - uses: actions/upload-artifact@v7
+        if: always() && hashFiles('HalkoDuo.xcresult/**') != ''
+        with:
+          name: screenshots-duo
+          path: |
+            screenshots-duo
+            screenshots-duo-inner
+          if-no-files-found: ignore
       # The whole test report (the app's output, its crash and hang logs) when a test fails.
       - uses: actions/upload-artifact@v7
         if: failure() && hashFiles('Halko.xcresult/**') != ''
         with:
           name: xcresult
           path: Halko.xcresult
+      - uses: actions/upload-artifact@v7
+        if: failure() && hashFiles('HalkoDuo.xcresult/**') != ''
+        with:
+          name: xcresult-duo
+          path: HalkoDuo.xcresult
 
   passed:
     name: CI passed

@@ -7,21 +7,21 @@ private let logger = Logger(subsystem: "com.zsr.halko", category: "workouts")
 
 extension View {
     // What can be done of a workout from its card, touched and held: as in the menu of its page, started, and the
-    // cards of the page reordered.
-    func workoutMenu(_ workout: Workout, reorder: @escaping () -> Void) -> some View {
+    // cards of the page reordered (`reorder` nil: in a list, which is not).
+    func workoutMenu(_ workout: Workout, reorder: (() -> Void)?) -> some View {
         modifier(WorkoutMenu(workout: workout, reorder: reorder))
     }
 
     // What can be done of a folder from its card, touched and held: as in the menu of its page, and the cards of the page
-    // reordered.
-    func folderMenu(_ folder: Folder, reorder: @escaping () -> Void) -> some View {
+    // reordered (`reorder` nil: in a list, which is not).
+    func folderMenu(_ folder: Folder, reorder: (() -> Void)?) -> some View {
         modifier(FolderMenu(folder: folder, reorder: reorder))
     }
 }
 
 private struct WorkoutMenu: ViewModifier {
     let workout: Workout
-    let reorder: () -> Void
+    let reorder: (() -> Void)?
     @Query private var items: [WorkoutItem]
     @Query(filter: #Predicate<Folder> { !$0.removed }, sort: \Folder.position) private var folders: [Folder]
     @State private var starting = false
@@ -29,7 +29,7 @@ private struct WorkoutMenu: ViewModifier {
     @State private var confirmingDelete = false
     @Environment(\.modelContext) private var context
 
-    init(workout: Workout, reorder: @escaping () -> Void) {
+    init(workout: Workout, reorder: (() -> Void)?) {
         self.workout = workout
         self.reorder = reorder
         let id = workout.id
@@ -64,7 +64,9 @@ private struct WorkoutMenu: ViewModifier {
                     Label("Move to folder", systemImage: "folder")
                 }
                 .pickerStyle(.menu)
-                Button("Reorder", systemImage: "arrow.up.arrow.down", action: reorder)
+                if let reorder {
+                    Button("Reorder", systemImage: "arrow.up.arrow.down", action: reorder)
+                }
                 Button("Delete", systemImage: "trash", role: .destructive) {
                     confirmingDelete = true
                 }
@@ -103,14 +105,14 @@ private struct WorkoutMenu: ViewModifier {
 
 private struct FolderMenu: ViewModifier {
     let folder: Folder
-    let reorder: () -> Void
+    let reorder: (() -> Void)?
     @Query private var workouts: [Workout]
     @State private var renaming = false
     @State private var creating = false
     @State private var confirmingDelete = false
     @Environment(\.modelContext) private var context
 
-    init(folder: Folder, reorder: @escaping () -> Void) {
+    init(folder: Folder, reorder: (() -> Void)?) {
         self.folder = folder
         self.reorder = reorder
         let id: String? = folder.id
@@ -128,7 +130,9 @@ private struct FolderMenu: ViewModifier {
                 Button("New workout here", systemImage: "dumbbell") {
                     creating = true
                 }
-                Button("Reorder", systemImage: "arrow.up.arrow.down", action: reorder)
+                if let reorder {
+                    Button("Reorder", systemImage: "arrow.up.arrow.down", action: reorder)
+                }
                 Button("Delete the folder", systemImage: "trash", role: .destructive) {
                     confirmingDelete = true
                 }
