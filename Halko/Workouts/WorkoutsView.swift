@@ -346,7 +346,7 @@ private struct ReorderHint: View {
 }
 
 // `create`: a button to make the first one. In a folder, how to put one in it.
-private struct NoWorkouts: View {
+struct NoWorkouts: View {
     var inFolder = false
     var create: (() -> Void)?
 
