@@ -40,7 +40,7 @@ final class DuoTests: XCTestCase {
         let request = URL(filePath: folder).appending(path: "\(name).request")
         XCTAssertNoThrow(try Data().write(to: request, options: .atomic))
         let taken = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
-            !FileManager.default.fileExists(atPath: request.path())
+            !FileManager.default.fileExists(atPath: request.path(percentEncoded: false))
         }, object: nil)
         XCTAssertEqual(XCTWaiter().wait(for: [taken], timeout: 30), .completed, "Screenshot not taken: \(name)")
     }
