@@ -213,7 +213,23 @@ jobs:
           # The inner screen takes over 1 to 2.5 s after the hinge.
           sleep 3
           "$hinge" -d "$duo" posture
-          xcodebuild test -project Halko.xcodeproj -scheme Halko -destination "id=$duo" -derivedDataPath build -resultBundlePath HalkoDuo.xcresult -retry-tests-on-failure -test-iterations 3 -only-testing:HalkoUITests/DuoTests
+          # XCTest's screenshots of the inner screen are black: each one the tests ask for, by a file in this folder, is
+          # taken here with simctl, then the file is removed to say it is done.
+          shots="$GITHUB_WORKSPACE/screenshots-duo-inner"
+          mkdir -p "$shots"
+          while true; do
+            for request in "$shots"/*.request; do
+              [ -e "$request" ] || continue
+              "$hinge" -d "$duo" screenshot "${request%.request}.png"
+              rm "$request"
+            done
+            sleep 0.2
+          done &
+          taker=$!
+          status=0
+          TEST_RUNNER_DUO_SHOTS="$shots" xcodebuild test -project Halko.xcodeproj -scheme Halko -destination "id=$duo" -derivedDataPath build -resultBundlePath HalkoDuo.xcresult -retry-tests-on-failure -test-iterations 3 -only-testing:HalkoUITests/DuoTests || status=$?
+          kill "$taker"
+          exit "$status"
       - name: List the tests that passed only when tried again (iPhone)
         if: always() && hashFiles('Halko.xcresult/**') != ''
         run: bash .github/retried-tests.sh Halko.xcresult "iPhone"
@@ -254,7 +270,9 @@ jobs:
         if: always() && hashFiles('HalkoDuo.xcresult/**') != ''
         with:
           name: screenshots-duo
-          path: screenshots-duo
+          path: |
+            screenshots-duo
+            screenshots-duo-inner
           if-no-files-found: ignore
       # The whole test report (the app's output, its crash and hang logs) when a test fails.
       - uses: actions/upload-artifact@v7

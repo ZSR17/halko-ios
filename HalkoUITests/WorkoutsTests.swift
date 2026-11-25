@@ -139,7 +139,9 @@ extension XCUIApplication {
         let window = windows.firstMatch.frame
         let bottomEdge = CGRect(x: window.minX, y: window.maxY - 60, width: window.width, height: 60)
         // The fade under the bar of a sheet reaches lower than under the bar of a tab.
-        let bars = [navigationBars.firstMatch.frame, tabBars.firstMatch.frame].map { $0.insetBy(dx: 0, dy: -60) } + [bottomEdge]
+        // No tab bar on the iPhone Duo open, where the tabs stand down the side.
+        let tabBar = tabBars.firstMatch.exists ? [tabBars.firstMatch.frame] : []
+        let bars = ([navigationBars.firstMatch.frame] + tabBar).map { $0.insetBy(dx: 0, dy: -60) } + [bottomEdge]
             // And under the block fixed at the bottom of the session, with its shadow.
             + descendants(matching: .any).matching(identifier: "bottom-panel").allElementsBoundByIndex.map { $0.frame.insetBy(dx: 0, dy: -24) }
         // The small screens drawing each look in the settings, whose names the audit measures over the drawing.
