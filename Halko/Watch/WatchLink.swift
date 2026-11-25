@@ -216,7 +216,11 @@ extension WatchLink: WCSessionDelegate {
         let plan = userInfo[CompanionMessage.planRequestKey] != nil
         let thumbnails = userInfo[CompanionMessage.thumbnailsKey] as? [String] ?? []
         let liveMessage = userInfo[CompanionMessage.liveKey] as? Data
+        let logLines = userInfo[WorkoutLog.key] as? [String]
         Task { @MainActor in
+            if let logLines {
+                WorkoutLog.received(logLines)
+            }
             if plan {
                 self.sendPlan(again: true)
             }

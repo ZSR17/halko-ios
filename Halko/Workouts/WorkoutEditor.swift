@@ -535,16 +535,3 @@ private struct ReorderPlan {
         gap = CGRect(x: held.minX, y: tops[slot], width: held.width, height: movedHeight)
     }
 }
-
-private extension View {
-    // The bar along the exercises of a superset.
-    func supersetBar(_ shown: Bool = true) -> some View {
-        overlay(alignment: .leading) {
-            if shown {
-                Rectangle()
-                    .fill(Color(.superset))
-                    .frame(width: 3)
-            }
-        }
-    }
-}

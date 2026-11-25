@@ -112,6 +112,7 @@ targets:
       - Halko/Session/RestAlert.swift
       - Halko/Session/LiveLink.swift
       - Halko/Health/WorkoutRecorder.swift
+      - Halko/Health/WorkoutLog.swift
       - Halko/Health/HealthTypes.swift
       - Halko/Health/Permissions.swift
       - Shared/ThemeColors.swift

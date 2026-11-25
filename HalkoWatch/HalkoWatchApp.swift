@@ -106,6 +106,7 @@ final class WatchAppDelegate: NSObject, WKApplicationDelegate {
     static var workoutLeftRunning: (() -> Void)?
 
     func handle(_ workoutConfiguration: HKWorkoutConfiguration) {
+        WorkoutLog.add("Asked by the iPhone, app \(WKApplication.shared().applicationState.rawValue)")
         Self.workoutAsked?()
     }
 
