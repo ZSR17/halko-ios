@@ -19,9 +19,7 @@ struct LogView<Empty: View>: View {
 
     var body: some View {
         ScrollView {
-            Text(verbatim: log.split(separator: "
-").reversed().joined(separator: "
-"))
+            Text(verbatim: log.split(separator: "\n").reversed().joined(separator: "\n"))
                 .font(.footnote.monospaced())
                 .textSelection(.enabled)
                 .frame(maxWidth: .infinity, alignment: .leading)
