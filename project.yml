@@ -126,7 +126,9 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.zsr.halko.watchkitapp
-        # Merged with the generated keys: the workout of Health runs with the wrist down (WKBackgroundModes).
+        # Merged with the generated keys: the workout of Health runs with the wrist down (WKBackgroundModes), and the
+        # session's Live Activity of the iPhone, touched in the Smart Stack, opens the watch app instead of offering
+        # to open the iPhone's (WKSupportsLiveActivityLaunchAttributeTypes).
         INFOPLIST_FILE: HalkoWatch/Info.plist
         # Health, and the end of a rest notified even in a Focus.
         CODE_SIGN_ENTITLEMENTS: HalkoWatch/HalkoWatch.entitlements

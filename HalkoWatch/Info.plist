@@ -6,5 +6,9 @@
 	<array>
 		<string>workout-processing</string>
 	</array>
+	<key>WKSupportsLiveActivityLaunchAttributeTypes</key>
+	<array>
+		<string>SessionActivityAttributes</string>
+	</array>
 </dict>
 </plist>
