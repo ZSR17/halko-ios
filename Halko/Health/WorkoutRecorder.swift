@@ -113,7 +113,11 @@ final class WorkoutRecorder {
     // same, as watchOS expects, and goes if no session comes.
     func start(sessionID: String?, at date: Date) {
         guard let health, session == nil, !isRecovering,
-              health.authorizationStatus(for: HKObjectType.workoutType()) == .sharingAuthorized else { return }
+              health.authorizationStatus(for: HKObjectType.workoutType()) == .sharingAuthorized else {
+            let workouts = health?.authorizationStatus(for: HKObjectType.workoutType()).rawValue
+            WorkoutLog.add("Not started: Health \(health != nil), one running \(session != nil), recovering \(isRecovering), workouts allowed \(workouts.map(String.init) ?? "-")")
+            return
+        }
         let configuration = Self.configuration
         do {
             let session = try HKWorkoutSession(healthStore: health, configuration: configuration)
@@ -132,17 +136,20 @@ final class WorkoutRecorder {
             } else {
                 dropIfUnnamed(session)
             }
+            WorkoutLog.add("Started\(sessionID == nil ? ", before its session" : "")")
             #if os(watchOS)
             handBackIfNotWorn(session, startedAt: date)
             #endif
         } catch {
             Self.logger.error("Cannot start the workout: \(String(describing: error))")
+            WorkoutLog.add("Cannot start: \(String(describing: error))")
         }
     }
 
     // The session of a workout started before it was heard of.
     func belongs(to sessionID: String) {
         guard let session, self.sessionID == nil else { return }
+        WorkoutLog.add("Its session heard")
         self.sessionID = sessionID
         name(session.associatedWorkoutBuilder(), sessionID)
     }
@@ -161,6 +168,7 @@ final class WorkoutRecorder {
             try? await Task.sleep(for: Self.unnamedDelay)
             guard let self, let own = self.session, ObjectIdentifier(own) == started, self.sessionID == nil else { return }
             Self.logger.error("No session for the workout started: discarded")
+            WorkoutLog.add("No session came: discarded")
             self.discard()
         }
     }
@@ -180,6 +188,7 @@ final class WorkoutRecorder {
             let locked = await Self.isLocked(health)
             guard let own = self.session, self.isOwn(started), locked || (measuresHeart && !self.heardHeart) else { return }
             Self.logger.notice("The watch is not worn (locked: \(locked)): the iPhone takes the workout over")
+            WorkoutLog.add("Not worn (locked \(locked), heart heard \(self.heardHeart)): given to the iPhone")
             self.handedBackAt = date
             // Said by the workout's channel while it is still open.
             self.peer?.workoutEnding()
@@ -258,6 +267,7 @@ final class WorkoutRecorder {
             watchLost = nil
         }
         guard records != otherDeviceRecords else { return }
+        WorkoutLog.add(records ? "The other device records" : "The other device does not record")
         otherDeviceRecords = records
         #if os(iOS)
         if records {
@@ -299,6 +309,7 @@ final class WorkoutRecorder {
     // The watch gave its workout up, not worn: the iPhone's records the session from the same start.
     func takeOver(sessionID: String, from date: Date) {
         guard !tookOver, session == nil else { return }
+        WorkoutLog.add("Taken over from the watch")
         tookOver = true
         otherDeviceRecords = false
         start(sessionID: sessionID, at: date)
@@ -341,15 +352,19 @@ final class WorkoutRecorder {
     func startWithWatch(sessionID: String, at date: Date) {
         let watch = WCSession.isSupported() ? WCSession.default : nil
         guard let health, let watch, watch.activationState == .activated, watch.isPaired, watch.isWatchAppInstalled else {
+            WorkoutLog.add("Watch not asked: Health \(health != nil), link \(watch.map { String($0.activationState.rawValue) } ?? "-"), paired \(watch?.isPaired == true), app installed \(watch?.isWatchAppInstalled == true)")
             start(sessionID: sessionID, at: date)
             return
         }
         waitingForWatch = sessionID
+        WorkoutLog.add("Watch asked")
         health.startWatchApp(with: Self.configuration) { @Sendable [weak self] started, error in
             if let error {
                 Self.logger.debug("The watch did not start: \(String(describing: error))")
             }
+            let answer = "Watch answered: started \(started)\(error.map { ", \(String(describing: $0))" } ?? "")"
             Task { @MainActor [weak self] in
+                WorkoutLog.add(answer)
                 if started {
                     // Its workout runs already: two at once for one session would measure badly. Here only if the
                     // watch never says it records.
@@ -374,6 +389,7 @@ final class WorkoutRecorder {
 
     private func watchDidNotAnswer(sessionID: String, startedAt date: Date) {
         guard waitingForWatch == sessionID else { return }
+        WorkoutLog.add("No word from the watch: the iPhone records")
         waitingForWatch = nil
         watchFallback?.cancel()
         watchFallback = nil
@@ -388,6 +404,10 @@ final class WorkoutRecorder {
         session.startMirroringToCompanionDevice { @Sendable [weak self] success, error in
             if let error {
                 Self.logger.debug("Not mirrored on the iPhone: \(String(describing: error))")
+            }
+            let result = "Mirrored on the iPhone: \(success)\(error.map { ", \(String(describing: $0))" } ?? "")"
+            Task { @MainActor in
+                WorkoutLog.add(result)
             }
             guard success else { return }
             Task { @MainActor [weak self] in
@@ -540,11 +560,13 @@ final class WorkoutRecorder {
             // saved, and the other device, or a new workout when the app comes back, takes over.
             if let own = self.session, ObjectIdentifier(own) == session {
                 Self.logger.error("The workout ended on its own")
+                WorkoutLog.add("Ended on its own")
                 self.saveOwnWorkout(at: date)
             } else {
                 self.mirroredGone(session)
             }
-        } failed: { [weak self] session in
+        } failed: { [weak self] session, error in
+            WorkoutLog.add("Failed: \(error)")
             // It could not start (from the background, without having been asked by the iPhone): tried again later.
             if let own = self?.session, ObjectIdentifier(own) == session, own.state == .notStarted {
                 self?.detach()
@@ -572,7 +594,7 @@ private nonisolated final class Relay: NSObject, HKWorkoutSessionDelegate, HKLiv
         let received: @MainActor @Sendable ([Data]) -> Void
         let disconnected: @MainActor @Sendable (ObjectIdentifier) -> Void
         let ended: @MainActor @Sendable (ObjectIdentifier, Date) -> Void
-        let failed: @MainActor @Sendable (ObjectIdentifier) -> Void
+        let failed: @MainActor @Sendable (ObjectIdentifier, String) -> Void
     }
 
     private static let logger = Logger(subsystem: "com.zsr.halko", category: "health")
@@ -596,8 +618,9 @@ private nonisolated final class Relay: NSObject, HKWorkoutSessionDelegate, HKLiv
         Self.logger.error("The workout failed: \(String(describing: error))")
         let session = ObjectIdentifier(workoutSession)
         let failed = events.failed
+        let described = String(describing: error)
         Task { @MainActor in
-            failed(session)
+            failed(session, described)
         }
     }
 

@@ -1,6 +1,26 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "%@ · history" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ · historique"
+          }
+        }
+      }
+    },
+    "%lld / %lld sets" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld / %2$lld séries"
+          }
+        }
+      }
+    },
     "Above" : {
       "localizations" : {
         "fr" : {
@@ -361,6 +381,16 @@
         }
       }
     },
+    "Filled in when a session starts, on the iPhone and on the watch." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rempli au début de chaque séance, sur l’iPhone et sur la montre."
+          }
+        }
+      }
+    },
     "Finish the session in progress to erase everything." : {
       "localizations" : {
         "fr" : {
@@ -441,6 +471,16 @@
         }
       }
     },
+    "No session yet with this exercise." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune séance avec cet exercice pour l’instant."
+          }
+        }
+      }
+    },
     "Nothing yet" : {
       "localizations" : {
         "fr" : {
@@ -451,12 +491,32 @@
         }
       }
     },
+    "Program" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Programme"
+          }
+        }
+      }
+    },
     "Sound log" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Journal du son"
+          }
+        }
+      }
+    },
+    "Watch log" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Journal de la montre"
           }
         }
       }
@@ -1039,6 +1099,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pour ranger tes séances."
+          }
+        }
+      }
+    },
+    "What happened to the workout of Health on the watch and the iPhone, newest first: to send if the watch did not record a session." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce qu’est devenue la séance Santé sur la montre et l’iPhone, le plus récent en premier : à envoyer si la montre n’a pas enregistré une séance."
           }
         }
       }

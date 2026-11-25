@@ -19,3 +19,16 @@ struct Tag: View {
             .background(color.opacity(0.15), in: .rect(cornerRadius: 6))
     }
 }
+
+extension View {
+    // The bar along the exercises of a superset: in the workout editor, and beside the session.
+    func supersetBar(_ shown: Bool = true) -> some View {
+        overlay(alignment: .leading) {
+            if shown {
+                Rectangle()
+                    .fill(Color(.superset))
+                    .frame(width: 3)
+            }
+        }
+    }
+}
