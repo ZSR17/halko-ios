@@ -127,6 +127,7 @@ extension PhoneLink: WCSessionDelegate {
         guard activationState == .activated else { return }
         Task { @MainActor in
             self.linked()
+            WorkoutLog.send()
         }
     }
 

@@ -56,6 +56,16 @@ struct PermissionsView: View {
                 Text("Only used if Halko no longer runs during a session. Without them, the end of a rest still sounds.")
                     .foregroundStyle(Color(.secondaryText))
             }
+            Section {
+                NavigationLink("Watch log") {
+                    LogView(key: WorkoutLog.key, title: "Watch log", icon: "applewatch", clear: WorkoutLog.clear) {
+                        Text("Filled in when a session starts, on the iPhone and on the watch.")
+                    }
+                }
+            } footer: {
+                Text("What happened to the workout of Health on the watch and the iPhone, newest first: to send if the watch did not record a session.")
+                    .foregroundStyle(Color(.secondaryText))
+            }
         }
         .navigationTitle("Permissions")
         .navigationBarTitleDisplayMode(.inline)
