@@ -42,8 +42,10 @@ while IFS= read -r file; do
     Halko/Tools/*) tests+=(ToolsTests) ;;
     # What the end of a session and the history show alike.
     Halko/Session/SessionFigures.swift) tests+=(LiveSessionTests HistoryTests) ;;
-    # The session, and what it shows outside the app (the widgets are not tested on screen: only built).
-    Halko/Session/* | Halko/Health/* | Halko/Settings/* | Shared/*) tests+=(LiveSessionTests) ;;
+    # The session, in two columns on the iPhone Duo open too.
+    Halko/Session/*) tests+=(LiveSessionTests DuoTests) ;;
+    # What the session shows outside the app (the widgets are not tested on screen: only built).
+    Halko/Health/* | Halko/Settings/* | Shared/*) tests+=(LiveSessionTests) ;;
     HalkoWidgets/*) ;;
     # Anything else (the views shared by the screens, the colours, the sample data, the project, the CI): all.
     *)

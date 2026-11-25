@@ -9,7 +9,8 @@ nonisolated enum LiveField: Hashable, Sendable {
 }
 
 // The session in progress: every exercise one under the other with its sets, and at the bottom the set to do (its
-// values and Validate), which becomes the rest once validated. Everything is written on the device first.
+// values and Validate), which becomes the rest once validated. Everything is written on the device first. On a wide
+// screen (the iPhone Duo open), the program of the session and the last sessions of the exercise beside it.
 struct LiveSessionView: View {
     private static let logger = Logger(subsystem: "com.zsr.halko", category: "session")
 
@@ -20,6 +21,7 @@ struct LiveSessionView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.locale) private var locale
     @Environment(\.units) private var units
+    @Environment(\.horizontalSizeClass) private var sizeClass
     @Query private var sessions: [Session]
     @Query private var sets: [SetLog]
     @Query private var exercises: [Exercise]
@@ -50,6 +52,56 @@ struct LiveSessionView: View {
 
     var body: some View {
         let table = self.table
+        Group {
+            if sizeClass == .regular {
+                NavigationSplitView {
+                    SessionProgram(table: table)
+                        .toolbar {
+                            ToolbarItem(placement: .topBarLeading) {
+                                backButton
+                            }
+                        }
+                } detail: {
+                    sets(table)
+                }
+                .navigationSplitViewStyle(.balanced)
+            } else {
+                sets(table)
+            }
+        }
+        // Its Cancel in the color of a text, as every alert's.
+        .background {
+            Color.clear
+                .alert("Discard the session?", isPresented: $discarding) {
+                    Button("Discard", role: .destructive) {
+                        discard()
+                    }
+                    Button("Cancel", role: .cancel) {}
+                } message: {
+                    Text("The sets done in this session will be deleted.")
+                }
+                .tint(.primary)
+        }
+        // Again for an exercise added.
+        .task(id: state.plan.map(\.exerciseID)) {
+            loadPrevious()
+        }
+        .sheet(isPresented: $picking) {
+            ExercisePicker { exercises in
+                change { try context.addExercises(&$0, exercises, after: addingAfter, unit: units.weight) }
+            }
+        }
+        // On the other device too, once the changes pause: not at each tap or digit.
+        .task(id: typing) {
+            guard !typing.isEmpty else { return }
+            try? await Task.sleep(for: .milliseconds(600))
+            guard !Task.isCancelled else { return }
+            change { _ in }
+        }
+    }
+
+    // The exercises and their sets, the set to do at the bottom.
+    private func sets(_ table: LiveTable) -> some View {
         NavigationStack {
             ScrollViewReader { proxy in
                 ScrollView {
@@ -127,35 +179,6 @@ struct LiveSessionView: View {
                 PastSessionView(link: link)
             }
         }
-        // Its Cancel in the color of a text, as every alert's.
-        .background {
-            Color.clear
-                .alert("Discard the session?", isPresented: $discarding) {
-                    Button("Discard", role: .destructive) {
-                        discard()
-                    }
-                    Button("Cancel", role: .cancel) {}
-                } message: {
-                    Text("The sets done in this session will be deleted.")
-                }
-                .tint(.primary)
-        }
-        // Again for an exercise added.
-        .task(id: state.plan.map(\.exerciseID)) {
-            loadPrevious()
-        }
-        .sheet(isPresented: $picking) {
-            ExercisePicker { exercises in
-                change { try context.addExercises(&$0, exercises, after: addingAfter, unit: units.weight) }
-            }
-        }
-        // On the other device too, once the changes pause: not at each tap or digit.
-        .task(id: typing) {
-            guard !typing.isEmpty else { return }
-            try? await Task.sleep(for: .milliseconds(600))
-            guard !Task.isCancelled else { return }
-            change { _ in }
-        }
     }
 
     private var table: LiveTable {
@@ -189,14 +212,11 @@ struct LiveSessionView: View {
 
     @ToolbarContentBuilder
     private func toolbar(_ table: LiveTable) -> some ToolbarContent {
-        ToolbarItem(placement: .topBarLeading) {
-            Button {
-                store.isPresented = false
-            } label: {
-                Label("Workouts", systemImage: "chevron.backward")
-                    .labelStyle(.titleAndIcon)
+        // Above the program instead, when it is beside.
+        if sizeClass != .regular {
+            ToolbarItem(placement: .topBarLeading) {
+                backButton
             }
-            .accessibilityHint(Text("The session goes on."))
         }
         ToolbarItem(placement: .principal) {
             VStack(spacing: 0) {
@@ -231,6 +251,16 @@ struct LiveSessionView: View {
                     .tint(.primary)
             }
         }
+    }
+
+    private var backButton: some View {
+        Button {
+            store.isPresented = false
+        } label: {
+            Label("Workouts", systemImage: "chevron.backward")
+                .labelStyle(.titleAndIcon)
+        }
+        .accessibilityHint(Text("The session goes on."))
     }
 
     @ViewBuilder
