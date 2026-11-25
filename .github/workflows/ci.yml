@@ -164,11 +164,13 @@ jobs:
       - name: Pick an iPhone simulator
         id: simulator
         run: |
-          # The newest iOS runtime of this Xcode, and its first iPhone (not the iPhone Duo, which has its own tests, nor
-          # the runtimes made for one device only).
+          # The newest iOS runtime of this Xcode (not the runtimes made for one device only), and its iPhone Pro: the
+          # screens are checked on the same size whatever order the runner's image lists its simulators in (its
+          # 2026-11-23 image put the Pro Max first). Else its first iPhone, not the iPhone Duo, which has its own tests.
           id=$(xcrun simctl list devices available --json | jq -r '
             .devices | to_entries | map(select(.key | test("iOS-[0-9]+(-[0-9]+)*$"))) | sort_by(.key | sub(".*iOS-"; "") | split("-") | map(tonumber))
-            | last.value | map(select((.name | startswith("iPhone")) and (.name | contains("Duo") | not))) | first.udid')
+            | last.value | map(select((.name | startswith("iPhone")) and (.name | contains("Duo") | not)))
+            | (map(select(.name | test("^iPhone [0-9]+ Pro$"))) | first) // first | .udid')
           xcrun simctl list devices | grep -e "$id"
           echo "id=$id" >> "$GITHUB_OUTPUT"
       - name: Test the iPhone app
