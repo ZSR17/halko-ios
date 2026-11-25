@@ -88,6 +88,12 @@ struct LiveTable {
         (0..<plan.setCount(item)).count(where: { plan.target(item, set: $0).kind != .warmup })
     }
 
+    func workingDone(_ item: Int) -> Int {
+        (0..<plan.setCount(item)).count { set in
+            plan.target(item, set: set).kind != .warmup && logged[LivePlan.key(plan.items[item].itemID, set)] != nil
+        }
+    }
+
     // A set as on the page of a workout: "80 × 8"; with its unit, alone: "80 kg × 8".
     func setText(_ item: Int, values: SetValues, unit: Bool = false) -> String {
         let target = SetTarget(kind: .normal, reps: values.reps, weightG: values.weightG, durationS: values.durationS, distanceM: values.distanceM)

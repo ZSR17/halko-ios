@@ -1,6 +1,26 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "%@ · history" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ · historique"
+          }
+        }
+      }
+    },
+    "%lld / %lld sets" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld / %2$lld séries"
+          }
+        }
+      }
+    },
     "Above" : {
       "localizations" : {
         "fr" : {
@@ -441,12 +461,32 @@
         }
       }
     },
+    "No session yet with this exercise." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune séance avec cet exercice pour l’instant."
+          }
+        }
+      }
+    },
     "Nothing yet" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rien pour l’instant"
+          }
+        }
+      }
+    },
+    "Program" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Programme"
           }
         }
       }

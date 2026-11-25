@@ -30,6 +30,27 @@ final class DuoTests: XCTestCase {
         snapInnerScreen("Duo › Séances")
     }
 
+    @MainActor
+    func testLiveSessionInTwoColumns() throws {
+        let app = launch(language: "en", locale: "en_GB")
+        app.openSessionInProgress()
+
+        // The sets on the right; on the left the program, the bench press under way, and its last sessions.
+        XCTAssertTrue(app.element(containing: "Set 2 of 4 · Barbell Bench Press - Medium Grip").waitForExistence(timeout: 30))
+        XCTAssertTrue(app.staticTexts["Program"].exists)
+        XCTAssertTrue(app.element(containing: "1 / 4 sets").exists)
+        XCTAssertTrue(app.element(containing: "Superset · no rest in between").exists)
+        XCTAssertTrue(app.element(containing: "Barbell Bench Press - Medium Grip · history").exists)
+        XCTAssertTrue(app.element(containing: "Estimated 1RM").exists)
+        XCTAssertTrue(app.buttons["Finish"].exists)
+        try app.auditScreen()
+        snapInnerScreen("Duo › Session")
+
+        // The way back is above the program; the session goes on.
+        app.buttons["Workouts"].firstMatch.tap()
+        XCTAssertTrue(app.element(containing: "Push A · in progress").waitForExistence(timeout: 5))
+    }
+
     // XCTest's screenshots of the inner screen are black: the CI takes them, from the Mac, with simctl. Asked by a
     // file in the folder it gives, and done when the CI has removed it.
     @MainActor
