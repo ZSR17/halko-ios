@@ -247,6 +247,9 @@ jobs:
           test "$(plutil -extract UIBackgroundModes.0 raw "$app/Info.plist")" = audio
           # The workout of Health of the watch, running with the wrist down.
           test "$(plutil -extract WKBackgroundModes.0 raw "$app/Watch/HalkoWatch.app/Info.plist")" = workout-processing
+          # The session's Live Activity, touched on the watch, opens the watch app: its type, as the widgets name it.
+          test "$(plutil -extract WKSupportsLiveActivityLaunchAttributeTypes.0 raw "$app/Watch/HalkoWatch.app/Info.plist")" = SessionActivityAttributes
+          grep -q "struct SessionActivityAttributes: ActivityAttributes" Shared/SessionActivityAttributes.swift
           test -f "$app/RestOver.wav"
           # Looped during a session: iOS lets the app start the end of a rest in the background only while it plays.
           test -f "$app/Silence.wav"
