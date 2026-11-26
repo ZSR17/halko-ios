@@ -172,7 +172,7 @@ private struct SessionMonths: View {
                     ForEach(month.sessions) { session in
                         let link = PastSessionLink(sessionID: session.id)
                         if let chosen {
-                            ChoiceRow(value: HistoryChoice.session(link), chosen: chosen, card: true) {
+                            ColumnRow(value: HistoryChoice.session(link), chosen: chosen, card: true) {
                                 PastSessionRow(session: session, text: text, chevron: false)
                             }
                         } else {
@@ -323,7 +323,7 @@ private struct ExerciseChoices: View {
         } else {
             LazyVStack(spacing: 8) {
                 ForEach(exercises) { exercise in
-                    ChoiceRow(value: HistoryChoice.exercise(exercise.id), chosen: chosen, card: true) {
+                    ColumnRow(value: HistoryChoice.exercise(exercise.id), chosen: chosen, card: true) {
                         Text(verbatim: exercise.localizedName)
                             .font(.headline)
                             .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)

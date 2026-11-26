@@ -48,7 +48,7 @@ struct TabColumns<Choice: Hashable, Sidebar: View, Detail: View, Stack: View>: V
 
 // A line of a list in the left column, which shows its page in the right one: marked while it is shown, by a grey
 // background, or by an outline around a card, which has its own background.
-struct ChoiceRow<Choice: Hashable, Label: View>: View {
+struct ColumnRow<Choice: Hashable, Label: View>: View {
     let value: Choice
     @Binding var chosen: Choice?
     var card = false

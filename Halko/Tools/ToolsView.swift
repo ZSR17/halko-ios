@@ -49,7 +49,7 @@ private struct ToolsView: View {
             VStack(spacing: 10) {
                 ForEach(Tool.allCases, id: \.self) { tool in
                     if let chosen {
-                        ChoiceRow(value: tool, chosen: chosen) {
+                        ColumnRow(value: tool, chosen: chosen) {
                             ToolRow(title: tool.title, symbol: tool.symbol, chevron: false)
                                 .padding(.vertical, 8)
                         }

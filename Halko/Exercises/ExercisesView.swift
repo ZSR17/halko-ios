@@ -35,7 +35,7 @@ private struct ExercisesView: View {
     var body: some View {
         ExerciseBrowser(chosen: chosen) { entry in
             if let chosen {
-                ChoiceRow(value: entry.exercise, chosen: chosen) {
+                ColumnRow(value: entry.exercise, chosen: chosen) {
                     ExerciseListRow(entry: entry)
                 }
             } else {
