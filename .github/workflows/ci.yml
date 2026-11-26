@@ -248,6 +248,8 @@ jobs:
           # The workout of Health of the watch, running with the wrist down.
           test "$(plutil -extract WKBackgroundModes.0 raw "$app/Watch/HalkoWatch.app/Info.plist")" = workout-processing
           test -f "$app/RestOver.wav"
+          # Looped during a session: iOS lets the app start the end of a rest in the background only while it plays.
+          test -f "$app/Silence.wav"
           # A missing or unreadable icon does not fail the build: the icon name is then absent from Info.plist.
           for plist in "$app/Info.plist" "$app/Watch/HalkoWatch.app/Info.plist"; do
             test "$(plutil -extract CFBundleIcons.CFBundlePrimaryIcon.CFBundleIconName raw "$plist" 2>/dev/null || plutil -extract CFBundleIconName raw "$plist")" = AppIcon
