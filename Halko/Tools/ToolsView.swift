@@ -1,23 +1,69 @@
 import HalkoCore
 import SwiftUI
 
-// The Tools tab: a line for each tool, which opens it in full screen. Worked out on the device: the same offline.
-struct ToolsView: View {
+// The Tools tab: a line for each tool, which opens it in full screen; with room (the iPhone Duo open), beside the list.
+// Worked out on the device: the same offline.
+struct ToolsTab: View {
+    var body: some View {
+        TabColumns(first: Tool.plates) { chosen in
+            ToolsView(chosen: chosen)
+        } detail: { tool in
+            tool.page
+        } stack: {
+            ToolsView(chosen: nil)
+        }
+    }
+}
+
+private enum Tool: CaseIterable {
+    case plates, oneRepMax
+
+    var title: Text {
+        switch self {
+        case .plates: Text("Plate calculator")
+        case .oneRepMax: Text("1RM calculator")
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .plates: "dumbbell"
+        case .oneRepMax: "chart.line.uptrend.xyaxis"
+        }
+    }
+
+    @ViewBuilder var page: some View {
+        switch self {
+        case .plates: PlatesView()
+        case .oneRepMax: OneRepMaxView()
+        }
+    }
+}
+
+private struct ToolsView: View {
+    // Beside the list, the tool shown; nil when a tool opens over the list.
+    let chosen: Binding<Tool?>?
+
     var body: some View {
         ScrollView {
             VStack(spacing: 10) {
-                NavigationLink {
-                    PlatesView()
-                } label: {
-                    ToolRow(title: Text("Plate calculator"), symbol: "dumbbell")
+                ForEach(Tool.allCases, id: \.self) { tool in
+                    if let chosen {
+                        ChoiceRow(value: tool, chosen: chosen) {
+                            ToolRow(title: tool.title, symbol: tool.symbol, chevron: false)
+                                .padding(.vertical, 8)
+                        }
+                    } else {
+                        NavigationLink {
+                            tool.page
+                        } label: {
+                            ToolRow(title: tool.title, symbol: tool.symbol, chevron: true)
+                                .padding(16)
+                                .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 18))
+                        }
+                        .buttonStyle(.plain)
+                    }
                 }
-                .buttonStyle(.plain)
-                NavigationLink {
-                    OneRepMaxView()
-                } label: {
-                    ToolRow(title: Text("1RM calculator"), symbol: "chart.line.uptrend.xyaxis")
-                }
-                .buttonStyle(.plain)
             }
             .padding([.horizontal, .bottom])
         }
@@ -29,6 +75,8 @@ struct ToolsView: View {
 private struct ToolRow: View {
     let title: Text
     let symbol: String
+    // Toward the page that opens over the list.
+    let chevron: Bool
     @ScaledMetric(relativeTo: .title3) private var iconSide = 48.0
 
     var body: some View {
@@ -42,13 +90,13 @@ private struct ToolRow: View {
             title
                 .font(.headline)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            Image(systemName: "chevron.right")
-                .font(.footnote.weight(.semibold))
-                .foregroundStyle(Color(.secondaryText))
-                .accessibilityHidden(true)
+            if chevron {
+                Image(systemName: "chevron.right")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(Color(.secondaryText))
+                    .accessibilityHidden(true)
+            }
         }
-        .padding(16)
-        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 18))
         .contentShape(.rect)
     }
 }

@@ -2,8 +2,37 @@ import HalkoCore
 import SwiftUI
 
 // The Settings tab: the language and units, how a session works, Health and the notifications, the look of the app and its data.
-// What the watch needs of it goes to the watch.
-struct SettingsView: View {
+// What the watch needs of it goes to the watch. With room (the iPhone Duo open), the page chosen beside the list.
+struct SettingsTab: View {
+    var body: some View {
+        TabColumns(first: SettingsPage.language) { chosen in
+            SettingsView(chosen: chosen)
+        } detail: { page in
+            page.view
+        } stack: {
+            SettingsView(chosen: nil)
+        }
+    }
+}
+
+private enum SettingsPage {
+    case language, restEnd, setTimer, permissions, theme, data
+
+    @ViewBuilder var view: some View {
+        switch self {
+        case .language: LanguageView()
+        case .restEnd: RestAlertSettingsView()
+        case .setTimer: SetTimerSettingsView()
+        case .permissions: PermissionsView()
+        case .theme: ThemeSettingsView()
+        case .data: DataSettingsView()
+        }
+    }
+}
+
+private struct SettingsView: View {
+    // Beside the list, the page shown; nil when a page opens over the list.
+    let chosen: Binding<SettingsPage?>?
     @AppStorage(AppLanguage.key) private var language = AppLanguage.system
     @AppStorage(Units.weightKey) private var weight: WeightUnit?
     @AppStorage(Units.distanceKey) private var distance: DistanceUnit?
@@ -19,99 +48,115 @@ struct SettingsView: View {
     @ScaledMetric(relativeTo: .body) private var unitsWidth = 150.0
 
     var body: some View {
-        List {
-            Section {
-                NavigationLink {
-                    LanguageView()
-                } label: {
-                    LabeledContent("Language") {
-                        language.name
-                    }
+        Group {
+            if let chosen {
+                List(selection: chosen) {
+                    sections
                 }
-                HStack {
-                    Text("Weight")
-                    Spacer(minLength: 8)
-                    Picker("Weight", selection: Binding { weight ?? units.weight } set: { weight = $0 }) {
-                        ForEach(WeightUnit.allCases, id: \.self) { unit in
-                            Text(verbatim: unit.rawValue)
-                                .tag(unit)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .labelsHidden()
-                    .controlSize(.large)
-                    .frame(maxWidth: unitsWidth)
+            } else {
+                List {
+                    sections
                 }
-                HStack {
-                    Text("Distance")
-                    Spacer(minLength: 8)
-                    Picker("Distance", selection: Binding { distance ?? units.distance } set: { distance = $0 }) {
-                        ForEach(DistanceUnit.allCases, id: \.self) { unit in
-                            Text(verbatim: unit.rawValue)
-                                .tag(unit)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .labelsHidden()
-                    .controlSize(.large)
-                    .frame(maxWidth: unitsWidth)
-                }
-            } header: {
-                // In a darker grey than the system's, for a contrast of 4.5:1.
-                Text("Language and units")
-                    .foregroundStyle(Color(.secondaryText))
-            }
-            Section {
-                NavigationLink {
-                    RestAlertSettingsView()
-                } label: {
-                    LabeledContent("Rest end") {
-                        Text(verbatim: restAlert)
-                    }
-                }
-                NavigationLink("Set timer") {
-                    SetTimerSettingsView()
-                }
-            } header: {
-                Text("Session")
-                    .foregroundStyle(Color(.secondaryText))
-            }
-            Section {
-                Toggle("Save in Health", isOn: $savesInHealth)
-                NavigationLink {
-                    PermissionsView()
-                } label: {
-                    LabeledContent("Permissions") {
-                        permissionsSummary
-                    }
-                }
-            } header: {
-                Text("Health and notifications")
-                    .foregroundStyle(Color(.secondaryText))
-            }
-            Section {
-                NavigationLink {
-                    ThemeSettingsView()
-                } label: {
-                    LabeledContent("Theme and color") {
-                        appearance.name
-                    }
-                }
-                NavigationLink {
-                    DataSettingsView()
-                } label: {
-                    LabeledContent("My data") {
-                        Text("Export, import")
-                    }
-                }
-            } header: {
-                Text("Appearance and data")
-                    .foregroundStyle(Color(.secondaryText))
             }
         }
         .navigationTitle("Settings")
         .task(id: scenePhase) {
             await permissions.refresh()
+        }
+    }
+
+    @ViewBuilder private var sections: some View {
+        Section {
+            link(.language) {
+                LabeledContent("Language") {
+                    language.name
+                }
+            }
+            HStack {
+                Text("Weight")
+                Spacer(minLength: 8)
+                Picker("Weight", selection: Binding { weight ?? units.weight } set: { weight = $0 }) {
+                    ForEach(WeightUnit.allCases, id: \.self) { unit in
+                        Text(verbatim: unit.rawValue)
+                            .tag(unit)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .controlSize(.large)
+                .frame(maxWidth: unitsWidth)
+            }
+            HStack {
+                Text("Distance")
+                Spacer(minLength: 8)
+                Picker("Distance", selection: Binding { distance ?? units.distance } set: { distance = $0 }) {
+                    ForEach(DistanceUnit.allCases, id: \.self) { unit in
+                        Text(verbatim: unit.rawValue)
+                            .tag(unit)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .controlSize(.large)
+                .frame(maxWidth: unitsWidth)
+            }
+        } header: {
+            // In a darker grey than the system's, for a contrast of 4.5:1.
+            Text("Language and units")
+                .foregroundStyle(Color(.secondaryText))
+        }
+        Section {
+            link(.restEnd) {
+                LabeledContent("Rest end") {
+                    Text(verbatim: restAlert)
+                }
+            }
+            link(.setTimer) {
+                Text("Set timer")
+            }
+        } header: {
+            Text("Session")
+                .foregroundStyle(Color(.secondaryText))
+        }
+        Section {
+            Toggle("Save in Health", isOn: $savesInHealth)
+            link(.permissions) {
+                LabeledContent("Permissions") {
+                    permissionsSummary
+                }
+            }
+        } header: {
+            Text("Health and notifications")
+                .foregroundStyle(Color(.secondaryText))
+        }
+        Section {
+            link(.theme) {
+                LabeledContent("Theme and color") {
+                    appearance.name
+                }
+            }
+            link(.data) {
+                LabeledContent("My data") {
+                    Text("Export, import")
+                }
+            }
+        } header: {
+            Text("Appearance and data")
+                .foregroundStyle(Color(.secondaryText))
+        }
+    }
+
+    // A line that opens its page: over the list, or beside it, marked while shown.
+    @ViewBuilder private func link<Label: View>(_ page: SettingsPage, @ViewBuilder label: () -> Label) -> some View {
+        if chosen != nil {
+            label()
+                .tag(page)
+        } else {
+            NavigationLink {
+                page.view
+            } label: {
+                label()
+            }
         }
     }
 

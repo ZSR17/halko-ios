@@ -3,16 +3,47 @@ import SwiftData
 import SwiftUI
 
 // The Exercises tab: the embedded library and the exercises made on the device, narrowed down by muscles,
-// equipment and a search of their names. All of it local: the same offline.
-struct ExercisesView: View {
+// equipment and a search of their names. All of it local: the same offline. With room (the iPhone Duo open), the page
+// of the exercise chosen beside the list.
+struct ExercisesTab: View {
+    var body: some View {
+        TabColumns { (chosen: Binding<Exercise?>) in
+            ExercisesView(chosen: chosen)
+        } detail: { exercise in
+            ExerciseView(exercise: exercise)
+                // From the progress on the page of an exercise.
+                .navigationDestination(for: PastSessionLink.self) { link in
+                    PastSessionView(link: link)
+                }
+        } stack: {
+            ExercisesView(chosen: nil)
+                .navigationDestination(for: Exercise.self) { exercise in
+                    ExerciseView(exercise: exercise)
+                }
+                .navigationDestination(for: PastSessionLink.self) { link in
+                    PastSessionView(link: link)
+                }
+        }
+    }
+}
+
+private struct ExercisesView: View {
+    // Beside the list, the exercise whose page is shown; nil when a page opens over the list.
+    let chosen: Binding<Exercise?>?
     @State private var creating = false
 
     var body: some View {
-        ExerciseBrowser { entry in
-            NavigationLink(value: entry.exercise) {
-                ExerciseListRow(entry: entry)
+        ExerciseBrowser(chosen: chosen) { entry in
+            if let chosen {
+                ChoiceRow(value: entry.exercise, chosen: chosen) {
+                    ExerciseListRow(entry: entry)
+                }
+            } else {
+                NavigationLink(value: entry.exercise) {
+                    ExerciseListRow(entry: entry)
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
         }
         .navigationTitle("Exercises")
         // The title and + stay while searching.
@@ -27,19 +58,14 @@ struct ExercisesView: View {
         .sheet(isPresented: $creating) {
             ExerciseEditor(exercise: nil)
         }
-        .navigationDestination(for: Exercise.self) { exercise in
-            ExerciseView(exercise: exercise)
-        }
-        // From the progress on the page of an exercise.
-        .navigationDestination(for: PastSessionLink.self) { link in
-            PastSessionView(link: link)
-        }
     }
 }
 
 // The silhouette, the filters, the search and the exercises they keep, each shown by `row`: the Exercises tab, and
 // the choice of the exercises to add to a workout.
 struct ExerciseBrowser<Row: View>: View {
+    // Beside the list (the iPhone Duo open): the exercise shown, the first one kept until one is chosen.
+    var chosen: Binding<Exercise?>?
     @ViewBuilder let row: (ExerciseEntry) -> Row
     @Query(filter: #Predicate<Exercise> { !$0.removed }) private var exercises: [Exercise]
     @State private var catalog = ExerciseCatalog()
@@ -77,6 +103,11 @@ struct ExerciseBrowser<Row: View>: View {
         .scrollDismissesKeyboard(.immediately)
         .onChange(of: exercises, initial: true) { _, exercises in
             catalog.show(exercises)
+        }
+        .onChange(of: catalog.results.first?.id, initial: true) { _, _ in
+            if let chosen, chosen.wrappedValue == nil {
+                chosen.wrappedValue = catalog.results.first?.exercise
+            }
         }
     }
 }

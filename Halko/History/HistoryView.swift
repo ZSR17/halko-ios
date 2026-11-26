@@ -3,8 +3,47 @@ import os
 import SwiftData
 import SwiftUI
 
-// The History tab: this week's figures, then the sessions finished by month, or the progress of an exercise.
-struct HistoryView: View {
+// The History tab: this week's figures, then the sessions finished by month, or the progress of an exercise. With room
+// (the iPhone Duo open), the session or the progress chosen beside the list.
+struct HistoryTab: View {
+    var body: some View {
+        TabColumns { (chosen: Binding<HistoryChoice?>) in
+            HistoryView(chosen: chosen)
+        } detail: { choice in
+            Group {
+                switch choice {
+                case .session(let link):
+                    PastSessionView(link: link)
+                case .exercise(let id):
+                    ExerciseProgressColumn(exerciseID: id)
+                }
+            }
+            .navigationDestination(for: PastSessionLink.self) { link in
+                PastSessionView(link: link)
+            }
+            .navigationDestination(for: Exercise.self) { exercise in
+                ExerciseView(exercise: exercise)
+            }
+        } stack: {
+            HistoryView(chosen: nil)
+                .navigationDestination(for: PastSessionLink.self) { link in
+                    PastSessionView(link: link)
+                }
+                .navigationDestination(for: Exercise.self) { exercise in
+                    ExerciseView(exercise: exercise)
+                }
+        }
+    }
+}
+
+// What the History tab shows beside its list.
+private enum HistoryChoice: Hashable {
+    case session(PastSessionLink)
+    // The progress of an exercise, by its id.
+    case exercise(String)
+}
+
+private struct HistoryView: View {
     private enum Page {
         case sessions, progress
     }
@@ -16,6 +55,8 @@ struct HistoryView: View {
     @Environment(\.units) private var units
     @State private var history: SessionHistory?
     @State private var page = Page.sessions
+    // Beside the list, what is shown; nil when a page opens over the list.
+    let chosen: Binding<HistoryChoice?>?
 
     var body: some View {
         let text = HistoryText(sets: SetsText(units: units))
@@ -36,10 +77,14 @@ struct HistoryView: View {
                             NoSessions()
                                 .padding(.top, 60)
                         } else {
-                            SessionMonths(months: history.months, text: text)
+                            SessionMonths(months: history.months, text: text, chosen: chosen)
                         }
                     case .progress:
-                        ProgressPage(history: history, text: text)
+                        if let chosen {
+                            ExerciseChoices(exercises: history.exercises, chosen: chosen)
+                        } else {
+                            ProgressPage(history: history, text: text)
+                        }
                     }
                 }
             }
@@ -55,11 +100,23 @@ struct HistoryView: View {
                 Self.logger.error("Cannot read the history: \(String(describing: error))")
             }
         }
-        .navigationDestination(for: PastSessionLink.self) { link in
-            PastSessionView(link: link)
+        // Beside the list: the first session, or the first exercise, until another one is chosen.
+        .onChange(of: first, initial: true) { _, first in
+            if let chosen, chosen.wrappedValue == nil {
+                chosen.wrappedValue = first
+            }
         }
-        .navigationDestination(for: Exercise.self) { exercise in
-            ExerciseView(exercise: exercise)
+        .onChange(of: page) {
+            chosen?.wrappedValue = first
+        }
+    }
+
+    private var first: HistoryChoice? {
+        switch page {
+        case .sessions:
+            history?.months.first?.sessions.first.map { .session(PastSessionLink(sessionID: $0.id)) }
+        case .progress:
+            history?.exercises.first.map { .exercise($0.id) }
         }
     }
 
@@ -98,6 +155,7 @@ struct PastSessionLink: Hashable {
 private struct SessionMonths: View {
     let months: [HistoryMonth]
     let text: HistoryText
+    let chosen: Binding<HistoryChoice?>?
     // Those not as they start: the first one unfolded, the others folded.
     @State private var changed: Set<String> = []
 
@@ -112,10 +170,17 @@ private struct SessionMonths: View {
                 }
                 if isOpen {
                     ForEach(month.sessions) { session in
-                        NavigationLink(value: PastSessionLink(sessionID: session.id)) {
-                            PastSessionRow(session: session, text: text)
+                        let link = PastSessionLink(sessionID: session.id)
+                        if let chosen {
+                            ChoiceRow(value: HistoryChoice.session(link), chosen: chosen, card: true) {
+                                PastSessionRow(session: session, text: text, chevron: false)
+                            }
+                        } else {
+                            NavigationLink(value: link) {
+                                PastSessionRow(session: session, text: text, chevron: true)
+                            }
+                            .buttonStyle(.plain)
                         }
-                        .buttonStyle(.plain)
                     }
                 }
             }
@@ -185,6 +250,8 @@ private struct MonthHeader: View {
 private struct PastSessionRow: View {
     let session: HistorySession
     let text: HistoryText
+    // Toward the page that opens over the list.
+    let chevron: Bool
     @ScaledMetric(relativeTo: .title2) private var dayWidth = 44.0
 
     var body: some View {
@@ -213,10 +280,12 @@ private struct PastSessionRow: View {
                     .foregroundStyle(Color(.warmup))
                     .accessibilityLabel(Text("Record beaten"))
             }
-            Image(systemName: "chevron.right")
-                .font(.footnote.weight(.semibold))
-                .foregroundStyle(Color(.secondaryText))
-                .accessibilityHidden(true)
+            if chevron {
+                Image(systemName: "chevron.right")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(Color(.secondaryText))
+                    .accessibilityHidden(true)
+            }
         }
         .padding(.vertical, 10)
         .padding(.horizontal, 14)
@@ -234,6 +303,66 @@ private struct NoSessions: View {
         } description: {
             Text("Finished sessions will appear here.")
                 .foregroundStyle(Color(.secondaryText))
+        }
+    }
+}
+
+// Beside the list, in Progress: the exercises done, the last one done first, each showing its progress in the right
+// column.
+private struct ExerciseChoices: View {
+    let exercises: [Exercise]
+    let chosen: Binding<HistoryChoice?>
+
+    var body: some View {
+        if exercises.isEmpty {
+            Text("Do a session to track your progress.")
+                .foregroundStyle(Color(.secondaryText))
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: .infinity)
+                .padding(.top, 60)
+        } else {
+            LazyVStack(spacing: 8) {
+                ForEach(exercises) { exercise in
+                    ChoiceRow(value: HistoryChoice.exercise(exercise.id), chosen: chosen, card: true) {
+                        Text(verbatim: exercise.localizedName)
+                            .font(.headline)
+                            .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                            .padding(.vertical, 6)
+                            .padding(.horizontal, 14)
+                            .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 14))
+                    }
+                }
+            }
+        }
+    }
+}
+
+// In the right column, the progress of the exercise chosen in Progress.
+private struct ExerciseProgressColumn: View {
+    private static let logger = Logger(subsystem: "com.zsr.halko", category: "history")
+
+    let exerciseID: String
+    @Query(filter: #Predicate<Session> { !$0.removed && $0.endedAt != nil }) private var sessions: [Session]
+    @Environment(\.modelContext) private var context
+    @Environment(\.units) private var units
+    @State private var history: SessionHistory?
+
+    var body: some View {
+        let exercise = history?.exercises.first { $0.id == exerciseID }
+        ScrollView {
+            if let history, let exercise {
+                ExerciseProgressPanel(exercise: exercise, history: history, text: HistoryText(sets: SetsText(units: units)))
+                    .padding([.horizontal, .bottom])
+            }
+        }
+        .background(Color(.systemGroupedBackground))
+        .navigationTitle(Text(verbatim: exercise?.localizedName ?? ""))
+        .task(id: sessions.map(\.updatedAt)) {
+            do {
+                history = try context.sessionHistory()
+            } catch {
+                Self.logger.error("Cannot read the history: \(String(describing: error))")
+            }
         }
     }
 }
