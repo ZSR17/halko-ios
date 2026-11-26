@@ -129,7 +129,8 @@ extension XCUIApplication {
     // grow and wrap (the largest-text screenshots show it): those two are not audited. It also measures the contrast
     // of the cards scrolling under the fade of the bars or under the session's bottom block, and of the drawing of the
     // body behind the muscles VoiceOver reads on it (`muscle-…`), of the loaded bar above its text (`plates-load`) and of
-    // the small screens drawing each look in the settings (`appearance-…`). Its hit region (44 pt to touch) is for what can be
+    // the small screens drawing each look in the settings (`appearance-…`), and of what a row scrolling sideways leaves past the
+    // edge of the screen, measured as black. Its hit region (44 pt to touch) is for what can be
     // touched: a text alone, whose element SwiftUI keeps as large as its letters, is not checked. The keyboard is the
     // system's: its keys are not checked. The texts seen through the tab bar, whose elements it does not always find, are
     // not detected again. Every other issue fails the test, at once.
@@ -153,7 +154,10 @@ extension XCUIApplication {
         let wheels = pickerWheels.allElementsBoundByIndex.map(\.frame)
         // Texts of the content seen through the glass of the tab bar, bent by it: the audit reads them on the screen
         // without always finding their elements, which VoiceOver reads all the same.
-        let underTabBar = !tabBar.isEmpty && staticTexts.allElementsBoundByIndex.contains { tabBar.intersects($0.frame) }
+        // A button's text too, such as the one below a list, but not the tabs' own.
+        let tabs = tabBars.firstMatch.exists ? tabBars.firstMatch.buttons.allElementsBoundByIndex.map(\.frame) : []
+        let underTabBar = !tabBar.isEmpty && (staticTexts.allElementsBoundByIndex + buttons.allElementsBoundByIndex)
+            .contains { tabBar.intersects($0.frame) && !tabs.contains($0.frame) }
         let largestText = launchArguments.contains("-UIPreferredContentSizeCategoryName")
         let kinds: [XCUIAccessibilityAuditType] = (largestText ? [] : [.contrast])
             + [.hitRegion, .sufficientElementDescription, .elementDetection, .trait]
@@ -181,6 +185,7 @@ extension XCUIApplication {
                         }
                         return issue.auditType == .contrast
                             && (issue.element?.identifier.hasPrefix("muscle-") == true
+                                || !window.contains(frame)
                                 || looks.contains { $0.intersects(frame) }
                                 || issue.element?.identifier == "plates-load"
                                 || bars.contains { $0.intersects(frame) })
