@@ -120,7 +120,7 @@ final class DuoTests: XCTestCase {
         app.element(containing: "Rest end").tap()
         XCTAssertTrue(app.navigationBars["Rest end"].waitForExistence(timeout: 5))
         // The list stays beside.
-        XCTAssertTrue(app.element(containing: "Theme and color").exists)
+        XCTAssertTrue(app.element(containing: "Set timer").exists)
         try app.auditScreen()
         snapInnerScreen("Duo › Settings › Rest end")
     }
