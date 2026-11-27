@@ -12,14 +12,23 @@ final class ExercisesTests: XCTestCase {
         try app.auditScreen()
         snap("Exercises")
 
-        // A muscle tapped on the body, around the chest: the muscles are a few points high, and where the body is
-        // drawn moves a little from one launch to the next. VoiceOver reads them as buttons.
+        // The body, small, opens large; a muscle tapped on it, around the chest: where the body is drawn moves a
+        // little from one launch to the next. VoiceOver reads the muscles as buttons.
+        app.buttons["Muscles"].tap()
+        XCTAssertTrue(app.navigationBars["Muscles"].waitForExistence(timeout: 5))
         XCTAssertEqual(app.buttons["muscle-chest"].value as? String, "Not picked")
+        try app.auditScreen()
         app.tapChest()
         XCTAssertTrue(app.element(containing: "Primary muscle:").waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'muscle-' AND value == 'Primary'")).firstMatch.exists)
+        snap("Exercises › Muscles")
+        app.buttons["Done"].tap()
+        XCTAssertTrue(app.navigationBars["Muscles"].waitForNonExistence(timeout: 5))
+        // The muscle picked beside the small body, the list kept to it.
+        XCTAssertTrue(app.element(containing: "Primary muscle:").exists)
         snap("Exercises, a muscle picked")
         app.buttons["Clear"].tap()
+        XCTAssertTrue(app.element(containing: "Tap one of the figures").waitForExistence(timeout: 5))
 
         // The equipment at hand.
         app.switches["Barbell"].tap()
@@ -102,9 +111,15 @@ final class ExercisesTests: XCTestCase {
         let app = launch(language: "en", locale: "en_GB", textSize: "UICTContentSizeCategoryAccessibilityXXXL")
         app.tabBars.buttons["Exercises"].tap()
 
-        XCTAssertTrue(app.element(containing: "Tap a muscle once").waitForExistence(timeout: 5))
+        XCTAssertTrue(app.element(containing: "Tap one of the figures").waitForExistence(timeout: 5))
         try app.auditScreen()
         snap("Exercises, largest text")
+        app.buttons["Muscles"].tap()
+        XCTAssertTrue(app.navigationBars["Muscles"].waitForExistence(timeout: 5))
+        try app.auditScreen()
+        snap("Exercises › Muscles, largest text")
+        app.buttons["Done"].tap()
+        XCTAssertTrue(app.navigationBars["Muscles"].waitForNonExistence(timeout: 5))
         app.scrollViews.firstMatch.swipeUp()
         snap("Exercises, largest text, scrolled")
 
@@ -124,11 +139,11 @@ final class ExercisesTests: XCTestCase {
 }
 
 extension XCUIApplication {
-    // The left of the chest on the body seen from the front, placed from the hint centered beside the body (default
-    // text size).
+    // The left of the chest on the large body seen from the front, in the sheet of the muscles (default text size):
+    // the two sides centered, 170 × 340 points 14 apart, over their names and the hint.
     @MainActor
     func tapChest() {
         let hint = staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Tap a muscle'")).firstMatch.frame
-        coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: hint.minX - 112, dy: hint.midY - 45)).tap()
+        coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: frame.midX - 107, dy: hint.minY - 279)).tap()
     }
 }

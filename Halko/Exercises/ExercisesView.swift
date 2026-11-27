@@ -73,7 +73,7 @@ struct ExerciseBrowser<Row: View>: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
-                MusclePicker(pick: catalog.filter.pick, cycle: { catalog.filter.cycle($0) }, clear: { catalog.filter.clearPick() })
+                MusclePicker(pick: catalog.filter.pick, cycle: { catalog.filter.cycle($0) }, clear: { catalog.filter.clearPick() }, clearsBeside: true)
                 FilterChips(filter: $catalog.filter)
                 Text("\(catalog.results.count) exercises")
                     .font(.subheadline)

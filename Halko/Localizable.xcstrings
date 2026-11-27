@@ -471,6 +471,16 @@
         }
       }
     },
+    "Muscles" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muscles"
+          }
+        }
+      }
+    },
     "No session yet with this exercise." : {
       "localizations" : {
         "fr" : {
@@ -491,6 +501,16 @@
         }
       }
     },
+    "Opens the body, large, to pick muscles." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvre les silhouettes en grand pour choisir des muscles."
+          }
+        }
+      }
+    },
     "Program" : {
       "localizations" : {
         "fr" : {
@@ -507,6 +527,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Journal du son"
+          }
+        }
+      }
+    },
+    "Tap one of the figures to pick a muscle." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Touche une des silhouettes pour choisir un muscle."
           }
         }
       }
@@ -2053,16 +2083,6 @@
                 }
               }
             }
-          }
-        }
-      }
-    },
-    "1 tap: primary · 2: secondary · 3: removed" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "1 toucher : principal · 2 : secondaire · 3 : retiré"
           }
         }
       }
