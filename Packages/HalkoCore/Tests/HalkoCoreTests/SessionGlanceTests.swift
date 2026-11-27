@@ -40,25 +40,24 @@ struct SessionGlanceTests {
         #expect(working.workingNumber == 1)
     }
 
-    @Test("During the rest, the set after it, raised to what the last set reached")
+    @Test("During the rest, the set after it, with its own values")
     func afterRest() throws {
         var state = try context.startSession(of: workout, now: start)
         try context.logSet(&state, step: 0, values: SetValues(reps: 10, weightG: 20_000), now: start + 60)
-        try context.logSet(&state, step: 1, values: SetValues(reps: 10, weightG: 80_000), startedFrom: SetValues(reps: 8, weightG: 80_000), now: start + 200)
+        try context.logSet(&state, step: 1, values: SetValues(reps: 10, weightG: 80_000), now: start + 200)
         #expect(state.isResting(at: start + 210))
         let glance = try #require(try context.glance(of: state, unit: .kg))
         #expect(glance.set == 2)
         #expect(glance.workingNumber == 2)
-        #expect(glance.values == SetValues(reps: 10, weightG: 80_000))
+        #expect(glance.values == SetValues(reps: 8, weightG: 80_000))
     }
 
-    @Test("Values changed on either device show outside the app; what they add is counted from the values offered")
+    @Test("Values changed on either device show outside the app")
     func changed() throws {
         var state = try context.startSession(of: workout, now: start)
         state.edits[state.livePlan.key(state.livePlan.steps[0])] = SetValues(reps: 12, weightG: 22_500)
         let glance = try #require(try context.glance(of: state, unit: .kg))
         #expect(glance.values == SetValues(reps: 12, weightG: 22_500))
-        #expect(glance.startedFrom == SetValues(reps: 10, weightG: 20_000))
     }
 
     @Test("Every set done: nothing to show")

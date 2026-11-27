@@ -175,13 +175,20 @@ struct WorkoutEditingTests {
         #expect(PlannedSetEdits.settingAll(item.targets, .rest, to: 90).allSatisfy { $0.restS == 90 })
     }
 
-    @Test("A value going up brings the next sets up to it; going down stays on its set")
+    @Test("A value typed stays on its set; asked, it goes to the following working sets, up or down")
     func setting() {
-        let targets = [80_000, 80_000, 82_500, 85_000].map { SetTarget(kind: .normal, reps: 8, weightG: $0) }
-        let up = PlannedSetEdits.setting(targets, .weight, to: 84_000, at: 1, from: 80_000)
-        #expect(up.map(\.weightG) == [80_000, 84_000, 84_000, 85_000])
-        let down = PlannedSetEdits.setting(targets, .weight, to: 70_000, at: 1, from: 80_000)
-        #expect(down.map(\.weightG) == [80_000, 70_000, 82_500, 85_000])
+        let warmup = SetTarget(kind: .warmup)
+        let targets = [warmup] + [80_000, 80_000, 82_500, 85_000].map { SetTarget(kind: .normal, reps: 8, weightG: $0) }
+        let typed = PlannedSetEdits.setting(targets, .weight, to: 84_000, at: 2)
+        #expect(typed.map(\.weightG) == [nil, 80_000, 84_000, 82_500, 85_000])
+        #expect(PlannedSetEdits.following(typed, .weight, after: 2, differingFrom: 84_000) == [3, 4])
+        #expect(PlannedSetEdits.settingFollowing(typed, .weight, to: 84_000, after: 2).map(\.weightG) == [nil, 80_000, 84_000, 84_000, 84_000])
+        let down = PlannedSetEdits.settingFollowing(targets, .reps, to: 6, after: 1)
+        #expect(down.map(\.reps) == [nil, 8, 6, 6, 6])
+        // Sets already at the value, a warm-up, the rest: nothing to ask.
+        #expect(PlannedSetEdits.following(targets, .reps, after: 1, differingFrom: 8).isEmpty)
+        #expect(PlannedSetEdits.following(targets, .weight, after: 0, differingFrom: 20_000).isEmpty)
+        #expect(PlannedSetEdits.following(targets, .rest, after: 1, differingFrom: 60).isEmpty)
     }
 
     @Test("A set made a warm-up has its values worked out; back to working, it keeps those shown")

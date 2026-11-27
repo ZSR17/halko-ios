@@ -11,8 +11,6 @@ struct DurationField: View {
     let subtitle: String
     let format: (Double?) -> String
     let focus: FocusState<EditorField?>.Binding
-    // When the wheels open, before anything is changed.
-    let begin: () -> Void
     let commit: (Double?) -> Void
     @State private var choosing = false
     @ScaledMetric(relativeTo: .body) private var height: CGFloat = 44
@@ -21,7 +19,6 @@ struct DurationField: View {
         let seconds = Int((value ?? 0).rounded())
         Button {
             focus.wrappedValue = nil
-            begin()
             choosing = true
         } label: {
             Text(verbatim: value == nil ? "–" : format(value))

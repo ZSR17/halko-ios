@@ -11,17 +11,23 @@ struct ItemEditor<Grip: View>: View {
     let focus: FocusState<EditorField?>.Binding
     let remove: () -> Void
     @ViewBuilder let grip: Grip
-    // The sets as they were when a box got the keyboard: a value typed is applied to them.
-    @State private var editStart: EditStart?
     @State private var openSet: UUID?
     @State private var confirmingRemove = false
     // The only set, asked to be deleted: the exercise goes with it, once confirmed.
     @State private var confirmingLastSet: UUID?
+    // Once asked, whether a value typed on a set goes to the following ones, by value (kg, reps…): kept while the
+    // workout is being edited, asked again the next time.
+    @State private var toFollowing: [SetField: Bool] = [:]
+    @State private var asking: FollowingQuestion?
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
-    private struct EditStart {
-        let targets: [SetTarget]
-        let shown: [SetTarget]
+    // A value typed on a set, that the following working sets do not have.
+    private struct FollowingQuestion {
+        let field: SetField
+        let value: Double
+        let set: Int
+        // The following working sets, in their order.
+        let sets: [Int]
     }
 
     private var type: ExerciseType {
@@ -84,6 +90,21 @@ struct ItemEditor<Grip: View>: View {
         }
         .padding(12)
         .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 16))
+        .alert(
+            Text(verbatim: asking.map(questionTitle) ?? ""),
+            isPresented: Binding { asking != nil } set: { if !$0 { asking = nil } },
+            presenting: asking
+        ) { question in
+            Button("Yes, the next sets") {
+                toFollowing[question.field] = true
+                item.targets = PlannedSetEdits.settingFollowing(item.targets, question.field, to: question.value, after: question.set)
+            }
+            Button("No, this set only", role: .cancel) {
+                toFollowing[question.field] = false
+            }
+        } message: { question in
+            Text(verbatim: questionMessage(question))
+        }
     }
 
     // Its name, whether it is done one side at a time, its number of sets.
@@ -218,8 +239,7 @@ struct ItemEditor<Grip: View>: View {
                 set: index,
                 editing: .value(item.id, set: index, field)
             ) { value in
-                let start = editStart ?? EditStart(targets: item.targets, shown: shown)
-                item.targets = PlannedSetEdits.setting(start.targets, field, to: value, at: index, from: start.shown[index][field])
+                item.targets = PlannedSetEdits.setting(item.targets, field, to: value, at: index)
             }
             if stacked {
                 labeled(label(field)) {
@@ -300,8 +320,7 @@ struct ItemEditor<Grip: View>: View {
                     title: String(localized: "Pause duration"),
                     subtitle: name,
                     format: { fields.text($0, of: .rest) },
-                    focus: focus,
-                    begin: {}
+                    focus: focus
                 ) { seconds in
                     item.switchS = seconds.map { Int($0) }
                 }
@@ -350,13 +369,6 @@ struct ItemEditor<Grip: View>: View {
         editing: EditorField,
         commit: @escaping (Double?) -> Void
     ) -> some View {
-        let targets = item.targets
-        let begin = {
-            editStart = EditStart(
-                targets: targets,
-                shown: Warmups.filledIn(targets, type: type, equipment: exercise?.equipment ?? [], unit: fields.weightUnit)
-            )
-        }
         if field == .rest {
             DurationField(
                 label: Text(verbatim: label),
@@ -365,7 +377,6 @@ struct ItemEditor<Grip: View>: View {
                 subtitle: wheelsSubtitle(set),
                 format: { fields.text($0, of: field) },
                 focus: focus,
-                begin: begin,
                 commit: commit
             )
         } else {
@@ -380,10 +391,67 @@ struct ItemEditor<Grip: View>: View {
                 canWorkOut: canWorkOut,
                 focus: focus,
                 field: editing,
-                begin: begin,
+                end: { start in
+                    if let set {
+                        typed(field, on: set, from: start)
+                    }
+                },
                 commit: commit
             )
         }
+    }
+
+    // MARK: Following sets
+
+    // A value typed on a set, its box left: it goes to the following working sets that do not have it, as chosen
+    // the first time it is asked for this value of the exercise.
+    private func typed(_ field: SetField, on set: Int, from start: Double?) {
+        guard item.targets.indices.contains(set), let value = item.targets[set][field], value != start else { return }
+        let sets = PlannedSetEdits.following(item.targets, field, after: set, differingFrom: value)
+        guard !sets.isEmpty else { return }
+        switch toFollowing[field] {
+        case true?:
+            item.targets = PlannedSetEdits.settingFollowing(item.targets, field, to: value, after: set)
+        case false?:
+            break
+        case nil:
+            // The keyboard goes: a box of the following sets keeps no text typed before they change.
+            focus.wrappedValue = nil
+            asking = FollowingQuestion(field: field, value: value, set: set, sets: sets)
+        }
+    }
+
+    // "Put 16 kg on the next sets?"
+    private func questionTitle(_ question: FollowingQuestion) -> String {
+        String(localized: "Put \(valueText(question.value, of: question.field)) on the next sets?")
+    }
+
+    // "Sets 2 to 4 of Bench press.", by their numbers as working sets.
+    private func questionMessage(_ question: FollowingQuestion) -> String {
+        let numbers = question.sets.map { set in item.targets[...set].count(where: { $0.kind != .warmup }) }
+        guard let first = numbers.first, let last = numbers.last else { return "" }
+        return first == last ? String(localized: "Set \(first) of \(name).") : String(localized: "Sets \(first) to \(last) of \(name).")
+    }
+
+    // A value with its unit: "16 kg", "12 reps", "0:40", "5 km".
+    private func valueText(_ value: Double, of field: SetField) -> String {
+        switch field {
+        case .weight:
+            measured(Measurement(value: value / fields.weightUnit.grams, unit: fields.weightUnit == .kg ? UnitMass.kilograms : .pounds))
+        case .distance:
+            measured(Measurement(value: value / FieldText.metres(fields.distanceUnit), unit: fields.distanceUnit == .km ? UnitLength.kilometers : .miles))
+        case .reps:
+            String(localized: "\(Int(value.rounded())) reps")
+        case .duration, .rest:
+            fields.text(value, of: field)
+        }
+    }
+
+    private func measured<Kind: Dimension>(_ measurement: Measurement<Kind>) -> String {
+        measurement.formatted(
+            .measurement(width: .abbreviated, usage: .asProvided, numberFormatStyle: .number.precision(.fractionLength(0...2)))
+                .locale(fields.locale)
+        )
     }
 
     // What the wheels of a duration are for: "Set 1 · Bench press", "Warm-up · Bench press", or the exercise alone.

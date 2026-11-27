@@ -50,7 +50,7 @@ struct LiveSessionTests {
     @Test("A set validated is recorded, then the next one comes after the rest")
     func validating() throws {
         var state = try context.startSession(of: workout, now: start)
-        try context.logSet(&state, step: 0, values: SetValues(reps: 10, weightG: 80_000), startedFrom: SetValues(reps: 8, weightG: 80_000), now: start + 60)
+        try context.logSet(&state, step: 0, values: SetValues(reps: 10, weightG: 80_000), now: start + 60)
         let sets = try context.sets(of: state.sessionID)
         #expect(sets.count == 1)
         #expect(sets[0].reps == 10)
@@ -58,8 +58,8 @@ struct LiveSessionTests {
         #expect(state.cursor == 1)
         #expect(state.restEndsAt == start + 60 + 150)
         #expect(state.isResting(at: start + 100))
-        // 2 more reps on the next set of the exercise.
-        #expect(state.bumps[LivePlan.key(items[0].id, 1)] == SetValues(reps: 10))
+        // The next set of the exercise keeps its own values.
+        #expect(state.edits.isEmpty)
 
         // Corrected: no new rest.
         state.endRest()
@@ -91,14 +91,13 @@ struct LiveSessionTests {
         #expect(state.cursor == 0)
     }
 
-    @Test("Undoing a set makes it the one to do and takes back what it added")
+    @Test("Undoing a set makes it the one to do again")
     func undoing() throws {
         var state = try context.startSession(of: workout, now: start)
-        try context.logSet(&state, step: 0, values: SetValues(reps: 10, weightG: 80_000), startedFrom: SetValues(reps: 8, weightG: 80_000), now: start + 60)
-        try context.unlogSet(&state, item: 0, set: 0, unit: .kg, now: start + 70)
+        try context.logSet(&state, step: 0, values: SetValues(reps: 10, weightG: 80_000), now: start + 60)
+        try context.unlogSet(&state, item: 0, set: 0, now: start + 70)
         #expect(try context.sets(of: state.sessionID).isEmpty)
         #expect(state.cursor == 0)
-        #expect(state.bumps[LivePlan.key(items[0].id, 1)] == nil)
     }
 
     @Test("A set added repeats the last one, for the session only")
@@ -143,10 +142,10 @@ struct LiveSessionTests {
         let second = LivePlan.key(items[0].id, 1)
         state.edits[first] = SetValues(reps: 6, weightG: 85_000)
         state.edits[second] = SetValues(reps: 5, weightG: 90_000)
-        try context.logSet(&state, step: 0, values: SetValues(reps: 6, weightG: 85_000), startedFrom: SetValues(reps: 8, weightG: 80_000), now: start + 60)
+        try context.logSet(&state, step: 0, values: SetValues(reps: 6, weightG: 85_000), now: start + 60)
         #expect(state.edits == [second: SetValues(reps: 5, weightG: 90_000)])
 
-        try context.unlogSet(&state, item: 0, set: 0, unit: .kg, now: start + 70)
+        try context.unlogSet(&state, item: 0, set: 0, now: start + 70)
         #expect(state.edits[first] == SetValues(reps: 6, weightG: 85_000))
 
         try context.deleteSet(&state, item: 0, set: 0, now: start + 80)

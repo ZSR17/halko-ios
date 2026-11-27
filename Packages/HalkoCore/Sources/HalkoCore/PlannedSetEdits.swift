@@ -82,20 +82,28 @@ public enum PlannedSetEdits {
         }
     }
 
-    // A value typed on set `index`, as in a session: when it goes up from `from` (the value it showed), the next
-    // sets below it are brought up to it. A decrease stays on that set, and a warm-up value left to work out stays
-    // so. The rest is the set's own.
-    public static func setting(_ targets: [SetTarget], _ field: SetField, to value: Double?, at index: Int, from: Double?) -> [SetTarget] {
-        let up = if field != .rest, let value, let from { value > from } else { false }
-        return targets.enumerated().map { offset, target in
-            var changed = target
-            if offset == index {
-                changed[field] = value
-            } else if up, offset > index, let current = target[field], let value, current < value {
-                changed[field] = value
-            }
-            return changed
+    // A value typed on set `index`: it stays on that set, until asked to go to the following ones.
+    public static func setting(_ targets: [SetTarget], _ field: SetField, to value: Double?, at index: Int) -> [SetTarget] {
+        guard targets.indices.contains(index) else { return targets }
+        var changed = targets
+        changed[index][field] = value
+        return changed
+    }
+
+    // The working sets after working set `index` whose value is not `value`: those it can go to, up or down. None
+    // for a warm-up, worked out from the working sets, nor for the rest, each set's own.
+    public static func following(_ targets: [SetTarget], _ field: SetField, after index: Int, differingFrom value: Double) -> [Int] {
+        guard field != .rest, targets.indices.contains(index), targets[index].kind != .warmup else { return [] }
+        return targets.indices.filter { $0 > index && targets[$0].kind != .warmup && targets[$0][field] != value }
+    }
+
+    // `value` on those working sets after set `index`.
+    public static func settingFollowing(_ targets: [SetTarget], _ field: SetField, to value: Double, after index: Int) -> [SetTarget] {
+        var changed = targets
+        for set in following(targets, field, after: index, differingFrom: value) {
+            changed[set][field] = value
         }
+        return changed
     }
 
     // A set like the last one shown (its warm-up values filled in), as a working set.

@@ -306,10 +306,9 @@ struct LiveSessionView: View {
         let table = self.table
         guard let step = table.step else { return }
         let values = table.draft(step)
-        let startedFrom = table.startedFrom(step)
         let index = state.cursor
         focus = nil
-        change { try context.logSet(&$0, step: index, values: values, startedFrom: startedFrom) }
+        change { try context.logSet(&$0, step: index, values: values) }
     }
 
     private func startTimer() {
@@ -320,7 +319,6 @@ struct LiveSessionView: View {
             $0.startTimer(
                 stepKey: table.plan.key(step),
                 values: table.draft(step),
-                startedFrom: table.startedFrom(step),
                 sidesPauseS: table.plan.items[step.item].sidesPauseS,
                 settings: SetTimerSettings(defaults: .standard)
             )
@@ -329,7 +327,7 @@ struct LiveSessionView: View {
 
     // A set validated by mistake: to do again, with the values it had.
     private func undo(_ item: Int, _ set: Int) {
-        change { try context.unlogSet(&$0, item: item, set: set, unit: units.weight) }
+        change { try context.unlogSet(&$0, item: item, set: set) }
     }
 
     // A set done, changed in its boxes: kept at once, without a new rest.

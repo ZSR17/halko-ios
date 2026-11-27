@@ -79,6 +79,46 @@ final class WorkoutEditorTests: XCTestCase {
     }
 
     @MainActor
+    func testFollowingSets() throws {
+        let app = launch(language: "en", locale: "en_GB")
+        app.openWorkoutEditor()
+        // The 4 working sets of the bench press, after its 4 warm-ups: 80 kg × 8.
+        let weight = { (set: Int) in app.textFields["Set \(set), kilograms"] }
+        let reps = { (set: Int) in app.textFields["Set \(set), Reps"] }
+
+        // A weight typed on the first one, its box left: asked for the next ones.
+        weight(5).tap()
+        weight(5).typeText("90")
+        reps(5).tap()
+        let weightQuestion = app.alerts["Put 90 kg on the next sets?"]
+        XCTAssertTrue(weightQuestion.waitForExistence(timeout: 5))
+        XCTAssertTrue(weightQuestion.staticTexts["Sets 2 to 4 of Barbell Bench Press - Medium Grip."].exists)
+        snap("Edit workout › Next sets?")
+        weightQuestion.buttons["No, this set only"].tap()
+        XCTAssertTrue(weightQuestion.waitForNonExistence(timeout: 5))
+        XCTAssertEqual(weight(5).value as? String, "90")
+        XCTAssertEqual(weight(6).value as? String, "80")
+
+        // Not asked again for the weights of the exercise: a weight typed stays on its set.
+        weight(7).tap()
+        weight(7).typeText("85")
+        reps(7).tap()
+        XCTAssertFalse(app.alerts.firstMatch.waitForExistence(timeout: 2))
+        XCTAssertEqual(weight(8).value as? String, "80")
+
+        // The reps are asked for on their own, going down too.
+        reps(7).typeText("6")
+        weight(7).tap()
+        let repsQuestion = app.alerts["Put 6 reps on the next sets?"]
+        XCTAssertTrue(repsQuestion.waitForExistence(timeout: 5))
+        XCTAssertTrue(repsQuestion.staticTexts["Set 4 of Barbell Bench Press - Medium Grip."].exists)
+        repsQuestion.buttons["Yes, the next sets"].tap()
+        XCTAssertTrue(repsQuestion.waitForNonExistence(timeout: 5))
+        XCTAssertEqual(reps(8).value as? String, "6")
+        XCTAssertEqual(reps(6).value as? String, "8")
+    }
+
+    @MainActor
     func testDiscardChanges() throws {
         let app = launch(language: "en", locale: "en_GB")
         app.openWorkoutEditor()

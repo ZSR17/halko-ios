@@ -24,7 +24,7 @@ struct SetTimerTests {
     private func started(_ settings: SetTimerSettings = SetTimerSettings(), sidesPauseS: Int? = nil, values: SetValues? = nil) throws -> LiveState {
         var state = try context.startSession(of: workout, now: start)
         let plan = state.livePlan
-        state.startTimer(stepKey: plan.key(plan.steps[0]), values: values ?? self.values, startedFrom: self.values, sidesPauseS: sidesPauseS, settings: settings, now: start)
+        state.startTimer(stepKey: plan.key(plan.steps[0]), values: values ?? self.values, sidesPauseS: sidesPauseS, settings: settings, now: start)
         return state
     }
 
@@ -48,7 +48,7 @@ struct SetTimerTests {
         #expect(state.setTimer?.startsAt == start + 2)
     }
 
-    @Test("The set is recorded with the time held, beyond the target too, and the next sets are not raised to it")
+    @Test("The set is recorded with the time held, beyond the target too")
     func held() throws {
         var state = try started()
         try context.stopTimer(&state, now: start + 73)
@@ -57,7 +57,6 @@ struct SetTimerTests {
         #expect(state.setTimer == nil)
         #expect(state.cursor == 1)
         #expect(state.restEndsAt == start + 73 + 90)
-        #expect(state.bumps.isEmpty)
     }
 
     @Test("Stopped on its own, the time held is the target, however late")
