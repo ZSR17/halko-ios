@@ -28,8 +28,9 @@ while IFS= read -r file; do
     Halko/Exercises/ExercisePicker.swift) tests+=(WorkoutEditorTests) ;;
     Halko/Exercises/AddToWorkout.swift) tests+=(AddToWorkoutTests) ;;
     Halko/Exercises/ExerciseEditor.swift) tests+=(ExerciseEditorTests) ;;
-    # The list and the page of an exercise, which the editor and « Add to a workout » open from.
-    Halko/Exercises/*) tests+=(ExercisesTests ExerciseEditorTests AddToWorkoutTests) ;;
+    # The list and the page of an exercise, which the editor and « Add to a workout » open from; in two columns on the
+    # iPhone Duo open.
+    Halko/Exercises/*) tests+=(ExercisesTests ExerciseEditorTests AddToWorkoutTests DuoTests) ;;
     # The workout editor, which « Add to a workout » opens too.
     Halko/Workouts/WorkoutEditor.swift | Halko/Workouts/ItemEditor.swift | Halko/Workouts/DurationPicker.swift)
       tests+=(WorkoutEditorTests AddToWorkoutTests)
@@ -38,14 +39,16 @@ while IFS= read -r file; do
     Halko/Workouts/ValueField.swift) tests+=(WorkoutEditorTests AddToWorkoutTests LiveSessionTests) ;;
     # The tab and the page of a workout, which the editor and the session open from.
     Halko/Workouts/*) tests+=(WorkoutsTests FoldersTests WorkoutEditorTests LiveSessionTests DuoTests) ;;
-    Halko/History/*) tests+=(HistoryTests) ;;
-    Halko/Tools/*) tests+=(ToolsTests) ;;
+    Halko/History/*) tests+=(HistoryTests DuoTests) ;;
+    Halko/Tools/*) tests+=(ToolsTests DuoTests) ;;
     # What the end of a session and the history show alike.
     Halko/Session/SessionFigures.swift) tests+=(LiveSessionTests HistoryTests) ;;
     # The session, in two columns on the iPhone Duo open too.
     Halko/Session/*) tests+=(LiveSessionTests DuoTests) ;;
+    # The settings, in two columns on the iPhone Duo open too, and what the session reads of them.
+    Halko/Settings/*) tests+=(SettingsTests LiveSessionTests DuoTests) ;;
     # What the session shows outside the app (the widgets are not tested on screen: only built).
-    Halko/Health/* | Halko/Settings/* | Shared/*) tests+=(LiveSessionTests) ;;
+    Halko/Health/* | Shared/*) tests+=(LiveSessionTests) ;;
     HalkoWidgets/*) ;;
     # Anything else (the views shared by the screens, the colours, the sample data, the project, the CI): all.
     *)

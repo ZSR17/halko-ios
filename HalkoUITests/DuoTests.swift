@@ -51,6 +51,80 @@ final class DuoTests: XCTestCase {
         XCTAssertTrue(app.element(containing: "Push A · in progress").waitForExistence(timeout: 5))
     }
 
+    @MainActor
+    func testExercisesInTwoColumns() throws {
+        let app = launch(language: "en", locale: "en_GB")
+        app.buttons["Exercises"].firstMatch.tap()
+
+        // The library on the left, the first exercise's page on the right.
+        XCTAssertTrue(app.staticTexts["877 exercises"].waitForExistence(timeout: 30))
+        XCTAssertTrue(app.buttons["Edit"].waitForExistence(timeout: 10))
+        try app.auditScreen()
+        snapInnerScreen("Duo › Exercises")
+
+        app.searchFields.firstMatch.tap()
+        app.searchFields.firstMatch.typeText("medium bench")
+        let bench = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Barbell Bench Press - Medium Grip")).firstMatch
+        XCTAssertTrue(bench.waitForExistence(timeout: 5))
+        bench.tap()
+        XCTAssertTrue(app.element(containing: "Max weight").waitForExistence(timeout: 5))
+        XCTAssertTrue(bench.isSelected)
+        snapInnerScreen("Duo › Exercises › Bench press")
+    }
+
+    @MainActor
+    func testHistoryInTwoColumns() throws {
+        let app = launch(language: "en", locale: "en_GB")
+        app.buttons["History"].firstMatch.tap()
+
+        // The sessions on the left, the latest one on the right.
+        XCTAssertTrue(app.staticTexts["This week"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["More actions"].waitForExistence(timeout: 10))
+        try app.auditScreen()
+        snapInnerScreen("Duo › History")
+
+        // In Progress, the exercises on the left, the progress of the first one on the right.
+        app.buttons["Progress"].tap()
+        XCTAssertTrue(app.buttons["Measure"].waitForExistence(timeout: 10))
+        try app.auditScreen()
+        snapInnerScreen("Duo › History › Progress")
+    }
+
+    @MainActor
+    func testToolsInTwoColumns() throws {
+        let app = launch(language: "en", locale: "en_GB")
+        app.buttons["Tools"].firstMatch.tap()
+
+        // The tools on the left, the plates on the right.
+        XCTAssertTrue(app.element(containing: "Per side: 1 × 25 kg + 1 × 15 kg").waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["Plate calculator"].isSelected)
+        try app.auditScreen()
+        snapInnerScreen("Duo › Tools")
+
+        app.buttons["1RM calculator"].tap()
+        XCTAssertTrue(app.buttons["1RM calculator"].isSelected)
+        XCTAssertFalse(app.element(containing: "Per side:").exists)
+        snapInnerScreen("Duo › Tools › 1RM")
+    }
+
+    @MainActor
+    func testSettingsInTwoColumns() throws {
+        let app = launch(language: "en", locale: "en_GB")
+        app.buttons["Settings"].firstMatch.tap()
+
+        // The settings on the left, the language on the right.
+        XCTAssertTrue(app.element(containing: "Same as the iPhone").waitForExistence(timeout: 10))
+        try app.auditScreen()
+        snapInnerScreen("Duo › Settings")
+
+        app.element(containing: "Rest end").tap()
+        XCTAssertTrue(app.navigationBars["Rest end"].waitForExistence(timeout: 5))
+        // The list stays beside.
+        XCTAssertTrue(app.element(containing: "Set timer").exists)
+        try app.auditScreen()
+        snapInnerScreen("Duo › Settings › Rest end")
+    }
+
     // XCTest's screenshots of the inner screen are black: the CI takes them, from the Mac, with simctl. Asked by a
     // file in the folder it gives, and done when the CI has removed it.
     @MainActor
