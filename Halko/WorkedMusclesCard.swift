@@ -1,24 +1,22 @@
 import HalkoCore
 import SwiftUI
 
-// The muscles a workout or an exercise works: on the body seen from the front and from the back, and in words.
+// The muscles a workout or an exercise works: on the body seen from the front and from the back, across the card,
+// and in words under it.
 struct WorkedMusclesCard: View {
     let muscles: [WorkedMuscle]
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-    @ScaledMetric(relativeTo: .body) private var figureHeight = 84.0
+    @ScaledMetric(relativeTo: .body) private var figureHeight = 200.0
 
     var body: some View {
         let primary = muscles.filter { $0.role == .primary }.map(\.muscle)
         let secondary = muscles.filter { $0.role == .secondary }.map(\.muscle)
-        // With the largest text sizes, the words go under the body, which keeps the whole width.
-        let layout = dynamicTypeSize.isAccessibilitySize
-            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
-            : AnyLayout(HStackLayout(spacing: 14))
-        layout {
-            HStack(spacing: 6) {
+        VStack(alignment: .leading, spacing: 10) {
+            // Both sides in the width, at most that high.
+            HStack(spacing: 24) {
                 figure(.front, "Front", primary: primary, secondary: secondary)
                 figure(.back, "Back", primary: primary, secondary: secondary)
             }
+            .frame(maxWidth: .infinity)
             .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 8) {
                 if !primary.isEmpty {
@@ -38,7 +36,7 @@ struct WorkedMusclesCard: View {
     private func figure(_ side: BodySide, _ caption: LocalizedStringKey, primary: [Muscle], secondary: [Muscle]) -> some View {
         VStack(spacing: 2) {
             BodyFigure(side: side, primary: Set(primary), secondary: Set(secondary))
-                .frame(height: min(figureHeight, 160))
+                .frame(maxWidth: figureHeight / 2, maxHeight: figureHeight)
             Text(caption)
                 .font(.caption2)
                 .foregroundStyle(Color(.secondaryText))

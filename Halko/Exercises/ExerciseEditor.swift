@@ -99,9 +99,7 @@ struct ExerciseEditor: View {
                     SectionText("Equipment")
                 }
                 Section {
-                    MusclePicker(pick: draft.muscles) { area in
-                        draft.muscles.cycle(area)
-                    }
+                    MusclePicker(pick: draft.muscles, cycle: { draft.muscles.cycle($0) }, clear: { draft.muscles = MusclePick() })
                     .padding(.vertical, 4)
                 } header: {
                     SectionText("Muscles worked")
