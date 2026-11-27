@@ -25,10 +25,11 @@ struct ValueField: View {
     let canWorkOut: Bool
     let focus: FocusState<EditorField?>.Binding
     let field: EditorField
-    // When the box gets the keyboard, before anything is typed.
-    let begin: () -> Void
     let commit: (Double?) -> Void
+    // When the box loses the keyboard, with the value it had when it got it.
+    let end: (Double?) -> Void
     @State private var text: String
+    @State private var valueAtStart: Double?
     @State private var selection: TextSelection?
     @ScaledMetric(relativeTo: .body) private var height: CGFloat = 44
 
@@ -43,7 +44,7 @@ struct ValueField: View {
         canWorkOut: Bool = false,
         focus: FocusState<EditorField?>.Binding,
         field: EditorField,
-        begin: @escaping () -> Void = {},
+        end: @escaping (Double?) -> Void = { _ in },
         commit: @escaping (Double?) -> Void
     ) {
         self.label = label
@@ -56,8 +57,8 @@ struct ValueField: View {
         self.canWorkOut = canWorkOut
         self.focus = focus
         self.field = field
-        self.begin = begin
         self.commit = commit
+        self.end = end
         _text = State(initialValue: format(value))
     }
 
@@ -85,11 +86,12 @@ struct ValueField: View {
         .accessibilityHint(workedOut ? Text("Worked out from the first working set. Type a value to set it.") : Text(verbatim: ""))
         .onChange(of: isFocused) { _, focused in
             if focused {
-                begin()
+                valueAtStart = value
                 // Typing replaces the value at once.
                 selectAllText(text, in: $selection)
             } else {
                 text = format(value)
+                end(valueAtStart)
             }
         }
         .onChange(of: value) { _, value in

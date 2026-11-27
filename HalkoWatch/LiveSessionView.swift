@@ -125,7 +125,6 @@ struct LiveSessionView: View {
                     $0.startTimer(
                         stepKey: table.plan.key(step),
                         values: table.draft(step),
-                        startedFrom: table.startedFrom(step),
                         sidesPauseS: table.plan.items[step.item].sidesPauseS,
                         settings: SetTimerSettings(defaults: .standard)
                     )
@@ -246,9 +245,8 @@ struct LiveSessionView: View {
 
     private func validate(_ table: LiveTable, _ step: LiveStep) {
         let values = table.draft(step)
-        let startedFrom = table.startedFrom(step)
         let index = state.cursor
-        change { try context.logSet(&$0, step: index, values: values, startedFrom: startedFrom) }
+        change { try context.logSet(&$0, step: index, values: values) }
     }
 
     // An action on the set takes the values being changed with it.

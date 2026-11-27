@@ -42,48 +42,6 @@ public struct SetValues: Codable, Hashable, Sendable {
             }
         }
     }
-
-    static let measures: [SetField] = [.reps, .weight, .duration, .distance]
-
-    // The values above those of `other`, field by field: what the next sets of the exercise must reach (15 reps done
-    // instead of 11 brings a next set of 10 to 15). Decreases are left out: a set missed out of fatigue must not lower
-    // the next ones.
-    public func increase(over other: SetValues) -> SetValues {
-        var result = SetValues()
-        for field in Self.measures {
-            if let value = self[field], let from = other[field], value > from {
-                result[field] = value
-            }
-        }
-        return result
-    }
-
-    // Without what `removed` brought (a set whose validation is undone); nil when nothing is left.
-    public func lowered(by removed: SetValues) -> SetValues? {
-        var result = SetValues()
-        for field in Self.measures {
-            if let value = self[field], value != removed[field] {
-                result[field] = value
-            }
-        }
-        return result.isEmpty ? nil : result
-    }
-
-    // Brought up to `bump` (values reached on an earlier set of the session); higher values stay.
-    public func raised(to bump: SetValues?) -> SetValues {
-        guard let bump else { return self }
-        var result = self
-        for field in Self.measures {
-            if let value = bump[field] {
-                result[field] = max(self[field] ?? 0, value)
-            }
-        }
-        return result
-    }
-
-    public var isEmpty: Bool {
-        self == SetValues()
-    }
 }
 
 // An exercise of the session as planned when it started: changing the workout during the session moves nothing. Its
@@ -217,12 +175,11 @@ public struct LivePlan: Sendable {
     }
 
     // What a set starts with: the plan (which takes what was done at the end of each session), what it leaves to work
-    // out from last time, raised to what earlier sets of the session reached (`bumps`). A warm-up left to work out is
-    // worked out from today's working weight when there is no last time, or when that weight is above last time's.
-    public func proposed(_ item: Int, set: Int, previous: [Int: SetValues], bumps: [String: SetValues], unit: WeightUnit) -> SetValues {
+    // out from last time. A warm-up left to work out is worked out from today's working weight when there is no last time, or when that weight is above last time's.
+    public func proposed(_ item: Int, set: Int, previous: [Int: SetValues], unit: WeightUnit) -> SetValues {
         let plan = items[item]
         let start = { (set: Int) in
-            Self.prefill(target(item, set: set), previous: previous[set]).raised(to: bumps[Self.key(plan.itemID, set)])
+            Self.prefill(target(item, set: set), previous: previous[set])
         }
         let planned = target(item, set: set)
         guard planned.kind == .warmup, let working = plan.targets.firstIndex(where: { $0.kind != .warmup }) else {
@@ -241,7 +198,7 @@ public struct LivePlan: Sendable {
         if planned.reps == nil, let reps = worked[set].reps {
             values.reps = reps
         }
-        return values.raised(to: bumps[Self.key(plan.itemID, set)])
+        return values
     }
 
     // The plan's values, else last time's.

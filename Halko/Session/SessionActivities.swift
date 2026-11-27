@@ -51,13 +51,12 @@ final class SessionActivities {
                 case .lengthenRest: state.lengthenRest()
                 case .validateSet:
                     guard let glance = try context.glance(of: state, unit: Units(defaults: .standard, locale: .current).weight) else { return }
-                    try context.logSet(&state, step: state.cursor, values: glance.values, startedFrom: glance.startedFrom)
+                    try context.logSet(&state, step: state.cursor, values: glance.values)
                 case .startTimer:
                     guard let glance = try context.glance(of: state, unit: Units(defaults: .standard, locale: .current).weight) else { return }
                     state.startTimer(
                         stepKey: LivePlan.key(state.plan[glance.item].itemID, glance.set),
                         values: glance.values,
-                        startedFrom: glance.startedFrom,
                         sidesPauseS: state.livePlan.items[glance.item].sidesPauseS,
                         settings: SetTimerSettings(defaults: .standard)
                     )

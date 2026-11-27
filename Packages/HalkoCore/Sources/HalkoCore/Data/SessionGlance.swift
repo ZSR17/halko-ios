@@ -12,8 +12,6 @@ public struct SessionGlance: Equatable, Sendable {
     // The set number shown: warm-ups are not counted.
     public let workingNumber: Int
     public let values: SetValues
-    // What the set is offered with, before any change: what the values add to it goes to the following sets too.
-    public let startedFrom: SetValues
 }
 
 extension ModelContext {
@@ -27,11 +25,10 @@ extension ModelContext {
         guard plan.steps.indices.contains(state.cursor), !plan.steps.allSatisfy({ logged[plan.key($0)] != nil }) else { return nil }
         let step = plan.steps[state.cursor]
         let item = plan.items[step.item]
-        let startedFrom = try logged[plan.key(step)].map(SetValues.init) ?? plan.proposed(
+        let values = try logged[plan.key(step)].map(SetValues.init) ?? state.edits[plan.key(step)] ?? plan.proposed(
             step.item,
             set: step.set,
             previous: previousPerformance(of: item.exerciseID, excluding: state.sessionID),
-            bumps: state.bumps,
             unit: unit
         )
         return SessionGlance(
@@ -41,8 +38,7 @@ extension ModelContext {
             exerciseType: item.exerciseType,
             isWarmup: step.target.kind == .warmup,
             workingNumber: item.workingNumber(step.set),
-            values: logged[plan.key(step)] == nil ? state.edits[plan.key(step)] ?? startedFrom : startedFrom,
-            startedFrom: startedFrom
+            values: values
         )
     }
 }

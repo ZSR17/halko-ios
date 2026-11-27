@@ -13,8 +13,6 @@ public struct LiveState: Codable, Equatable, Sendable {
     public var cursor: Int
     public var restEndsAt: Date?
     public var restTotalS: Int
-    // Values reached above the plan on a set, that the following sets of the exercise must reach, by step key.
-    public var bumps: [String: SetValues]
     // The last action on it, on either device: the most recent one wins. Absent from a state kept before there was one.
     public var changedAt: Date?
     // The timer of the set to do, while it is held for a time.
@@ -31,7 +29,6 @@ public struct LiveState: Codable, Equatable, Sendable {
         cursor: Int = 0,
         restEndsAt: Date? = nil,
         restTotalS: Int = 0,
-        bumps: [String: SetValues] = [:],
         changedAt: Date? = nil,
         setTimer: SetTimer? = nil
     ) {
@@ -41,7 +38,6 @@ public struct LiveState: Codable, Equatable, Sendable {
         self.cursor = cursor
         self.restEndsAt = restEndsAt
         self.restTotalS = restTotalS
-        self.bumps = bumps
         self.changedAt = changedAt
         self.setTimer = setTimer
     }
@@ -158,9 +154,8 @@ extension ModelContext {
     }
 
     // Records a set done, then goes to the next set not done and starts the rest. A set already done is corrected:
-    // the rest going on, if any, carries on. `startedFrom`: the values the set was offered with; what was added to
-    // them is added to the following sets of the exercise too.
-    public func logSet(_ state: inout LiveState, step index: Int, values: SetValues, startedFrom: SetValues? = nil, now: Date = .now) throws {
+    // the rest going on, if any, carries on. The following sets keep their own values.
+    public func logSet(_ state: inout LiveState, step index: Int, values: SetValues, now: Date = .now) throws {
         let plan = state.livePlan
         guard plan.steps.indices.contains(index) else { return }
         let step = plan.steps[index]
@@ -188,13 +183,6 @@ extension ModelContext {
         set.completedAt = already?.completedAt ?? now
         set.updatedAt = now
 
-        let added = startedFrom.map { values.increase(over: $0) } ?? SetValues()
-        if !added.isEmpty {
-            for next in (step.set + 1)..<max(step.set + 1, plan.setCount(step.item)) {
-                let key = LivePlan.key(item.itemID, next)
-                state.bumps[key] = (state.bumps[key] ?? SetValues()).raised(to: added)
-            }
-        }
         if state.setTimer?.stepKey == plan.key(step) {
             state.setTimer = nil
         }
@@ -210,9 +198,8 @@ extension ModelContext {
         try save()
     }
 
-    // Undoes a set validated by mistake: it is the set to do again. What it added to the next sets is taken back (it
-    // comes back if the set is validated again).
-    public func unlogSet(_ state: inout LiveState, item: Int, set: Int, unit: WeightUnit, now: Date = .now) throws {
+    // Undoes a set validated by mistake: it is the set to do again.
+    public func unlogSet(_ state: inout LiveState, item: Int, set: Int, now: Date = .now) throws {
         let plan = state.livePlan
         let planItem = plan.items[item]
         let done = try sets(of: state.sessionID)
@@ -221,13 +208,6 @@ extension ModelContext {
         log.updatedAt = now
         // To do again with the values it had.
         state.edits[LivePlan.key(planItem.itemID, set)] = SetValues(log)
-        let previous = try previousPerformance(of: planItem.exerciseID, excluding: state.sessionID)
-        let startedFrom = plan.proposed(item, set: set, previous: previous, bumps: state.bumps, unit: unit)
-        let added = SetValues(log).increase(over: startedFrom)
-        for next in (set + 1)..<max(set + 1, plan.setCount(item)) {
-            let key = LivePlan.key(planItem.itemID, next)
-            state.bumps[key] = state.bumps[key]?.lowered(by: added)
-        }
         state.cursor = plan.firstOpen(done: doneKeys(done.filter { $0 !== log }))
         state.setTimer = nil
         try save()
@@ -254,7 +234,6 @@ extension ModelContext {
             }
             log.updatedAt = now
         }
-        state.bumps = Self.movingUp(state.bumps, of: itemID, after: set)
         state.edits = Self.movingUp(state.edits, of: itemID, after: set)
         state.setTimer = nil
         state.cursor = state.livePlan.firstOpen(done: doneKeys(logs.filter { !$0.removed }))
@@ -277,7 +256,6 @@ extension ModelContext {
                 log.updatedAt = now
             }
         }
-        state.bumps = state.bumps.filter { Self.setIndex($0.key, of: itemID) == nil }
         state.edits = state.edits.filter { Self.setIndex($0.key, of: itemID) == nil }
         state.setTimer = nil
         state.cursor = state.livePlan.firstOpen(done: doneKeys(logs.filter { !$0.removed }))

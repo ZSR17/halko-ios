@@ -36,33 +36,23 @@ struct LiveTable {
         return count > 0 && (0..<count).allSatisfy { logged[LivePlan.key(plan.items[item].itemID, $0)] != nil }
     }
 
-    // What a set not done is offered with: last time's values or the plan, raised to what earlier sets reached.
+    // What a set not done is offered with: last time's values or the plan.
     func proposed(_ item: Int, set: Int) -> SetValues {
-        plan.proposed(item, set: set, previous: previous[plan.items[item].exerciseID] ?? [:], bumps: state.bumps, unit: fields.weightUnit)
+        plan.proposed(item, set: set, previous: previous[plan.items[item].exerciseID] ?? [:], unit: fields.weightUnit)
     }
 
-    // What the current set started with: its values when done, else what it is offered with.
-    func startedFrom(_ step: LiveStep) -> SetValues {
-        logged[plan.key(step)].map(SetValues.init) ?? proposed(step.item, set: step.set)
-    }
-
+    // What the current set is validated with: typed, else its values when done, else what it is offered with.
     func draft(_ step: LiveStep) -> SetValues {
-        edits[plan.key(step)] ?? startedFrom(step)
+        edits[plan.key(step)] ?? logged[plan.key(step)].map(SetValues.init) ?? proposed(step.item, set: step.set)
     }
 
-    // The values a set shows: done, typed, or offered (an increase typed on the current set shows on the next sets of
-    // the exercise straight away).
+    // The values a set shows: done, typed, or offered. A value typed on a set stays on it.
     func values(_ item: Int, set: Int) -> SetValues {
         let key = LivePlan.key(plan.items[item].itemID, set)
         if let log = logged[key] {
             return SetValues(log)
         }
-        if let edited = edits[key] {
-            return edited
-        }
-        let offered = proposed(item, set: set)
-        guard let step, step.item == item, set > step.set else { return offered }
-        return offered.raised(to: draft(step).increase(over: startedFrom(step)))
+        return edits[key] ?? proposed(item, set: set)
     }
 
     // "2" for the second working set, "W" for a warm-up.
