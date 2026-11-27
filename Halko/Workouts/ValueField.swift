@@ -83,6 +83,8 @@ struct ValueField: View {
         .padding(.horizontal, 4)
         .frame(minHeight: max(44, height))
         .background(Color(.tertiarySystemFill), in: .rect(cornerRadius: 10))
+        // The label of a field with a prompt is not read otherwise: the box would be read by its value alone.
+        .accessibilityLabel(label)
         .accessibilityHint(workedOut ? Text("Worked out from the first working set. Type a value to set it.") : Text(verbatim: ""))
         .onChange(of: isFocused) { _, focused in
             if focused {
