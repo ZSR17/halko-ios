@@ -225,8 +225,10 @@ final class WorkoutRecorder {
             if let error {
                 Self.logger.error("Cannot recover the workout: \(String(describing: error))")
             }
+            let result = "Recovered: \(session != nil)\(error.map { ", \(String(describing: $0))" } ?? "")"
             let found = Handoff(value: session)
             Task { @MainActor [weak self] in
+                WorkoutLog.add(result)
                 self?.isRecovering = false
                 if let session = found.value {
                     self?.recovered(session, sessionID: sessionID)
@@ -237,6 +239,9 @@ final class WorkoutRecorder {
 
     // Saved in Health at the end of the session, with what was measured; on the device where it runs.
     func finish(at date: Date) {
+        if session != nil {
+            WorkoutLog.add("Saved with the session")
+        }
         waitingForWatch = nil
         peer?.workoutEnding()
         saveOwnWorkout(at: date)
@@ -248,6 +253,7 @@ final class WorkoutRecorder {
         waitingForWatch = nil
         peer?.workoutEnding()
         if let session {
+            WorkoutLog.add("Discarded with the session")
             let builder = session.associatedWorkoutBuilder()
             detach()
             session.end()
@@ -563,12 +569,14 @@ final class WorkoutRecorder {
                 WorkoutLog.add("Ended on its own")
                 self.saveOwnWorkout(at: date)
             } else {
+                WorkoutLog.add("Ended, not the one running here")
                 self.mirroredGone(session)
             }
         } failed: { [weak self] session, error in
-            WorkoutLog.add("Failed: \(error)")
+            let own = self?.session.flatMap { ObjectIdentifier($0) == session ? $0 : nil }
+            WorkoutLog.add("Failed (\(own.map { "running here, state \($0.state.rawValue)" } ?? "not the one running here")): \(error)")
             // It could not start (from the background, without having been asked by the iPhone): tried again later.
-            if let own = self?.session, ObjectIdentifier(own) == session, own.state == .notStarted {
+            if let own, own.state == .notStarted {
                 self?.detach()
             }
         }
