@@ -38,6 +38,7 @@ struct HalkoWatchApp: App {
         } catch {
             fatalError("Cannot open the local database: \(error)")
         }
+        WorkoutLog.add("Launched")
         let health = HKHealthStore.isHealthDataAvailable() ? HKHealthStore() : nil
         let store = LiveSessionStore(fileURL: LiveSessionStore.defaultFileURL)
         let recorder = WorkoutRecorder(health: health)
@@ -72,7 +73,7 @@ struct HalkoWatchApp: App {
                 // A session of the iPhone found with the watch asleep: its workout could not start then.
                 .onChange(of: scenePhase) { _, phase in
                     if phase == .active {
-                        live?.startWorkout()
+                        live?.startWorkout(because: "on screen")
                     }
                 }
         }

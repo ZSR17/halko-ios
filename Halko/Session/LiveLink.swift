@@ -139,6 +139,9 @@ final class LiveLink {
             guard held?.sessionID == session.id else { return }
             close(session)
         case let .going(state):
+            if let held, held.sessionID != state.sessionID {
+                WorkoutLog.add("Another session from the other device")
+            }
             current = state.sessionID
             shared = snapshot
             #if os(iOS)
@@ -150,7 +153,7 @@ final class LiveLink {
             store.set(state)
             #if os(watchOS)
             if held == nil {
-                startWorkout()
+                startWorkout(because: "its session came")
             }
             #endif
             // What this device knows and the other does not goes back to it.
@@ -166,6 +169,7 @@ final class LiveLink {
     // Saved or discarded on the other device: its workout, when it runs here, goes the same way. Its summary is shown
     // here too only if this device hears of it at once: later, the summary was seen over there long ago.
     private func close(_ session: Session) {
+        WorkoutLog.add(session.removed ? "Discarded on the other device" : "Finished on the other device")
         forget()
         if session.removed {
             recorder.discard()
@@ -192,13 +196,14 @@ final class LiveLink {
         if store.state == nil {
             recorder.start(sessionID: nil, at: .now)
         } else {
-            startWorkout()
+            startWorkout(because: "asked")
         }
     }
 
     // The workout of the session goes on the watch, which measures it best: from the start of the session when the
     // iPhone has just started it and was waiting, or from now, taking over from the iPhone's.
-    func startWorkout() {
+    // `reason`: what calls it, for the log of the workouts.
+    func startWorkout(because reason: String) {
         guard let state = store.state else { return }
         let id = state.sessionID
         // Started at the iPhone's request before the session was heard of: it is this one's.
@@ -209,6 +214,7 @@ final class LiveLink {
         let startedAt = (try? context.fetch(FetchDescriptor(predicate: #Predicate<Session> { $0.id == id })).first)?.startedAt
         let now = Date.now
         let fromStart = !recorder.otherDeviceRecords && startedAt.map { now.timeIntervalSince($0) < 30 } == true
+        WorkoutLog.add("Starting (\(reason)), from \(fromStart ? "the session's start" : "now")")
         recorder.start(sessionID: id, at: fromStart ? startedAt ?? now : now)
     }
     #endif
